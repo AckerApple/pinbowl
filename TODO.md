@@ -1,0 +1,3 @@
+- Need to look for mixed attributes aka id="player-${playerIndex}"
+- Need to delete no longer used code
+- unsubscribing
