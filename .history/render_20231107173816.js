@@ -244,17 +244,13 @@ function getSubjectFunction(value, config) {
 
 function bindSubjectFunction(value, config) {
   return function subjectFunction(element, args) {
-    const result = value.bind(element)(...args)
+    value.bind(element)(...args)
     
     while(config.ownerGem) {
       config = config.ownerGem // let the highest gem do the updating
     }
 
     config.update()
-
-    if(result instanceof Promise) {
-      result.then(() => config.update())
-    }
   }
 }
 

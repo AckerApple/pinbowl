@@ -253,7 +253,8 @@ function bindSubjectFunction(value, config) {
     config.update()
 
     if(result instanceof Promise) {
-      result.then(() => config.update())
+      console.log('waiting on promise')
+      result.then(config.update)
     }
   }
 }

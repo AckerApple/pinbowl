@@ -45,10 +45,7 @@ export function SmallBowlApp() {
     }
   }
 
-  let changePlayerTimeout
   const submitPlayerScore = (player) => {
-    clearTimeout(changePlayerTimeout)
-    
     // maybe player game over
     if(player.scores.length === player.frames.length) {
       // its not a 3, game over
@@ -141,8 +138,6 @@ export function SmallBowlApp() {
   }
 
   const scorePlayerFrame = (currentFrame, player, playerIndex, frameIndex) => {
-    clearTimeout(changePlayerTimeout)
-
     if(!player.edit) {
       if(playerTurn !== playerIndex) {
         return // wrong player scoring
@@ -154,16 +149,6 @@ export function SmallBowlApp() {
     }
   
     updatePlayerFrame(player, frameIndex)
-
-    if(!player.edit) {
-      return new Promise(res => {
-        // auto change to next player
-        changePlayerTimeout = setTimeout(() => {
-          submitPlayerScore(player)
-          res()
-        }, 10000)  
-      })
-    }
   }
 
   const updatePlayerFrame = (player, frameIndex) => {
@@ -312,9 +297,7 @@ export function SmallBowlApp() {
         `)}
       </div>
       <br /><br />
-      <div style="font-size:0.8em;opacity:.5">
-        ✍️ written & created by Acker Apple
-      </div>
+      ✍️ written & created by Acker Apple
       <br /><br />
     </div>
   `)

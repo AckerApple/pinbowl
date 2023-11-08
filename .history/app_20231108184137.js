@@ -16,11 +16,7 @@ export function SmallBowlApp() {
     gameover: false,
   })
 
-  const startGame = () => {
-    gameStarted=true
-    players.forEach(player => player.edit = false)
-  }
-
+  const startGame = () => gameStarted=true
   const restartGame = () => {
     if(!confirm('Are you sure you want to restart game?')){
       return
@@ -45,10 +41,7 @@ export function SmallBowlApp() {
     }
   }
 
-  let changePlayerTimeout
   const submitPlayerScore = (player) => {
-    clearTimeout(changePlayerTimeout)
-    
     // maybe player game over
     if(player.scores.length === player.frames.length) {
       // its not a 3, game over
@@ -140,9 +133,7 @@ export function SmallBowlApp() {
     return leader.playerIndex === targetPlayerIndex
   }
 
-  const scorePlayerFrame = (currentFrame, player, playerIndex, frameIndex) => {
-    clearTimeout(changePlayerTimeout)
-
+  const scorePlayerFrame = (currentFrame, player, frameIndex) => {
     if(!player.edit) {
       if(playerTurn !== playerIndex) {
         return // wrong player scoring
@@ -154,16 +145,6 @@ export function SmallBowlApp() {
     }
   
     updatePlayerFrame(player, frameIndex)
-
-    if(!player.edit) {
-      return new Promise(res => {
-        // auto change to next player
-        changePlayerTimeout = setTimeout(() => {
-          submitPlayerScore(player)
-          res()
-        }, 10000)  
-      })
-    }
   }
 
   const updatePlayerFrame = (player, frameIndex) => {
@@ -243,7 +224,7 @@ export function SmallBowlApp() {
                         (currentFrame === frameIndex ? 'font-weight:bold;' : '') +
                         (playerTurn === playerIndex && currentFrame === frameIndex ? '' : 'cursor:default;')
                       }
-                      onclick=${() => scorePlayerFrame(currentFrame, player, playerIndex, frameIndex)}
+                      onclick=${() => scorePlayerFrame(currentFrame, player, frameIndex)}
                     >
                       <div style="display:flex;padding:0 .2em;">
                         <span style="flex-grow:1;font-size:0.7em;">${frameIndex+1}</span>
@@ -312,9 +293,7 @@ export function SmallBowlApp() {
         `)}
       </div>
       <br /><br />
-      <div style="font-size:0.8em;opacity:.5">
-        ✍️ written & created by Acker Apple
-      </div>
+      ✍️ written & created by Acker Apple
       <br /><br />
     </div>
   `)

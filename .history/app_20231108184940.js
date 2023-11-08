@@ -141,8 +141,6 @@ export function SmallBowlApp() {
   }
 
   const scorePlayerFrame = (currentFrame, player, playerIndex, frameIndex) => {
-    clearTimeout(changePlayerTimeout)
-
     if(!player.edit) {
       if(playerTurn !== playerIndex) {
         return // wrong player scoring

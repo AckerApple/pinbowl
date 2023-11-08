@@ -141,8 +141,6 @@ export function SmallBowlApp() {
   }
 
   const scorePlayerFrame = (currentFrame, player, playerIndex, frameIndex) => {
-    clearTimeout(changePlayerTimeout)
-
     if(!player.edit) {
       if(playerTurn !== playerIndex) {
         return // wrong player scoring
@@ -151,11 +149,7 @@ export function SmallBowlApp() {
       if(frameIndex !== currentFrame) {
         return // ignore
       }
-    }
-  
-    updatePlayerFrame(player, frameIndex)
 
-    if(!player.edit) {
       return new Promise(res => {
         // auto change to next player
         changePlayerTimeout = setTimeout(() => {
@@ -164,6 +158,8 @@ export function SmallBowlApp() {
         }, 10000)  
       })
     }
+  
+    updatePlayerFrame(player, frameIndex)
   }
 
   const updatePlayerFrame = (player, frameIndex) => {
