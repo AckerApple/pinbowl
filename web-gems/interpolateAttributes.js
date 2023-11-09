@@ -1,5 +1,4 @@
 import { Subject } from "./Subject.js"
-import { evalOver } from "./evals.js"
 
 export function interpolateAttributes(
   child, scope
@@ -12,7 +11,8 @@ export function interpolateAttributes(
     if ( value.search(/^\s*{/) >= 0 && value.search(/}\s*$/) >= 0 ) {
       // get the code inside the brackets like "variable0" or "{variable0}"
       const code = value.replace('{','').split('').reverse().join('').replace('}','').split('').reverse().join('')
-      const result = evalOver(scope, code)
+      //const result = evalOver(scope, code)
+      const result = scope[code]
 
       // attach as callback
       if(result instanceof Function) {

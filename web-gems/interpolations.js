@@ -1,6 +1,4 @@
-// Does not require money symbol (more like React)
-//export const interpolateReplace = /\$*{((?:[^{}]|(?:\{[^{}]*\}))*?)}/g
-export const interpolateReplace = /(?:<[^>]*>)|\$*{((?:[^{}]|(?:\{[^{}]*\}))*?)}/g;
+export const interpolateReplace = /(?:<[^>]*>)|({__gemVar[^}]+})/g;
 
 /** replaces ${x} with <template id="x-start"></template><template id="x-end"></template> */
 export function interpolateToTemplates(template) {
@@ -10,7 +8,9 @@ export function interpolateToTemplates(template) {
       // If the match is an HTML tag, don't replace
       return match;
     }
-    const id = expression.trim();
+    
+    const noBraces = expression.substring(1, expression.length-1)
+    const id = noBraces
     keys.push(id);
     return `<template interpolate end id="${id}"></template>`;
   });

@@ -1,11 +1,10 @@
-import { Gem, buildItemGemMap } from "./render.js"
+import { Gem, buildItemGemMap, variablePrefix } from "./render.js"
 import { Subject } from "./Subject.js"
-import { evalOver } from "./evals.js"
 import { removeChild } from "./removeChild.js"
 
 export function interpolateTemplate(
   template, // <template end interpolate />
-  variable,
+  context, // variable scope of {`__gemVar${index}`:'x'}
   subs,
 ) {
   if ( !template.hasAttribute('end') ) {
@@ -19,7 +18,12 @@ export function interpolateTemplate(
   }
 
   const variableName = template.getAttribute('id')
-  const result = evalOver(variable, variableName)
+
+  if(variableName.substring(0, variablePrefix.length) !== variablePrefix) {
+    return // ignore, not a gemVar
+  }
+
+  const result = context[variableName]
   template.clones = []
   template.lastFirstChild = template
 

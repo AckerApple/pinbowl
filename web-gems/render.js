@@ -1,6 +1,8 @@
 import { ValueSubject } from "./ValueSubject.js"
 import { interpolateElement } from "./interpolateElement.js"
 
+export const variablePrefix = '__gemVar'
+
 export class Gem {
   strings = undefined
   values = undefined
@@ -17,6 +19,8 @@ export class Gem {
   getTemplate() {
     // string could contain {this is not a variable}, lets remap those    
     const newStrings = this.strings.map(string => {
+      return string
+      /*
       const braces = breakBraces(string) // detect braces
       
       if(!braces.values.length && !braces.strings.length) {
@@ -24,7 +28,7 @@ export class Gem {
       }
 
       let newString = braces.strings.map((string, index) => {
-        const varName = `bracedVariable${index}`
+        const varName = variablePrefix + `_braced_${index}`
         
         if(braces.values[index]) {
           this.context[varName] = '{' + braces.values[index] + '}'
@@ -38,17 +42,18 @@ export class Gem {
       const diff = braces.values.length - braces.strings.length
       if(diff > 0) {
         newString = braces.values.splice(diff-1, diff).map(value => {
-          const varName = `bracedVariable${index}`
+          const varName = variablePrefix + `_braced_${index}`
           this.context[varName] = '{' + value + '}'
           return `{${varName}}`
         }).join('')
       }    
-      
+
       return newString
+      */
     })
 
     const template = this.lastTemplateString = newStrings.map((string, index) => {
-      const endString = string + (this.values.length > index ? `{variable${index}}` : '')
+      const endString = string + (this.values.length > index ? `{${variablePrefix}${index}}` : '')
       return endString
     }).join('')
 
@@ -112,7 +117,7 @@ export class Gem {
   updateContext(context) {
     const config = this
     config.strings.map((_string, index) => {
-      const variableName = `variable${index}`
+      const variableName = variablePrefix + index
       const hasValue = config.values.length > index
       const value = config.values[index]
 
@@ -156,10 +161,6 @@ export function buildItemGemMap(
   template,
   insertBefore,
 ) {
-  if(!insertBefore.parentNode){
-    console.log('insertBefore',insertBefore)
-    throw 22
-  }
   const temporary = document.createElement('div')
   
   // render content with a first child that we can know is our first element

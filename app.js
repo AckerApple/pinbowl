@@ -7,6 +7,12 @@ export function SmallBowlApp() {
   let playerTurn = 0
   let currentFrame = 0
   let gameStarted = false
+  let frameScoreModalDetails = {
+    player: undefined,
+    playerIndex: undefined,
+    frameIndex: undefined,
+  }
+  let changePlayerTimeout
 
   const addPlayer = () => players.push({
     name: `Player ${players.length + 1}`,
@@ -56,7 +62,6 @@ export function SmallBowlApp() {
     }
   }
 
-  let changePlayerTimeout
   const submitPlayerScore = (player) => {
     clearTimeout(changePlayerTimeout)
     
@@ -111,11 +116,9 @@ export function SmallBowlApp() {
 
     if(leaders.length > 1) {
       alert('🤗 Multiple winners, get ready for an additional round!')
-      console.log('leaders', leaders)
       leaders.forEach(({player}) => {
         player.frames.push(player.frames.length)
         player.gameover = false
-        console.log('player',player)
       })
       playerTurn = leaders[0].playerIndex
       ++currentFrame
@@ -156,9 +159,19 @@ export function SmallBowlApp() {
     return leader.playerIndex === targetPlayerIndex
   }
 
-  const scorePlayerFrame = (currentFrame, player, playerIndex, frameIndex) => {
-    clearTimeout(changePlayerTimeout)
+  const showFrameScoreModal = (player, playerIndex, frameIndex) => {
+    enterScore.showModal()
+    frameScoreModalDetails = {player, playerIndex, frameIndex}
+  }
 
+  const scoreByModal = (score) => {
+    const {player, playerIndex, frameIndex} = frameScoreModalDetails
+    scorePlayerFrame(score, player, playerIndex, frameIndex)
+    enterScore.close()
+  }
+
+
+  const scorePlayerFrame = (score, player, playerIndex, frameIndex) => {
     if(!player.edit) {
       if(playerTurn !== playerIndex) {
         return // wrong player scoring
@@ -169,28 +182,8 @@ export function SmallBowlApp() {
       }
     }
   
-    updatePlayerFrame(player, frameIndex)
-
-    if(!player.edit) {
-      return new Promise(res => {
-        // auto change to next player
-        changePlayerTimeout = setTimeout(() => {
-          submitPlayerScore(player)
-          res()
-        }, 10000)  
-      })
-    }
-  }
-
-  const updatePlayerFrame = (player, frameIndex) => {
-    const hasScore = player.scores[frameIndex] == undefined
-    let value = hasScore ? 1 : player.scores[frameIndex]
-    
-    if ( value > 2 ) {
-      value = -1
-    }
-  
-    player.scores[frameIndex] = value + 1  
+    player.scores[frameIndex] = score
+    submitPlayerScore(player)
   }
 
   // test data
@@ -211,7 +204,7 @@ export function SmallBowlApp() {
         ${players.map((player, playerIndex) => renderFor(player, $ => $`
           <div id=${`player_${playerIndex}`}
             style=${
-              "border-radius:.5em;padding:.75em;text-align: left;flex-grow:1;" +
+              "border-radius:.5em;text-align: left;flex-grow:1;" +
               (player.gameover ?
                 'background-color:rgb(89 76 231 / 44%);' :
                 gameStarted && player.edit ? 'background-color:rgb(290 76 131 / 44%);' :
@@ -219,9 +212,10 @@ export function SmallBowlApp() {
             }
           >
             <div style="display: flex;flex-direction: column;">
-              <!-- player info-->
-              <div>
+              <!-- player -->
+              <div style="padding:.75em;">
                 <div style="display: flex;">
+                  <!-- player info -->
                   <div style="flex-grow:1">
                     <div style="display: flex;align-items: center;">
                       <div style="padding-right:.5em;"
@@ -236,6 +230,7 @@ export function SmallBowlApp() {
 
                       ${player.edit && render($ => $`
                         <input ()="this.select()"
+                          onclick="this.select()"
                           onblur=${() => player.edit = false}
                           onkeyup=${event => player.name=event.target.value}
                           value=${player.name}
@@ -248,6 +243,7 @@ export function SmallBowlApp() {
                     ${ player.won && '🏆' }
                     <a style=${player.edit ? 'background-color:orange;' : ''} onclick=${() => player.edit = !player.edit}>✏️</a>
                   </div>
+                </div>
               </div>
 
               <!-- frame info-->
@@ -260,7 +256,7 @@ export function SmallBowlApp() {
                         (currentFrame === frameIndex ? 'font-weight:bold;' : '') +
                         (playerTurn === playerIndex && currentFrame === frameIndex ? '' : 'cursor:default;')
                       }
-                      onclick=${() => scorePlayerFrame(currentFrame, player, playerIndex, frameIndex)}
+                      onclick=${() => showFrameScoreModal(player, playerIndex, frameIndex)}
                     >
                       <div style="display:flex;padding:0 .2em;">
                         <span style="flex-grow:1;font-size:0.7em;opacity:.7">${frameIndex+1}</span>
@@ -286,23 +282,17 @@ export function SmallBowlApp() {
                   `))}
                 </div>
 
-                <div style="display:flex;gap:1em;flex-wrap:wrap;justify-content: center;">
+                <div style="padding:.75em;display:flex;gap:1em;flex-wrap:wrap;justify-content: center;">
                   <!--score-->
                   <div style="text-align: center;">
                     ${!player.gameover && render($ => $`<strong>SCORE:</strong>`)}
                     ${player.gameover && render($ => $`<strong>FINAL SCORE:</strong>`)}
                     ${getPlayerScore(player)}
                   </div>
-
-                  ${playerTurn === playerIndex && player.scores[currentFrame] != undefined && render($ => $`
-                    <button
-                      onclick=${() => submitPlayerScore(player)}
-                    >👉 submit score</button>
-                  `)}
                 </div>
               `)}
               
-              ${!gameStarted && render($ => $`
+              ${!gameStarted || (gameStarted && player.edit) && render($ => $`
                 <div style="text-align: center;padding-top:1em">
                   <button
                     onclick=${() => players.splice(playerIndex,1)}
@@ -326,7 +316,7 @@ export function SmallBowlApp() {
         `)}
 
         ${gameStarted && render($ => $`
-            <button type="button" onclick=${restartGame}>🔄 restart game</button>
+          <button type="button" onclick=${restartGame}>🔄 restart game</button>
         `)}
       </div>
       <br /><br />
@@ -335,6 +325,30 @@ export function SmallBowlApp() {
       </div>
       <br /><br />
     </div>
+
+    <!-- enter score modal -->
+    <dialog id="enterScore" style="padding:0"
+      onmousedown="var r = this.getBoundingClientRect();(r.top<=event.clientY&&event.clientY<=r.top+r.height&&r.left<=event.clientX&&event.clientX<=r.left+r.width) || this.close()"
+      ondragstart="const {e,dt,t} = {t:this,e:event,dt:event.dataTransfer};const d=t.drag=t.drag||{x:0,y:0};d.initX=d.x;d.startX=event.clientX-t.offsetLeft;d.startY=event.clientY-t.offsetTop;t.ondragover=e.target.ondragover=(e)=>e.preventDefault();dt.effectAllowed='move';dt.dropEffect='move'"
+      ondrag="const {t,e,dt,d}={e:event,dt:event.dataTransfer,d:this.drag}; if(e.clientX===0) return;d.x = d.x + e.offsetX - d.startX; d.y = d.y + e.offsetY - d.startY; this.style.left = d.x+'px'; this.style.top = d.y+'px';"
+      ondragend="const {t,e,d}={t:this,e:event,d:this.drag};if (d.initX === d.x) {d.x=d.x+e.offsetX-(d.startX-d.x);d.y=d.y+e.offsetY-(d.startY-d.y);this.style.transform=translate3d(d.x+'px', d.y+'px', 0)};this.draggable=false"
+    >
+      <div style="padding:.25em;background-color:#999999;color:white;" onmousedown="this.parentNode.draggable=true"
+      >Select your score</div>
+      
+      <div style="display:flex;flex-wrap:wrap;gap:1em;padding:1em">
+        ${frameScoreModalDetails.player && render($ => $`
+          <button style="flex:1;min-width:200px;padding:.3em" type="button" onclick=${() => scoreByModal(3)}>💎 STRIKE</button>
+          <button style="flex:1;min-width:200px;padding:.3em" type="button" onclick=${() => scoreByModal(2)}>SPARE</button>
+          <button style="flex:1;min-width:200px;padding:.3em" type="button" onclick=${() => scoreByModal(1)}>1 PIN LEFT</button>
+          <button style="flex:1;min-width:200px;padding:.3em" type="button" onclick=${() => scoreByModal(0)}>MORE THAN 1 PIN LEFT</button>
+        `)}
+      </div>
+      
+      <div style="padding:.5em">
+        <button type="button" onclick="enterScore.close()" style="min-width:200px;">🅧 cancel</button>
+      </div>
+    </dialog>
   `)
 }
 

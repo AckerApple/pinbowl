@@ -11,7 +11,6 @@ export function interpolateElement(
   // const result = interpolateChild(element, context, owner)
   if(result.keys.length) {
     interpolateContentTemplates(element, context)
-    // interpolateContentTemplates(owner, context)
   }
   interpolateAttributes(element, context)
 
