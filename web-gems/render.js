@@ -1,6 +1,5 @@
-import { Subject } from "./web-gems/Subject.js"
-import { ValueSubject } from "./web-gems/ValueSubject.js"
-import { interpolateElement } from "./web-gems/interpolateElement.js"
+import { ValueSubject } from "./ValueSubject.js"
+import { interpolateElement } from "./interpolateElement.js"
 
 export class Gem {
   strings = undefined

@@ -1,5 +1,4 @@
-import { extractAndReplaceFunctions } from "./extractAndReplaceFunctions.js"
-
+/* TODO: this could be greatly simplified due to low eval needs now */
 export function evalWith(
   string,
   context,
@@ -284,8 +283,7 @@ function constsToObject(obj, objName) {
 
 function parseExpression(expression) {
   const variables = []
-  const noFunctions = extractAndReplaceFunctions(expression, variables)
-  const cleansedString = extractAndReplaceStrings(noFunctions.newString, variables)
+  const cleansedString = extractAndReplaceStrings(expression, variables)
 
   const flatOps = [
     '+', '-', '*', '/','?',':','=',

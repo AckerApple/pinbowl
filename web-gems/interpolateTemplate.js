@@ -1,4 +1,4 @@
-import { Gem, buildItemGemMap } from "../render.js"
+import { Gem, buildItemGemMap } from "./render.js"
 import { Subject } from "./Subject.js"
 import { evalOver } from "./evals.js"
 import { removeChild } from "./removeChild.js"

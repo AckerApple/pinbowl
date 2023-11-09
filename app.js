@@ -1,4 +1,4 @@
-import { render, renderFor } from "./render.js"
+import { render, renderFor } from "./web-gems/render.js"
 import { interpolateElement } from "./web-gems/interpolateElement.js"
 
 export function SmallBowlApp() {
@@ -14,6 +14,7 @@ export function SmallBowlApp() {
     scores: [],
     edit: true,
     gameover: false,
+    won: false,
   })
 
   const startGame = () => {
@@ -25,11 +26,13 @@ export function SmallBowlApp() {
     if(!confirm('Are you sure you want to restart game?')){
       return
     }
+    
     currentFrame = 0
     playerTurn = 0
     gameStarted = false
 
     players.forEach(player => {
+      player.won = false
       player.frames.length = 5
       player.scores = []
       player.gameover = false
@@ -119,9 +122,14 @@ export function SmallBowlApp() {
       return
     }
 
-    alert(`🎉 Winner is Player ${leaders[0].playerIndex + 1}, ${leaders[0].player.name}`)
+    leaders[0].player.won = true
     playerTurn = -1
     currentFrame = -1
+
+    // let screen render
+    setTimeout(() => {
+      alert(`🎉 Winner is Player ${leaders[0].playerIndex + 1}, ${leaders[0].player.name}`)
+    }, 5)
   }
 
   const getPlayerScore = (player) => {
@@ -197,7 +205,7 @@ export function SmallBowlApp() {
   
   return render($ => $`
     <div>
-      <h2>🎳 ${players.length} Player Pinbowl game</h2>
+      <h2>🎳 ${players.length ? players.length+' Player' : 'New'} Pinbowl game</h2>
       <div style="display: flex;flex-wrap: wrap;gap:.5em">
         <!-- 👤 players loop -->
         ${players.map((player, playerIndex) => renderFor(player, $ => $`
@@ -236,7 +244,8 @@ export function SmallBowlApp() {
                     </div>
                   </div>
                   <div>
-                    ${ players.length > 1 && isPlayerIndexWinning(playerIndex) ? '⭐️' : '' }
+                    ${ players.length > 1 && isPlayerIndexWinning(playerIndex) && '🐺' }  
+                    ${ player.won && '🏆' }
                     <a style=${player.edit ? 'background-color:orange;' : ''} onclick=${() => player.edit = !player.edit}>✏️</a>
                   </div>
               </div>
@@ -254,7 +263,7 @@ export function SmallBowlApp() {
                       onclick=${() => scorePlayerFrame(currentFrame, player, playerIndex, frameIndex)}
                     >
                       <div style="display:flex;padding:0 .2em;">
-                        <span style="flex-grow:1;font-size:0.7em;">${frameIndex+1}</span>
+                        <span style="flex-grow:1;font-size:0.7em;opacity:.7">${frameIndex+1}</span>
                         <span>${frameIndex === currentFrame ? render($ => $`<span>🔵</span>`) : ''}</span>
                       </div>
                       <hr style="margin: 0;" />
@@ -270,6 +279,7 @@ export function SmallBowlApp() {
                             tap<br />to<br />score
                           </div>
                         `)}
+                        ${player.scores[frameIndex] === 3 && (playerIndex!=playerTurn || frameIndex!=currentFrame) && '💎'}
                         ${player.scores[frameIndex] == undefined ? '' : player.scores[frameIndex]}
                       </div>
                     </a>
