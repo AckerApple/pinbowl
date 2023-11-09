@@ -42,6 +42,14 @@ export function SmallBowlApp() {
     if(playerTurn >= players.length){
       ++currentFrame
       playerTurn=0
+
+      if(players.every(player => player.gameover)) {
+        runGameOver()
+      }
+    }
+
+    if(players[playerTurn].gameover) {
+      increasePlayerTurn()
     }
   }
 
@@ -99,7 +107,7 @@ export function SmallBowlApp() {
     const leaders = leadersMeta[1]
 
     if(leaders.length > 1) {
-      alert('🤗 Multiple winners, get ready for a additional round!')
+      alert('🤗 Multiple winners, get ready for an additional round!')
       console.log('leaders', leaders)
       leaders.forEach(({player}) => {
         player.frames.push(player.frames.length)
