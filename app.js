@@ -1,4 +1,4 @@
-import { render, renderFor } from "./web-gems/render.js"
+import { $ } from "./web-gems/render.js"
 import { interpolateElement } from "./web-gems/interpolateElement.js"
 
 export function SmallBowlApp() {
@@ -14,14 +14,18 @@ export function SmallBowlApp() {
   }
   let changePlayerTimeout
 
-  const addPlayer = () => players.push({
-    name: `Player ${players.length + 1}`,
-    frames: [0,1,2,3,4],
-    scores: [],
-    edit: true,
-    gameover: false,
-    won: false,
-  })
+  const addPlayer = () => {
+    console.info('adding player...')
+    players.push({
+      name: `Player ${players.length + 1}`,
+      frames: [0,1,2,3,4],
+      scores: [],
+      edit: true,
+      gameover: false,
+      won: false,
+    })
+    console.info('✅ player added')
+}
 
   const startGame = () => {
     gameStarted=true
@@ -170,7 +174,6 @@ export function SmallBowlApp() {
     enterScore.close()
   }
 
-
   const scorePlayerFrame = (score, player, playerIndex, frameIndex) => {
     if(!player.edit) {
       if(playerTurn !== playerIndex) {
@@ -196,12 +199,12 @@ export function SmallBowlApp() {
     players[1].scores = [2,2,0,0]
   })()*/
   
-  return render($ => $`
+  return () => $`
     <div>
       <h2>🎳 ${players.length ? players.length+' Player' : 'New'} Pinbowl game</h2>
       <div style="display: flex;flex-wrap: wrap;gap:.5em">
         <!-- 👤 players loop -->
-        ${players.map((player, playerIndex) => renderFor(player, $ => $`
+        ${players.map((player, playerIndex) => $.for(player)`
           <div id=${`player_${playerIndex}`}
             style=${
               "border-radius:.5em;text-align: left;flex-grow:1;" +
@@ -228,14 +231,14 @@ export function SmallBowlApp() {
                         ${!player.edit && player.name}
                       </a>
 
-                      ${player.edit && render($ => $`
-                        <input ()="this.select()"
-                          onclick="this.select()"
+                      ${player.edit && $`
+                        <input
+                          onclick=${event => !gameStarted && event.target.select()}
                           onblur=${() => player.edit = false}
                           onkeyup=${event => player.name=event.target.value}
                           value=${player.name}
                         />
-                      `)}
+                      `}
                     </div>
                   </div>
                   <div>
@@ -247,9 +250,9 @@ export function SmallBowlApp() {
               </div>
 
               <!-- frame info-->
-              ${gameStarted && render($ => $`
+              ${gameStarted && $`
                 <div style="display: flex;flex-wrap:wrap">
-                  ${player.frames.map((frame, frameIndex) => renderFor(frame, $ => $`
+                  ${player.frames.map((frame, frameIndex) => $.for(frame)`
                     <a
                       style=${
                         'display:flex;flex-direction:column;flex-grow:1;border:1px solid white;' +
@@ -260,7 +263,7 @@ export function SmallBowlApp() {
                     >
                       <div style="display:flex;padding:0 .2em;">
                         <span style="flex-grow:1;font-size:0.7em;opacity:.7">${frameIndex+1}</span>
-                        <span>${frameIndex === currentFrame ? render($ => $`<span>🔵</span>`) : ''}</span>
+                        <span>${frameIndex === currentFrame ? $`<span>🔵</span>` : ''}</span>
                       </div>
                       <hr style="margin: 0;" />
                       <div
@@ -270,54 +273,54 @@ export function SmallBowlApp() {
                           (playerTurn === playerIndex && currentFrame === frameIndex ? 'background:rgba(255,234,142,.8);' : '')
                         }
                       >
-                        ${playerTurn === playerIndex && currentFrame === frameIndex && player.scores[frameIndex] == undefined && render($ => $`
+                        ${playerTurn === playerIndex && currentFrame === frameIndex && player.scores[frameIndex] == undefined && $`
                           <div style="opacity:.5;font-size:.8em;line-height:1em;">
                             tap<br />to<br />score
                           </div>
-                        `)}
+                        `}
                         ${player.scores[frameIndex] === 3 && (playerIndex!=playerTurn || frameIndex!=currentFrame) && '💎'}
                         ${player.scores[frameIndex] == undefined ? '' : player.scores[frameIndex]}
                       </div>
                     </a>
-                  `))}
+                  `)}
                 </div>
 
                 <div style="padding:.75em;display:flex;gap:1em;flex-wrap:wrap;justify-content: center;">
                   <!--score-->
                   <div style="text-align: center;">
-                    ${!player.gameover && render($ => $`<strong>SCORE:</strong>`)}
-                    ${player.gameover && render($ => $`<strong>FINAL SCORE:</strong>`)}
+                    ${!player.gameover && $`<strong>SCORE:</strong>`}
+                    ${player.gameover && $`<strong>FINAL SCORE:</strong>`}
                     ${getPlayerScore(player)}
                   </div>
                 </div>
-              `)}
+              `}
               
-              ${!gameStarted || (gameStarted && player.edit) && render($ => $`
+              ${!gameStarted || (gameStarted && player.edit) && $`
                 <div style="text-align: center;padding-top:1em">
                   <button
                     onclick=${() => players.splice(playerIndex,1)}
                   >🗑️ remove player ${playerIndex+1}</button>
                 </div>
-              `)}
+              `}
             </div>
           </div>
-        `))}
+        `)}
       </div>
 
       <div style="padding-top:1em;">
-        ${currentFrame === 0 && render($ => $`
+        ${currentFrame === 0 && $`
           <button type="button"
             onclick=${addPlayer}
           >👤 Add Player</button>
-        `)}
+        `}
 
-        ${!gameStarted && players.length > 0 && render($ => $`
+        ${!gameStarted && players.length > 0 && $`
             <button type="button" onclick=${startGame}>🟢 start game</button>
-        `)}
+        `}
 
-        ${gameStarted && render($ => $`
+        ${gameStarted && $`
           <button type="button" onclick=${restartGame}>🔄 restart game</button>
-        `)}
+        `}
       </div>
       <br /><br />
       <div style="font-size:0.8em;opacity:.5">
@@ -337,26 +340,29 @@ export function SmallBowlApp() {
       >Select your score</div>
       
       <div style="display:flex;flex-wrap:wrap;gap:1em;padding:1em">
-        ${frameScoreModalDetails.player && render($ => $`
+        ${frameScoreModalDetails.player && $`
           <button style="flex:1;min-width:200px;padding:.3em" type="button" onclick=${() => scoreByModal(3)}>💎 STRIKE</button>
           <button style="flex:1;min-width:200px;padding:.3em" type="button" onclick=${() => scoreByModal(2)}>SPARE</button>
           <button style="flex:1;min-width:200px;padding:.3em" type="button" onclick=${() => scoreByModal(1)}>1 PIN LEFT</button>
           <button style="flex:1;min-width:200px;padding:.3em" type="button" onclick=${() => scoreByModal(0)}>MORE THAN 1 PIN LEFT</button>
-        `)}
+        `}
       </div>
       
       <div style="padding:.5em">
         <button type="button" onclick="enterScore.close()" style="min-width:200px;">🅧 cancel</button>
       </div>
     </dialog>
-  `)
+  `
 }
 
 export default () => {
   const app = SmallBowlApp()
 
   const element = document.getElementsByTagName('small-bowl-app')[0]
-  const {template, context} = app.getTemplate()
+  
+  const gem = app()
+  gem.setTemplater(app)
+  const {template, context} = gem.getTemplate()
   element.innerHTML = template
 
   interpolateElement(element, context, element)

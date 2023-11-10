@@ -120,7 +120,8 @@ function processGemArray(
       // appears arrayValue is not there but maybe arrayValue is actually the value of undefined
       if (!Object.keys(subGem).includes('arrayValue')) {
         console.log('bad value', value, subGem)
-        const err = new Error('Use renderFor() instead of render() to template an Array. Example: array.map(item => renderFor(item, $ => $``))')
+        const err = new Error('Use $.for(item)`html` instead of $`html` to template an Array. Example: array.map(item => $.for(item)``)')
+        err.code = 'replace-with-for'
         throw err
       }
     }
@@ -194,7 +195,7 @@ function processGemResult(
     const existing = result.lastArray[index]
 
     if(existing?.gem.isLikeGem(gem)) {
-      existing.gem.update(gem.values)
+      existing.gem.updateByGem(gem)
       return existing.gem.clones // seen already
     }
 
@@ -214,7 +215,7 @@ function processGemResult(
   // *if
   if(result.gem) {
     if(result.gem.isLikeGem(gem)) {
-      result.gem.update(gem.values)
+      result.gem.updateByGem(gem)
       result.gem // we were a gem and still am the same gem
       return result.gem.clones
     }

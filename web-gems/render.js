@@ -4,55 +4,55 @@ import { interpolateElement } from "./interpolateElement.js"
 export const variablePrefix = '__gemVar'
 
 export class Gem {
-  strings = undefined
-  values = undefined
   props = undefined
   context = {}
   clones = []
+
+  constructor(strings, values) {
+    this.strings = strings
+    this.values = values
+    this.updateValues(values)
+  }
   
-  constructor(update) {
-    this.update = update
+  setTemplater(templater) {
+    this.templater = templater
+  }
+    
+  update() {
+    if(!this.templater) {
+      console.log('------', this, this.templater)
+    }
+    const {strings, values} = this.templater()
+    this.updateConfig(strings, values)
+  }
+
+  updateByGem(gem) {
+    this.updateConfig(gem.strings, gem.values)
   }
 
   lastTemplateString = undefined // used to compare templates for updates
+
+  updateOwner() {
+    let gem = this
+    
+    while(gem.ownerGem) {
+      gem = gem.ownerGem // let the highest gem do the updating
+    }
+
+    if(!gem.templater) {
+      throw 'Cannot find owning gem that rerender content'
+    }
+
+    gem.update() // only time this function should be called
+  }
   
+  updateConfig(strings, values) {
+    this.strings = strings
+    this.updateValues(values)
+  }
+
   getTemplate() {
-    // string could contain {this is not a variable}, lets remap those    
-    const newStrings = this.strings.map(string => {
-      return string
-      /*
-      const braces = breakBraces(string) // detect braces
-      
-      if(!braces.values.length && !braces.strings.length) {
-        return string // no work todo
-      }
-
-      let newString = braces.strings.map((string, index) => {
-        const varName = variablePrefix + `_braced_${index}`
-        
-        if(braces.values[index]) {
-          this.context[varName] = '{' + braces.values[index] + '}'
-          return string + `{${varName}}`
-        }
-
-        return string
-      }).join('')
-
-  
-      const diff = braces.values.length - braces.strings.length
-      if(diff > 0) {
-        newString = braces.values.splice(diff-1, diff).map(value => {
-          const varName = variablePrefix + `_braced_${index}`
-          this.context[varName] = '{' + value + '}'
-          return `{${varName}}`
-        }).join('')
-      }    
-
-      return newString
-      */
-    })
-
-    const template = this.lastTemplateString = newStrings.map((string, index) => {
+    const template = this.lastTemplateString = this.strings.map((string, index) => {
       const endString = string + (this.values.length > index ? `{${variablePrefix}${index}}` : '')
       return endString
     }).join('')
@@ -193,92 +193,32 @@ export function buildItemGemMap(
   return { clones, subs: [], parentNode:insertBefore.parentNode }
 }
 
-export function renderFor(
-  arrayValue,
-  templater //: (props)=>string the function that both provides the original template AND variable updates
-) {
-  const config = render(templater)
-  config.arrayValue = arrayValue
-  return config
+export function $(strings, ...values) {
+  return new Gem(strings, values)
 }
 
-/** Returns config */
-export function render(
-  templater //: (props)=>string the function that both provides the original template AND variable updates
-) {
-  const config = new Gem(update)
-
-  // Build context
-  function updateConfig(strings, values) {
-    config.strings = strings
-    config.updateValues(values)
+$.for = (
+  arrayValue
+) => {
+  return (strings, ...values) => {
+    const gem = $(strings, ...values)
+    gem.arrayValue = arrayValue
+    return gem
   }
-  
-  function interpolate(strings, ...values) {
-    ++setupCount
-    updateConfig(strings, values)
-  }
-
-  function update() {
-    // config.values = newValues // does nothing because just updated below
-    setupCount = 0
-    templater(interpolate)
-    if(setupCount > 1) {
-      throw 'template interpolation function was called more than once. To render additional templates, call render(template => template\`\`)'
-    }
-  }
-
-  let setupCount = 0
-  templater(interpolate)
-  
-  if(setupCount > 1) {
-    throw 'template interpolation function was called more than once. To render additional templates, call render(template => template\`\`)'
-  }
-  
-  return config
 }
 
 function getSubjectFunction(value, config) {
   return new ValueSubject(bindSubjectFunction(value, config))
 }
 
-function bindSubjectFunction(value, config) {
+function bindSubjectFunction(value, gem) {
   return function subjectFunction(element, args) {
     const result = value.bind(element)(...args)
     
-    while(config.ownerGem) {
-      config = config.ownerGem // let the highest gem do the updating
-    }
-
-    config.update()
+    gem.updateOwner()
 
     if(result instanceof Promise) {
-      result.then(() => config.update())
+      result.then(() => gem.updateOwner())
     }
   }
-}
-
-function breakBraces(inputString) {
-  let strings = [];
-  let values = [];
-  let startIndex = 0;
-  let endIndex;
-
-  while ((startIndex = inputString.indexOf('{', startIndex)) !== -1) {
-    endIndex = inputString.indexOf('}', startIndex);
-    if (endIndex !== -1) {
-      strings.push(inputString.substring(0, startIndex));
-      values.push(inputString.substring(startIndex + 1, endIndex));
-      inputString = inputString.substring(endIndex + 1);
-    } else {
-      // Unmatched opening brace found
-      strings.push(inputString.substring(0, startIndex));
-      values.push('');
-      inputString = '';
-      break;
-    }
-  }
-
-  strings.push(inputString);
-  return { strings, values };
 }
