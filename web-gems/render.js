@@ -19,9 +19,6 @@ export class Gem {
   }
     
   update() {
-    if(!this.templater) {
-      console.log('------', this, this.templater)
-    }
     const {strings, values} = this.templater()
     this.updateConfig(strings, values)
   }

@@ -119,7 +119,6 @@ function processGemArray(
     if (subGem.arrayValue === undefined) {
       // appears arrayValue is not there but maybe arrayValue is actually the value of undefined
       if (!Object.keys(subGem).includes('arrayValue')) {
-        console.log('bad value', value, subGem)
         const err = new Error('Use $.for(item)`html` instead of $`html` to template an Array. Example: array.map(item => $.for(item)``)')
         err.code = 'replace-with-for'
         throw err
