@@ -4,37 +4,25 @@ import { interpolateTemplate } from "./interpolateTemplate.js"
 export function interpolateContentTemplates(
   element,
   variable,
-  subs
+  ownerGem,
 ) {
-  subs = subs || [] // recursion
-
   if ( !element.children || element.tagName === 'TEMPLATE' ) {
-    return subs // done
+    return // done
   }
 
   const children = new Array(...element.children)
 
   children.forEach((child, index) => {
-    const isSkip = child.getAttribute('*for') || child.getAttribute('*if')
-    
-    if(isSkip) {
-      return // let the *for do its own rendering
-    }
-
     interpolateChild(child, index, children)
     
     if ( child.children ) {  
       const nextKids = new Array(...child.children)
       nextKids.forEach((subChild, index) => {
-        if ( subChild.getAttribute('*for') || subChild.getAttribute('*if') ) {
-          return // prevent interpolating things I do not own
-        }
-
         if ( isRenderEndTemplate(subChild) ) {
           interpolateChild(subChild, index, nextKids)
         }
 
-        interpolateContentTemplates(subChild, variable, subs)
+        interpolateContentTemplates(subChild, variable, ownerGem)
       })
     }
   })
@@ -56,14 +44,15 @@ export function interpolateContentTemplates(
       return child
     })
     
+    // subs made here
     interpolateTemplate(
       child,
       variable,
-      subs
+      ownerGem,
     )
   }
 
-  return subs
+  return
 }
 
 function isRenderEndTemplate(child) {

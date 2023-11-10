@@ -1,7 +1,8 @@
 import { $ } from "./web-gems/render.js"
-import { interpolateElement } from "./web-gems/interpolateElement.js"
+import { renderAppToElement } from "./web-gems/renderAppToElement.js"
+import { globalSubs, globalSubCount } from "./web-gems/Subject.js"
 
-export function SmallBowlApp() {
+export function SmallBowlApp(_params, { update }) {
   const players = []
   
   let playerTurn = 0
@@ -198,6 +199,13 @@ export function SmallBowlApp() {
     players[0].scores = [2,2,0,0]
     players[1].scores = [2,2,0,0]
   })()*/
+
+  /*
+  setInterval(() => {
+    console.log('globalSubCount',{globalSubCount, globalSubs})
+    update()
+  }, 4000)*/
+
   
   return () => $`
     <div>
@@ -295,7 +303,7 @@ export function SmallBowlApp() {
                 </div>
               `}
               
-              ${!gameStarted || (gameStarted && player.edit) && $`
+              ${(!gameStarted || (gameStarted && player.edit)) && $`
                 <div style="text-align: center;padding-top:1em">
                   <button
                     onclick=${() => players.splice(playerIndex,1)}
@@ -356,14 +364,6 @@ export function SmallBowlApp() {
 }
 
 export default () => {
-  const app = SmallBowlApp()
-
   const element = document.getElementsByTagName('small-bowl-app')[0]
-  
-  const gem = app()
-  gem.setTemplater(app)
-  const {template, context} = gem.getTemplate()
-  element.innerHTML = template
-
-  interpolateElement(element, context, element)
+  renderAppToElement(SmallBowlApp, element)
 }

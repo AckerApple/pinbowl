@@ -1,11 +1,11 @@
-import { Gem, buildItemGemMap, variablePrefix } from "./render.js"
+import { buildItemGemMap } from "./render.js"
+import { Gem, removeChild, variablePrefix } from "./Gem.class.js"
 import { Subject } from "./Subject.js"
-import { removeChild } from "./removeChild.js"
 
 export function interpolateTemplate(
-  template, // <template end interpolate />
+  template, // <template end interpolate /> (will be removed)
   context, // variable scope of {`__gemVar${index}`:'x'}
-  subs,
+  ownerGem, // Gem class
 ) {
   if ( !template.hasAttribute('end') ) {
     return // only care about starts
@@ -14,7 +14,7 @@ export function interpolateTemplate(
   const parent = template.getAttribute('parent')
   const isMine = !parent
   if ( !isMine ) {
-    return // not for me, for someone else
+    return// not for me, for someone else
   }
 
   const variableName = template.getAttribute('id')
@@ -24,98 +24,119 @@ export function interpolateTemplate(
   }
 
   const result = context[variableName]
-  template.clones = []
-  template.lastFirstChild = template
+  template.clones = [] // TODO: i think we can remove
+  template.subs = [] // TODO: i think we can remove
+  // template.lastFirstChild = template
 
   if(result instanceof Subject) {
-    return processSubject(result, template, subs)
+    const sub = result.subscribe(value => {
+      processSubjectValue(value, result, template, ownerGem)
+    })
+    ownerGem.cloneSubs.push(sub)
+    return
   }
 
-  updateBetweenTemplates(result, template)
+  const clone = updateBetweenTemplates(
+    result,
+    template.clone || template, // this will be removed
+  )
+  ownerGem.clones.push(clone)
+  template.clone = clone
   template.parentNode.removeChild(template) // it wont update again, remove template placeholder
-}
-
-function processSubject(result, template, subs) {
-  const sub = result.subscribe(value => {
-    // *if processing resolved to Gem
-    if (value instanceof Gem) {
-      value.ownerGem = result.gemOwner
-      const clones = processGemResult(
-        value,
-        result,
-        template
-      )
-      template.lastFirstChild = clones[0]
-      return
-    }
-
-    // *if processing was a gem now other non-gem value
-    if (result.gem) {      
-      // put the template back
-      template.lastFirstChild.parentNode.insertBefore(template, template.lastFirstChild)
-      template.clones.forEach(x=>
-        x.parentNode.removeChild(x)
-      )
-      template.clones.length = 0
-      template.lastFirstChild=template
-
-
-      result.gem.clones.forEach(clone => {
-        clone.parentNode.removeChild(clone)
-      })
-      delete result.gem
-
-
-      const clones = updateBetweenTemplates(value, template)
-      template.lastFirstChild = clones[0]
-      return
-    }
-
-    // *for
-    if (value instanceof Array && value.every(x => x instanceof Gem)) {
-      return processGemArray(result, value, template)
-    }
-
-    // Processing of regular values
-    const clones = updateBetweenTemplates(
-      value,
-      template
-    )
-
-    // remove template from stage and save place holder of where we will throw down next
-    if (template.parentNode) {
-      template.parentNode.removeChild(template)
-    }
-    template.lastFirstChild = clones[0]
-  })
-
-  subs.push(sub)
-
+  
   return
 }
 
-function processGemArray(
-  result,
+function processSubjectValue(
   value,
-  template, // <template end interpolate />
+  result, // could be gem via result.gem
+  template,
+  ownerGem,
 ) {
-  result.lastArray = result.lastArray || [] // {build, gem, index}[]
-  result.templateArray = result.templateArray || []
+  // *if processing resolved to Gem
+  if (value instanceof Gem) {
+    processGemResult(
+      value,
+      result,
+      template
+    )
+    
+    if(result.gem) {
+      result.gem.ownerGem = ownerGem // Let the previous gem result know its owner (THIS MAY NOT BE NEEDED AND REDUDANT)      
+      value.ownerGem = ownerGem // let new gem know the owner
+      ownerGem.children.push(value) // let the owner know it has a new kid
+    }
 
-  /** remove previous items first */
+    // template.lastFirstChild = clones[0]
+    return
+  }
+
+  // *if processing WAS a gem BUT NOW its some other non-gem value
+  if (result.gem) {      
+    // put the template back
+    let lastFirstChild = template.clone || template// result.gem.clones[0] // template.lastFirstChild
+    lastFirstChild.parentNode.insertBefore(template, lastFirstChild)
+
+    result.gem.destroy()
+    delete result.gem
+
+    const clone = updateBetweenTemplates(
+      value,
+      lastFirstChild // ✅ this will be removed
+    ) // the template will be remove in here
+
+    template.clone = clone
+
+    return
+  }
+
+  // *for
+  if (value instanceof Array && value.every(x => x instanceof Gem)) {
+    return processGemArray(result, value, template, ownerGem)
+  }
+
+  // Processing of regular values
+  const before = template.clone || template
+  const clone = updateBetweenTemplates(
+    value,
+    before, // this will be removed
+  )
+
+  template.clone = clone
+}
+
+function processGemArray(
+  result, // gem
+  value, // arry of Gem classes
+  template, // <template end interpolate />
+  ownerGem,
+) {
+  result.lastArray = result.lastArray || [] // {gem, index}[] populated in processGemResult
+  // result.templateArray = result.templateArray || []
+
+  /** 🗑️ remove previous items first */
   result.lastArray.forEach((item, index) => {
     const subGem = value[index]
     const subArrayValue = subGem?.arrayValue
     const lessLength = value.length-1 < index
     if(lessLength || subArrayValue !== item.gem.arrayValue) {
+      const last = result.lastArray[index]
+      // const item = result.templateArray[index]
+      const gem = last.gem
+      // removeTemplateItem( last.build )
+      gem.destroy()
+      // subGem.destroy()
       result.lastArray.splice(index, 1)
-      // TODO: may need to unsubscribe to things?
-      result.templateArray[index].clones.forEach(clone => removeChild(clone.parentNode, clone))
-      result.templateArray.splice(index, 1)
+      // removeTemplateItem( item )
+      // result.templateArray.splice(index, 1)
     }
   })
 
   value.forEach((subGem, index) => {
+    subGem.ownerGem = ownerGem
+    
+    ownerGem.children.push(subGem)
+
     if (subGem.arrayValue === undefined) {
       // appears arrayValue is not there but maybe arrayValue is actually the value of undefined
       if (!Object.keys(subGem).includes('arrayValue')) {
@@ -134,21 +155,22 @@ function processGemArray(
       }
       // TODO: will need to unsubscribe
     } else {
-      subGem.ownerGem = result.gemOwner
-      const newClones = processGemResult(subGem, result, template, index)
-      result.templateArray[index] = {
-        clones: newClones
-      }
+      const before = template || template.clone
+      processGemResult(subGem, result, before, index, ownerGem)
+      /*result.templateArray[index] = {
+        clones,
+        gem: subGem,
+        // subs,
+        // clones,
+        // subs
+      }*/
     }
   })
 
   while (result.lastArray.length > value.length) {
     result.lastArray.pop()
-    const template = result.templateArray.pop() 
-    template.clones.forEach(clone => {
-      removeChild(clone.parentNode, clone)
-      // TODO: will need to unsubscribe
-    })
+    // const template = result.templateArray.pop() 
+    // removeTemplateItem(template)
   }
 
   return
@@ -157,9 +179,9 @@ function processGemArray(
 // Function to update the value of x
 export function updateBetweenTemplates(
   value,
-  template
+  lastFirstChild,
 ) {
-  const parent = template.lastFirstChild.parentNode
+  const parent = lastFirstChild.parentNode
   
   // mimic React skipping to display
   if(value === undefined || value === false || value === true || value === null) {
@@ -168,19 +190,22 @@ export function updateBetweenTemplates(
 
   // Insert the new value (never use innerHTML here)
   const textNode = document.createTextNode(value)
-  parent.insertBefore(textNode, template.lastFirstChild)
+  parent.insertBefore(textNode, lastFirstChild)
 
   /* remove existing nodes */
-  template.clones.forEach(clone => parent.removeChild(clone))
-  template.clones.length = 0
+  // removeTemplateItem(template)
+  lastFirstChild.parentNode.removeChild(lastFirstChild)
   
+  /*
   if(template.clones) {
     template.clones.push(textNode)
   }
+  */
 
-  return template.clones
+  return textNode
 }
 
+/** Returns {clones:[], subs:[]} */
 function processGemResult(
   gem,
   result,
@@ -195,35 +220,34 @@ function processGemResult(
 
     if(existing?.gem.isLikeGem(gem)) {
       existing.gem.updateByGem(gem)
-      return existing.gem.clones // seen already
+      return {clones: existing.gem.clones} // seen already
     }
 
-    // result.lastArray[index]
-    const build = buildItemGemMap(gem, templateString, insertBefore.lastFirstChild)
-    gem.clones = build.clones
+    const lastFirstChild = insertBefore // gem.clones[0] // insertBefore.lastFirstChild
+    buildItemGemMap(gem, templateString, lastFirstChild)
+    // gem.clones = build.clones
     result.lastArray.push({
-      build, gem, index
+      gem, index
     })
-    result.templateArray.push({
-      clones: gem.clones
-    })
+    // result.templateArray.push(build)
     
-    return build.clones
+    return
   }
 
-  // *if
+  // *if appears we aready have seen
   if(result.gem) {
+    // are we just updating an if we already had?
     if(result.gem.isLikeGem(gem)) {
       result.gem.updateByGem(gem)
       result.gem // we were a gem and still am the same gem
-      return result.gem.clones
+      return {clones: result.gem.clones}
     }
   }
 
-  // add first time
-  const build = buildItemGemMap(gem, templateString, insertBefore.lastFirstChild)
-  result.gem = gem
-  result.gem.clones = build.clones
+  // *if just now appearing to be a Gem
+  const before = insertBefore.clone || insertBefore // gem.clones[0]
+  buildItemGemMap(gem, templateString, before)  
+  result.gem = gem // let reprocessing know we saw this previously as an if
+  
   gem.processed = true
-  return build.clones
 }

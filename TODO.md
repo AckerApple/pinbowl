@@ -1,6 +1,11 @@
-- Need to look for mixed attributes aka id="player-${playerIndex}"
-- Need to delete no longer used code
 - unsubscribing
+  - almost perfect, play a full game and just a few subs remain
+  - Instead of removeChild() calls, lets see about RemoveGem calls
+  - will help with unsubscribing
+- Need to look for mixed attributes aka id="player-${playerIndex}"
 - Consider how array without a key work in terms of redrawing
+- Need to delete no longer used code
 - Consider what if an issue if some content contains {__gemVar0} as actual content?
   - Maybe first replace all "fake" {gemVar0} with something we can drop them back in with
+
+- remove all TODOs

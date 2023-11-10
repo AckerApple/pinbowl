@@ -5,13 +5,14 @@ import { interpolateContentTemplates } from "./interpolateContentTemplates.js"
 export function interpolateElement(
   element,
   context, // variables used to evaluate
-  // owner, // this aka element
+  ownerGem,
 ) {
-  const result = interpolateChild(element, context, element)
-  // const result = interpolateChild(element, context, owner)
+  const result = interpolateElementChild(element, context, element)
+
   if(result.keys.length) {
-    interpolateContentTemplates(element, context)
+    interpolateContentTemplates(element, context, ownerGem)
   }
+
   interpolateAttributes(element, context)
 
   function processChildren(children) {
@@ -25,21 +26,18 @@ export function interpolateElement(
   }
 
   processChildren(element.children)
+
+  return
 }
 
 /** Convert interpolations into template tags */
-export function interpolateChild(
-  child, context, owner, toAppend
+export function interpolateElementChild(
+  child, context,
 ) {
   const html = child.innerHTML
  
   const result = interpolateToTemplates(html, context)
   child.innerHTML = result.string
-
-  // 🔒 Prevent anyone from editing template which would cause that content to be executable
-  if(toAppend) {
-    owner.appendChild(toAppend)
-  }
 
   return result
 }

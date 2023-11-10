@@ -17,5 +17,3 @@ export class ValueSubject extends Subject {
     return unsubscribe
   }
 }
-
-export const value$ = (...args) => new ValueSubject(...args)

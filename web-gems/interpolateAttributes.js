@@ -3,7 +3,6 @@ import { Subject } from "./Subject.js"
 export function interpolateAttributes(
   child, scope
 ) {
-  const subs = child.gemSubs = child.gemSubs || []
   child.getAttributeNames().forEach(attrName => {
     const value = child.getAttribute(attrName)
 
@@ -11,7 +10,6 @@ export function interpolateAttributes(
     if ( value.search(/^\s*{/) >= 0 && value.search(/}\s*$/) >= 0 ) {
       // get the code inside the brackets like "variable0" or "{variable0}"
       const code = value.replace('{','').split('').reverse().join('').replace('}','').split('').reverse().join('')
-      //const result = evalOver(scope, code)
       const result = scope[code]
 
       // attach as callback
@@ -35,7 +33,11 @@ export function interpolateAttributes(
 
           child.setAttribute(attrName, newValue)
         })
-        subs.push(sub)
+
+        // one element can have multiple subs
+        child.gemSubs = child.gemSubs || []
+        child.gemSubs.push(sub)
+
         return
       }
 
