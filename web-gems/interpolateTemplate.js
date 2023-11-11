@@ -24,14 +24,15 @@ export function interpolateTemplate(
   }
 
   const result = context[variableName]
-  template.clones = [] // TODO: i think we can remove
-  template.subs = [] // TODO: i think we can remove
-  // template.lastFirstChild = template
 
   if(result instanceof Subject) {
-    const sub = result.subscribe(value => {
+    const callback = value => {
+      callback.value = value
+      callback.result = result
+      callback.template = template
       processSubjectValue(value, result, template, ownerGem)
-    })
+    }
+    const sub = result.subscribe(callback)
     ownerGem.cloneSubs.push(sub)
     return
   }
@@ -72,7 +73,7 @@ function processSubjectValue(
   }
 
   // *if processing WAS a gem BUT NOW its some other non-gem value
-  if (result.gem) {      
+  if (result.gem) {
     // put the template back
     let lastFirstChild = template.clone || template// result.gem.clones[0] // template.lastFirstChild
     lastFirstChild.parentNode.insertBefore(template, lastFirstChild)
@@ -150,27 +151,15 @@ function processGemArray(
     if (previous) {
       if (previous.gem.arrayValue === subGem.arrayValue) {
         previous.gem.updateValues(subGem.values)
-      } else {
-        console.warn('possible array issue here')
       }
-      // TODO: will need to unsubscribe
     } else {
       const before = template || template.clone
       processGemResult(subGem, result, before, index, ownerGem)
-      /*result.templateArray[index] = {
-        clones,
-        gem: subGem,
-        // subs,
-        // clones,
-        // subs
-      }*/
     }
   })
 
   while (result.lastArray.length > value.length) {
     result.lastArray.pop()
-    // const template = result.templateArray.pop() 
-    // removeTemplateItem(template)
   }
 
   return

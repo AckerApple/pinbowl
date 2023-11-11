@@ -33,8 +33,13 @@ export function SmallBowlApp(_params, { update }) {
     players.forEach(player => player.edit = false)
   }
 
+  const endGame = () => {
+    restartGame()
+    gameStarted = false
+  }
+
   const restartGame = () => {
-    if(!confirm('Are you sure you want to restart game?')){
+    if(!confirm('Are you sure you want to end current game?')){
       return
     }
     
@@ -173,6 +178,7 @@ export function SmallBowlApp(_params, { update }) {
     const {player, playerIndex, frameIndex} = frameScoreModalDetails
     scorePlayerFrame(score, player, playerIndex, frameIndex)
     enterScore.close()
+    delete frameScoreModalDetails.player
   }
 
   const scorePlayerFrame = (score, player, playerIndex, frameIndex) => {
@@ -200,14 +206,14 @@ export function SmallBowlApp(_params, { update }) {
     players[1].scores = [2,2,0,0]
   })()*/
 
-  /*
+  // Test subscriptions
   setInterval(() => {
     console.log('globalSubCount',{globalSubCount, globalSubs})
     update()
-  }, 4000)*/
-
+  }, 4000)
   
   return () => $`
+    --**${globalSubCount}**--
     <div>
       <h2>🎳 ${players.length ? players.length+' Player' : 'New'} Pinbowl game</h2>
       <div style="display: flex;flex-wrap: wrap;gap:.5em">
@@ -328,6 +334,10 @@ export function SmallBowlApp(_params, { update }) {
 
         ${gameStarted && $`
           <button type="button" onclick=${restartGame}>🔄 restart game</button>
+        `}
+
+        ${gameStarted && $`
+          <button type="button" onclick=${endGame}>🔄 end game</button>
         `}
       </div>
       <br /><br />

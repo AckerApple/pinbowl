@@ -17,7 +17,7 @@ export function interpolateElement(
 
   function processChildren(children) {
     new Array(...children).forEach(child => {
-      interpolateAttributes(child, context)
+      interpolateAttributes(child, context, ownerGem)
 
       if(child.children) {
         processChildren(child.children)

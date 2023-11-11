@@ -1,8 +1,9 @@
 import { Subject } from "./Subject.js"
 
 export function interpolateAttributes(
-  child, scope
+  child, scope, ownerGem
 ) {
+  const subs = []
   child.getAttributeNames().forEach(attrName => {
     const value = child.getAttribute(attrName)
 
@@ -22,7 +23,12 @@ export function interpolateAttributes(
 
       if(result instanceof Subject) {
         child.removeAttribute(attrName)
-        const sub = result.subscribe(newValue => {
+        const callback = newValue => {
+          callback.value = newValue
+          callback.child = child
+          callback.scope = scope
+          callback.attrName = attrName
+          
           if(newValue instanceof Function) {
             child[attrName] = function(...args) {
               newValue(child, args)
@@ -32,11 +38,10 @@ export function interpolateAttributes(
           }
 
           child.setAttribute(attrName, newValue)
-        })
+        }
 
-        // one element can have multiple subs
-        child.gemSubs = child.gemSubs || []
-        child.gemSubs.push(sub)
+        const sub = result.subscribe(callback)
+        ownerGem.cloneSubs.push(sub)
 
         return
       }

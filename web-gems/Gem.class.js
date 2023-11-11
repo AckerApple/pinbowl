@@ -179,7 +179,7 @@ function getSubjectFunction(value, config) {
 }
 
 function bindSubjectFunction(value, gem) {
-  return function subjectFunction(element, args) {
+  function subjectFunction(element, args) {
     const result = value.bind(element)(...args)
     
     gem.updateOwner()
@@ -188,20 +188,18 @@ function bindSubjectFunction(value, gem) {
       result.then(() => gem.updateOwner())
     }
   }
+
+  subjectFunction.original = value
+
+  return subjectFunction
 }
 
 export function removeChild(child) {
-  if(child.gemSubs) {
-      child.gemSubs.forEach(gemSub => gemSub.unsubscribe())
-      child.gemSubs.length = 0
-      delete child.gemSubs
-  }
-
-  if(child.childNodes) {
+  /*if(child.childNodes) {
     new Array(...child.childNodes).forEach(subChild =>
       removeChild(subChild)
     )
-  }
+  }*/
 
   child.parentNode.removeChild(child)
 }
