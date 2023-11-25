@@ -5,8 +5,9 @@ import { getPlayerScore, playersLoop } from "./playersLoop.js"
 import { footerButtons } from "./footerButtons.js"
 import runTest from "./app.test.js"
 import { animateIn, animateOut } from "./animations.js"
+import { component } from "./component.js"
 
-export const SmallBowlApp = () => ({state, init, async}) => {
+export let SmallBowlApp = () => ({state, init, async}) => {
   let debug = false
   let renderCounter = 0
   let playerTurn = 0
@@ -35,7 +36,7 @@ export const SmallBowlApp = () => ({state, init, async}) => {
     players.forEach(player => player.edit = false)
   }
 
-  const addPlayer = () => {
+  function addPlayer() {
     players.push({
       name: `Player ${players.length + 1}`,
       frames: [0,1,2,3,4],
@@ -44,6 +45,7 @@ export const SmallBowlApp = () => ({state, init, async}) => {
       gameover: false,
       won: false,
     })
+
     console.info('✅ player added', players.length)
   }
 
@@ -181,6 +183,10 @@ export const SmallBowlApp = () => ({state, init, async}) => {
     submitPlayerScore(player)
   }
 
+  function removeAllPlayers() {
+    players.length = 0
+  }
+
   // test data
   /*(() => {
     addPlayer()
@@ -211,11 +217,10 @@ export const SmallBowlApp = () => ({state, init, async}) => {
         ${playersLoop({players, gameStarted, currentFrame, playerTurn, frameScoreModalDetails})}
       </div>
 
+      players.length:${players.length}
       ${footerButtons({
-        currentFrame, gameStarted, players, addPlayer,
-        startGame,
-        restartGame,
-        endGame,
+        currentFrame, gameStarted, playersLength: players.length,
+        removeAllPlayers, addPlayer, startGame, restartGame, endGame,
       })}
       
       <div style="font-size:0.8em;opacity:.5" onclick=${() => debug = !debug}>
@@ -268,7 +273,7 @@ export const SmallBowlApp = () => ({state, init, async}) => {
       ondragend="const {t,e,d}={t:this,e:event,d:this.drag};if (d.initX === d.x) {d.x=d.x+e.offsetX-(d.startX-d.x);d.y=d.y+e.offsetY-(d.startY-d.y);this.style.transform=translate3d(d.x+'px', d.y+'px', 0)};this.draggable=false"
     >
       <div style="padding:.25em;background-color:#999999;color:white;" onmousedown="this.parentNode.draggable=true"
-      >Select your score</div>
+      >Select your score - ${frameScoreModalDetails.player ? 'true' : 'false'}</div>
       
       <div style="display:flex;flex-wrap:wrap;gap:1em;padding:1em">
         ${frameScoreModalDetails.player && html`
@@ -297,6 +302,8 @@ export const SmallBowlApp = () => ({state, init, async}) => {
   `
 }
 
+SmallBowlApp = component(SmallBowlApp)
+
 export function showFrameScoreModal(
   player,
   playerIndex,
@@ -306,6 +313,7 @@ export function showFrameScoreModal(
   frameScoreModalDetails.player = player
   frameScoreModalDetails.playerIndex = playerIndex
   frameScoreModalDetails.frameIndex = frameIndex
+  console.info('⠷ Showing frame scoring modal', frameScoreModalDetails)
   enterScore.showModal()
 }
 

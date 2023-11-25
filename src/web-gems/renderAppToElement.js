@@ -13,12 +13,13 @@ export function renderAppToElement(app, element, props) {
     gem.gemSupport.updateToNewest()
     const fromGem = lastGem = wrapper(gem.gemSupport)
     fromGem.setSupport(gem.gemSupport)
-    gem.updateByGem(fromGem)
+    gem.updateByGem(fromGem, true)
 
     if(lastGem) {
       lastGem.destroy(0)
     }
 
+    return lastGem
   }
   
   // gemSupport.init = () => undefined
@@ -33,7 +34,7 @@ export function renderAppToElement(app, element, props) {
 export function applyGemUpdater(
   wrapper, //: ({render, async, watch}) => ({strings, values})
 ){
-  const gemSupport = getGemSupport()
+  const gemSupport = getGemSupport(wrapper)
 
   // Call the apps function for our gem templater
   const gem = wrapper(gemSupport)
@@ -43,21 +44,24 @@ export function applyGemUpdater(
   return { gem, gemSupport }
 }
 
-export function getGemSupport() {
+export function getGemSupport(
+  templater
+) {
   const stateSets = [] // my own
   const gemSupport = {
+    templater,
+    renderCount: 0,
     mutatingRender: () => {throw new Error('Gem function "render()" was called in sync but can only be called async')}, // loaded later and only callable async
-    render: () => gemSupport.mutatingRender(), // ensure this function still works even during deconstructing
+    render: (...args) => {
+      ++gemSupport.renderCount
+      return gemSupport.mutatingRender(...args)
+    }, // ensure this function still works even during deconstructing
     init: (runOnce) => {
       runOnce()
       gemSupport.init = () => undefined
     },
     async: callback => (...args) => {
       const result = callback(...args)
-
-      // updateOldest(gemSupport) // ???
-      // updateToNewest(gemSupport) // ???
-
       gemSupport.render()
 
       // the callback function returned another promise
@@ -76,13 +80,15 @@ export function getGemSupport() {
   return gemSupport
 }
 
-
 function updateOldest(gemSupport) {
   const myStateCallback = gemSupport.stateSets[0]
 
   if(!myStateCallback) {
+    console.log('i am the oldest', gemSupport.templater)
     return // nothing to update, I maybe the main one
   }
+
+  console.log('going for oldest....', gemSupport.templater)
   
   const myStateSets = myStateCallback()
   const oldestState = gemSupport.state.oldestCallback()

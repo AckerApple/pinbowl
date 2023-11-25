@@ -1,15 +1,24 @@
 import { html } from "./web-gems/render.js"
 import { animateIn, animateOut } from "./animations.js"
+import { component } from "./component.js"
 
-export const footerButtons = ({
-  currentFrame, addPlayer, gameStarted, players, startGame, restartGame, endGame
+export let footerButtons = ({
+  currentFrame,
+  gameStarted,
+  playersLength,
+  
+  removeAllPlayers,
+  addPlayer,
+  startGame,
+  restartGame,
+  endGame
 }) => ({ render, async, init, state }) => {
   // footerButtons.js
-  /*
   let counter = 0
 
   state(() => [counter, x => counter = x])
 
+  /*
   init(() => {
     console.log('👉 i should only ever run once')
 
@@ -20,25 +29,28 @@ export const footerButtons = ({
   })
   */
 
+  console.log('counter', counter)
+
   return html`
     <!--footerButtons.js-->
     <div style="padding-top:1em;">
+      <button onclick=${() => {console.log('current counter',counter);++counter}}>counter:${counter}</button>
       <hr />
       ${currentFrame === 0 && html`
         <button type="button" id="player_add_button"
           class:insert=${animateIn} class:remove=${animateOut}
           onclick=${addPlayer}
-        >👤 Add Player</button>
+        >👤 Add ${playersLength + 1}${(x => (x === '1' && 'st') || (x === '2' && 'nd')  || (x === '3' && 'rd') || 'th')((playersLength+1).toString().slice(-1))} Player</button>
       `}
 
-      ${!gameStarted && currentFrame === 0 && players.length > 1 && html`
+      ${!gameStarted && currentFrame === 0 && playersLength > 1 && html`
         <button type="button" id="player_add_button"
           class:insert=${animateIn} class:remove=${animateOut}
-          onclick=${() => players.length = 0}
+          onclick=${removeAllPlayers}
         >❌ 👤 Remove All Players</button>
       `}
 
-      ${!gameStarted && players.length > 0 && html`
+      ${!gameStarted && playersLength > 0 && html`
       <button type="button" id="start_game_button"
         class:insert=${animateIn} class:remove=${animateOut}
         onclick=${startGame}
@@ -62,3 +74,5 @@ export const footerButtons = ({
     </div>
   `
 }
+
+footerButtons = component(footerButtons)

@@ -1,3 +1,7 @@
+- EVERYONE needs to use:
+  - footerButtons = component(footerButtons)
+  - lets only march changes up as far as props have changed
+
 - Consider how array without a key work in terms of redrawing
 - Consider what if an issue if some content contains {__gemVar0} as actual content?
   - Maybe first replace all "fake" {gemVar0} with something we can drop them back in with

@@ -1,6 +1,7 @@
 import { html } from "./web-gems/render.js"
 import { playerFrames } from "./playerFrames.js"
 import { animateIn, animateOut } from "./animations.js"
+import { component } from "./component.js"
 
 export function getPlayerScore (player) {
   return player.scores.reduce((all,score) => {
@@ -8,7 +9,7 @@ export function getPlayerScore (player) {
   },0)
 }
 
-export const playersLoop = ({
+export let playersLoop = ({
   players, gameStarted, currentFrame, playerTurn, frameScoreModalDetails
 }) => () => {
   // playersLoop.js
@@ -91,3 +92,6 @@ export const playersLoop = ({
     `)}
   `
 }
+
+
+playersLoop = component(playersLoop)

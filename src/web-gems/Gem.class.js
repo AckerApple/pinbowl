@@ -1,4 +1,5 @@
 import { ValueSubject } from "./ValueSubject.js"
+import { deepClone, deepEqual } from "./deepFunctions.js"
 import { isSpecialAttr } from "./interpolateAttributes.js"
 import { isGemComponent } from "./interpolateTemplate.js"
 import { getGemSupport } from "./renderAppToElement.js"
@@ -151,7 +152,10 @@ export class Gem {
   }
 
   updateByGem(gem) {
+    ++this.gemSupport.renderCount
     this.updateConfig(gem.strings, gem.values)
+    this.gemSupport.templater = gem.gemSupport.templater
+    this.gemSupport.updateOldest()
   }
 
   lastTemplateString = undefined // used to compare templates for updates
@@ -159,19 +163,22 @@ export class Gem {
   /** A method of passing down the same render method */
   setSupport(gemSupport) {
     this.gemSupport = this.gemSupport || gemSupport
-    this.gemSupport.mutatingRender = gemSupport.mutatingRender
+    this.gemSupport.mutatingRender = this.gemSupport.mutatingRender || gemSupport.mutatingRender
     this.children.forEach(kid => kid.setSupport(gemSupport))
   }
 
   updateOwner() {
-    if(this.gemSupport?.render) {
-      this.gemSupport.render()
-      return
-    }
-    
-    if(this.ownerGem.gemSupport.render) {
-      this.ownerGem.gemSupport.render() // I'm in an array
-      return
+    // this.render()
+    let templateOwner = this
+    while(templateOwner.ownerGem) {
+      
+      if(templateOwner.gemSupport.templater) {
+        templateOwner.gemSupport.render(true)
+        //templateOwner.updateOwner()
+        return
+      }
+
+      templateOwner = templateOwner.ownerGem
     }
   }
   
@@ -213,7 +220,7 @@ export class Gem {
 
       if(value instanceof Gem && compareTo instanceof Gem) {        
         value.ownerGem = this // let children know I own them
-        value.gemSupport = this.gemSupport
+        //value.gemSupport = this.gemSupport
         this.children.push(value) // record children I created
         
         // TODO: This maybe redundant because the first condition already rejects if not defined
@@ -243,9 +250,9 @@ export class Gem {
     return this.updateContext( this.context )
   }
 
-  updateValues(values) {
+  updateValues(values, topDown) {
     this.values = values
-    return this.updateContext(this.context)
+    return this.updateContext(this.context, topDown)
   }
 
   updateContext(context) {
@@ -259,12 +266,14 @@ export class Gem {
 
       if(existing) {
         const ogGEm = existing.value?.gem
-        if(ogGEm) {
+
+        // handle already seen gems
+        if(ogGEm) {  
           const gemSupport = ogGEm.gemSupport
-          gemSupport.mutatingRender = this.gemSupport.mutatingRender
-  
-          const regem = value(gemSupport)
-          //regem.gemSupport = gemSupport
+          const templater = value
+          const regem = templater(gemSupport)
+          templater._gem = regem
+          regem.ownerGem = ogGEm.ownerGem
           regem.getTemplate() // cause lastTemplateString to render
           regem.setSupport(gemSupport)
           ogGEm.updateByGem(regem)
@@ -272,23 +281,33 @@ export class Gem {
           return
         }
 
+        // handle already seen gem components
         if(isGemComponent(value)) {
+          const latestProps = deepClone(value.props) // value.cloneProps
           const existingGem = existing.gem
-          const gemSupport = existing.gemSupport || existing.value.gemSupport || getGemSupport() // this.gemSupport
-          gemSupport.mutatingRender = existing.gemSupport?.mutatingRender || this.gemSupport.mutatingRender
 
-          const regem = value(gemSupport)
-          regem.getTemplate() // cause lastTemplateString to render
-          regem.setSupport(gemSupport)
-
-          // If previously was a gem and seems to be same gem, then just update current gem with new values
-          if(existingGem && existingGem.isLikeGem(regem)) {
-            existing.gem.updateByGem(regem)
+          // previously was something else, now a gem component
+          if(!existing.gem) {
+            setValueRedraw(value, existing, this)
+            value.redraw(latestProps)
             return
           }
 
-          existing.set(value)
+          const oldGemSetup = existingGem.gemSupport
+          const oldestGem = oldGemSetup.oldest
+          // const oldProps = oldestGem.gemSupport.templater.cloneProps // existingSupport.mutatingRender.lastProps
+          const oldProps = this.gemSupport.templater.cloneProps // existingSupport.mutatingRender.lastProps
 
+          if(existingGem) {
+            const equal = deepEqual(oldProps, latestProps)  
+            if(equal) {
+              return
+            }
+          }
+          
+          setValueRedraw(value, existing, this)
+          oldGemSetup.templater = value
+          oldGemSetup.newest = value.redraw(latestProps)
           return
         }
 
@@ -306,7 +325,8 @@ export class Gem {
       // First time values below
 
       if(isGemComponent(value)) {
-        context[variableName] = new ValueSubject(value)
+        const existing = context[variableName] = new ValueSubject(value)
+        setValueRedraw(value, existing, this)
         return
       }
 
@@ -337,17 +357,28 @@ function getSubjectFunction(value, gem) {
 
 function bindSubjectFunction(value, gem) {
   function subjectFunction(element, args) {
-    const result = value.bind(element)(...args)
-    
-    gem.gemSupport.updateOldest()
+    const renderCount = gem.gemSupport.renderCount
 
-    gem.updateOwner()
+    const callbackResult = value.bind(element)(...args)
 
-    if(result instanceof Promise) {
-      result.then(() => gem.updateOwner())
+    if(renderCount !== gem.gemSupport.renderCount) {
+      return // already rendered
     }
 
-    return result
+    console.log('self render')
+    // gem.updateOwner()
+    gem.gemSupport.render()
+    gem.gemSupport.updateOldest()
+    
+    if(callbackResult instanceof Promise) {
+      callbackResult.then(() => {
+        // gem.updateOwner()
+        gem.render()
+        gem.gemSupport.updateOldest()
+      })
+    }
+
+    return callbackResult
   }
 
   subjectFunction.gemFunction = value
@@ -366,4 +397,51 @@ function captureElementPosition(element) {
   setTimeout(() => {
     element.style.position = 'fixed'
   }, 0);
+}
+
+function setValueRedraw(
+  templater, // latest gem function to call for rendering
+  existing,
+  ownerGem
+) {
+  templater.redraw = () => {
+    // Find previous variables
+    const existingGem = existing.gem
+    const gemSupport = existingGem?.gemSupport || getGemSupport(templater) // this.gemSupport
+    gemSupport.mutatingRender = gemSupport.mutatingRender || existing.gemSupport?.mutatingRender || this.gemSupport.mutatingRender
+    
+    console.log('redraw run', existingGem?.values, gemSupport.newest?.values, templater._gem?.value)
+
+    const regem = templater(gemSupport)
+    // regem.setSupport(gemSupport)
+    templater._gem = regem
+    // existing.gem = regem
+    regem.ownerGem = existingGem?.ownerGem || ownerGem
+    //templater.gemSupport = gemSupport
+
+    gemSupport.oldest = gemSupport.oldest || regem
+    gemSupport.newest = regem
+
+    console.log('update gem support --->', gemSupport.oldest.gemSupport.templater, gemSupport.templater)
+    gemSupport.oldest.gemSupport = gemSupport.oldest.gemSupport || gemSupport
+    gemSupport.oldest.gemSupport.templater = templater
+    // existingGem.gemSupport.templater = templater
+
+    regem.getTemplate() // cause lastTemplateString to render
+    regem.setSupport(gemSupport)
+    const isSameGem = existingGem && existingGem.isLikeGem(regem)
+
+    // If previously was a gem and seems to be same gem, then just update current gem with new values
+    if(isSameGem) {
+      console.log('xxxx-0', regem.values, existingGem.values)
+      gemSupport.oldest.updateByGem(regem)
+      console.log('xxxx-1', regem.values, existingGem.values)
+      // gemSupport.updateOldest()
+      return
+    }
+
+    existing.set(templater)
+
+    return regem
+  }
 }

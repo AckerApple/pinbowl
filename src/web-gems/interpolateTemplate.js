@@ -3,6 +3,7 @@ import { Gem, variablePrefix } from "./Gem.class.js"
 import { Subject } from "./Subject.js"
 import { processGemArray } from "./processGemArray.js"
 import { getGemSupport } from "./renderAppToElement.js"
+import { deepClone, deepEqual } from "./deepFunctions.js"
 
 export function interpolateTemplate(
   template, // <template end interpolate /> (will be removed)
@@ -53,13 +54,17 @@ function processSubjectValue(
   counts, // {added:0, removed:0}
 ) {
   if (value instanceof Gem) {
+    // first time seeing this gem?
     if(!value.gemSupport) {
       value.gemSupport = getGemSupport()
       value.gemSupport.mutatingRender = ownerGem.gemSupport.mutatingRender
+      value.gemSupport.oldest = value
       
       ownerGem.children.push(value)
       value.ownerGem = ownerGem
     }
+
+    // value.gemSupport.newest = value
 
     processGemResult(
       value,
@@ -98,13 +103,42 @@ function processSubjectValue(
   }
 
   if(isGemComponent(value)) {
-    const gemSupport = getGemSupport()
-    gemSupport.mutatingRender = ownerGem.gemSupport.render
+    if(!value.cloneProps) {
+      const error = new Error(`Not a gem component. Use functionName = component(functionName) on component:\n\n${value.toString().substring(0,120)}\n\n`)
+      throw error
+    }
+
+    const gemSupport = result.gem?.gemSupport || getGemSupport( value )
+    value.setCallback( ownerGem.gemSupport.async )
+
+    gemSupport.mutatingRender = (bottomUp) => {
+      const newProps = deepClone(value.props)
+      // const newProps = value.cloneProps
+      // const oldProps = result.value.cloneProps
+      const oldProps = result.gem.gemSupport.templater.cloneProps
+
+      if(deepEqual(newProps, oldProps)) {
+        gemSupport.newest = value.redraw(newProps) // No change detected
+        return gemSupport.newest
+      }
+
+      return gemSupport.newest = ownerGem.gemSupport.render( newProps )
+    }
     
-    const gem = value(gemSupport)
+    const templater = value
+    const gem = templater(gemSupport)
+    templater._gem = gem
+    gem.ownerGem = ownerGem
+    gemSupport.oldest = gem
+    // gemSupport.newest = gem
 
     // new
-    value.gemSupport = gemSupport
+    //value.gemSupport = gemSupport
+    value.deepCheckEquals = (lastProps) => {
+      const oldProps = value.cloneProps
+      const newProps = deepClone(oldProps)
+      return deepEqual(lastProps, newProps)
+    }
 
     gem.ownerGem = ownerGem
     ownerGem.children.push(gem)
