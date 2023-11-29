@@ -51,6 +51,12 @@ export function interpolateAttributes(
       }
 
       // child.setAttribute(attrName, result)
+      /*
+      if(attrName === 'style') {
+        return
+      }
+      */
+
       child.setAttribute(attrName, result.value)
       return
     }

@@ -56,6 +56,7 @@ export class Gem {
             const attrType = splits.shift() // remove class
             const value = clone.getAttribute(name)
 
+            // remove element styling logic
             if(attrType === 'class') {
               if(splits[0] === 'remove') {
                 let classList = value.split(' ')
@@ -115,7 +116,7 @@ export class Gem {
                   return true
                 })
 
-                
+                // begin to remove element by adding class first
                 if(waitToAdd) {
                   setTimeout(() =>
                     newClassList.forEach(className =>
@@ -138,7 +139,6 @@ export class Gem {
       }
 
       if(waitFor) {
-        //clone.parentNode.removeChild(clone)
         const myClone = clone
         setTimeout(() => myClone.parentNode.removeChild(myClone), waitFor)
         return
@@ -152,7 +152,6 @@ export class Gem {
   }
 
   updateByGem(gem) {
-    ++this.gemSupport.renderCount
     this.updateConfig(gem.strings, gem.values)
     this.gemSupport.templater = gem.gemSupport.templater
     this.gemSupport.updateOldest()
@@ -197,10 +196,24 @@ export class Gem {
   }
 
   isLikeGem(gem) {
+    // fast compare components
+    /*
+    const mySupport = this.gemSupport
+    const theySupport = gem.gemSupport
+    if(theySupport.templater) {
+      const theyTemplateString = theySupport.templater.toString()
+      const myTemplateString = mySupport.templater.toString()
+      const templatesMatch = theyTemplateString === myTemplateString
+      if(templatesMatch) {
+        console.log(';;')
+        return true
+      }
+    }*/
+
     if(gem.lastTemplateString !== this.lastTemplateString) {
       return false
     }
-    
+
     if(gem.values.length !== this.values.length) {
       return false
     }
@@ -267,20 +280,6 @@ export class Gem {
       if(existing) {
         const ogGEm = existing.value?.gem
 
-        // handle already seen gems
-        if(ogGEm) {  
-          const gemSupport = ogGEm.gemSupport
-          const templater = value
-          const regem = templater(gemSupport)
-          templater._gem = regem
-          regem.ownerGem = ogGEm.ownerGem
-          regem.getTemplate() // cause lastTemplateString to render
-          regem.setSupport(gemSupport)
-          ogGEm.updateByGem(regem)
-          existing.set(value)
-          return
-        }
-
         // handle already seen gem components
         if(isGemComponent(value)) {
           const latestProps = deepClone(value.props) // value.cloneProps
@@ -294,12 +293,13 @@ export class Gem {
           }
 
           const oldGemSetup = existingGem.gemSupport
-          const oldestGem = oldGemSetup.oldest
-          // const oldProps = oldestGem.gemSupport.templater.cloneProps // existingSupport.mutatingRender.lastProps
-          const oldProps = this.gemSupport.templater.cloneProps // existingSupport.mutatingRender.lastProps
+          const gemSupport = value.gemSupport || oldGemSetup || getGemSupport(value) // this.gemSupport || 
+          const oldCloneProps = gemSupport.templater?.cloneProps
+          const oldProps = gemSupport.templater?.props
 
           if(existingGem) {
-            const equal = deepEqual(oldProps, latestProps)  
+            const isCommonEqual = oldProps === undefined && oldProps === latestProps
+            const equal = isCommonEqual || deepEqual(oldCloneProps, latestProps)  
             if(equal) {
               return
             }
@@ -307,10 +307,24 @@ export class Gem {
           
           setValueRedraw(value, existing, this)
           oldGemSetup.templater = value
-          oldGemSetup.newest = value.redraw(latestProps)
+          existing.value.gem = oldGemSetup.newest = value.redraw(latestProps)
           return
         }
 
+        // handle already seen gems
+        if(ogGEm) {
+          const gemSupport = ogGEm.gemSupport
+          const templater = value
+          const regem = templater(gemSupport)
+          templater.newest = regem
+          regem.ownerGem = ogGEm.ownerGem
+          regem.getTemplate() // cause lastTemplateString to render
+          regem.setSupport(gemSupport)
+          ogGEm.updateByGem(regem)
+          existing.set(value)
+          return
+        }
+        
         // now its a function
         if(value instanceof Function) {
           existing.set(bindSubjectFunction(value, this))
@@ -365,16 +379,13 @@ function bindSubjectFunction(value, gem) {
       return // already rendered
     }
 
-    console.log('self render')
-    // gem.updateOwner()
+    gem.gemSupport.updateOldest() // set the state of the gem that renders to document
     gem.gemSupport.render()
-    gem.gemSupport.updateOldest()
     
     if(callbackResult instanceof Promise) {
       callbackResult.then(() => {
-        // gem.updateOwner()
-        gem.render()
         gem.gemSupport.updateOldest()
+        gem.gemSupport.render()
       })
     }
 
@@ -388,15 +399,20 @@ function bindSubjectFunction(value, gem) {
 
 function captureElementPosition(element) {
   element.style.zIndex = element.style.zIndex || 1
-  element.style.top = element.offsetTop + 'px'
-  element.style.left = element.offsetLeft + 'px'
+  const toTop = element.offsetTop + 'px'
+  const toLeft = element.offsetLeft + 'px'  
+  const toWidth = (element.clientWidth + (element.offsetWidth - element.clientWidth) + 1) + 'px'
+  const toHeight = (element.clientHeight + (element.offsetHeight - element.clientHeight) + 1) + 'px'
   
-  element.style.width = (element.clientWidth + (element.offsetWidth - element.clientWidth) + 1) + 'px'
-  element.style.height = (element.clientHeight + (element.offsetHeight - element.clientHeight) + 1) + 'px'
-    
+  // element.style.position = 'fixed'
+  // allow other elements that are being removed to have a moment to figure out where they currently sit
   setTimeout(() => {
+    element.style.top = toTop
+    element.style.left = toLeft  
+    element.style.width = toWidth
+    element.style.height = toHeight
     element.style.position = 'fixed'
-  }, 0);
+  }, 0)
 }
 
 function setValueRedraw(
@@ -404,28 +420,23 @@ function setValueRedraw(
   existing,
   ownerGem
 ) {
+  // redraw does not communicate to parent
   templater.redraw = () => {
     // Find previous variables
     const existingGem = existing.gem
     const gemSupport = existingGem?.gemSupport || getGemSupport(templater) // this.gemSupport
     gemSupport.mutatingRender = gemSupport.mutatingRender || existing.gemSupport?.mutatingRender || this.gemSupport.mutatingRender
     
-    console.log('redraw run', existingGem?.values, gemSupport.newest?.values, templater._gem?.value)
-
     const regem = templater(gemSupport)
-    // regem.setSupport(gemSupport)
-    templater._gem = regem
-    // existing.gem = regem
+    templater.newest = regem
     regem.ownerGem = existingGem?.ownerGem || ownerGem
-    //templater.gemSupport = gemSupport
 
     gemSupport.oldest = gemSupport.oldest || regem
     gemSupport.newest = regem
 
-    console.log('update gem support --->', gemSupport.oldest.gemSupport.templater, gemSupport.templater)
-    gemSupport.oldest.gemSupport = gemSupport.oldest.gemSupport || gemSupport
+    const oldestGemSupport = gemSupport.oldest.gemSupport
+    gemSupport.oldest.gemSupport = oldestGemSupport || gemSupport
     gemSupport.oldest.gemSupport.templater = templater
-    // existingGem.gemSupport.templater = templater
 
     regem.getTemplate() // cause lastTemplateString to render
     regem.setSupport(gemSupport)
@@ -433,10 +444,7 @@ function setValueRedraw(
 
     // If previously was a gem and seems to be same gem, then just update current gem with new values
     if(isSameGem) {
-      console.log('xxxx-0', regem.values, existingGem.values)
       gemSupport.oldest.updateByGem(regem)
-      console.log('xxxx-1', regem.values, existingGem.values)
-      // gemSupport.updateOldest()
       return
     }
 

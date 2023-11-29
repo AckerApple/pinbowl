@@ -1,16 +1,13 @@
-import { deepClone } from "./web-gems/deepFunctions.js"
+import { deepClone } from "./deepFunctions.js"
 
-export function component(gemComponent) {
+export function gem(gemComponent) {
   return (props) => {
     let asyncFunc = param => param
     
     const callback = (toCall, callWith) => {
       const callbackResult = toCall(...callWith)
-
-      // gem.gemSupport.updateOldest()
-      const ownerGem = templater._gem.ownerGem
+      const ownerGem = templater.newest.ownerGem
       ownerGem.gemSupport.render()
-
       return callbackResult
     }
     
@@ -19,10 +16,6 @@ export function component(gemComponent) {
     const templater = gemComponent( newProps )
     templater.props = props
     templater.cloneProps = deepClone(newProps)
-    /*templater.setProps = p => {
-      const newProps = resetProps(p, callback)
-      templater.cloneProps = deepClone(newProps)
-    }*/
     templater.setCallback = x => {
       return asyncFunc = x
     }

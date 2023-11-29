@@ -10,7 +10,7 @@ export function inputAttribute(
     element.style[names[1]] = value
   }
 
-  // class.width-full = "true"
+  // Example: class.width-full = "true"
   if(names[0] === 'class') {
     names.pop()
     if(value) {

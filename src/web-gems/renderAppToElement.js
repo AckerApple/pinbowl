@@ -84,11 +84,8 @@ function updateOldest(gemSupport) {
   const myStateCallback = gemSupport.stateSets[0]
 
   if(!myStateCallback) {
-    console.log('i am the oldest', gemSupport.templater)
     return // nothing to update, I maybe the main one
   }
-
-  console.log('going for oldest....', gemSupport.templater)
   
   const myStateSets = myStateCallback()
   const oldestState = gemSupport.state.oldestCallback()

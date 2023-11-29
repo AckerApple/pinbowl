@@ -77,26 +77,6 @@ function processSubjectValue(
     return
   }
 
-  // *if processing WAS a gem BUT NOW its some other non-gem value
-  if (result.gem) {
-    // put the template back
-    const lastFirstChild = template.clone || template// result.gem.clones[0] // template.lastFirstChild
-    lastFirstChild.parentNode.insertBefore(template, lastFirstChild)
-
-    const animated = result.gem.destroy(counts.removed)
-    counts.removed = counts.removed + animated
-    delete result.gem
-
-    const clone = updateBetweenTemplates(
-      value,
-      lastFirstChild // ✅ this will be removed
-    ) // the template will be remove in here
-
-    template.clone = clone
-
-    return
-  }
-
   // *for map
   if(value instanceof Array && value.every(x => x instanceof Gem)) {
     return processGemArray(result, value, template, ownerGem, counts)
@@ -108,37 +88,48 @@ function processSubjectValue(
       throw error
     }
 
-    const gemSupport = result.gem?.gemSupport || getGemSupport( value )
+    /*
+    const oldGem = result.gem
+    const oldSupport = oldGem?.gemSupport
+    const gemSupport = oldSupport || getGemSupport( value )
+    */
+    const gemSupport = getGemSupport( value )
+
+    /*
+    if(oldSupport) {
+      console.log('old check')
+      const oldProps = oldSupport.templater.cloneProps
+      const newProps = gemSupport.templater.cloneProps
+      const isCommonEqual = oldProps === undefined && oldProps === newProps
+      if( isCommonEqual || deepEqual(newProps, oldProps) ) {
+        console.log('➡️ we do not need to continue rendering')
+      }
+    }
+    */
+    
     value.setCallback( ownerGem.gemSupport.async )
 
-    gemSupport.mutatingRender = (bottomUp) => {
+    gemSupport.mutatingRender = () => {
       const newProps = deepClone(value.props)
-      // const newProps = value.cloneProps
-      // const oldProps = result.value.cloneProps
-      const oldProps = result.gem.gemSupport.templater.cloneProps
+      // const oldProps = result.gem.gemSupport.templater.cloneProps
+      const oldProps = gemSupport.templater.cloneProps
 
-      if(deepEqual(newProps, oldProps)) {
-        gemSupport.newest = value.redraw(newProps) // No change detected
+      const isCommonEqual = value.props === undefined && value.props === result.gem.gemSupport.templater.props
+      const isEqual = isCommonEqual || deepEqual(newProps, oldProps)
+      if(isEqual) {
+        gemSupport.newest = value.redraw(newProps) // No change detected, just redraw me only
         return gemSupport.newest
       }
 
+      // draw to my parent
       return gemSupport.newest = ownerGem.gemSupport.render( newProps )
     }
     
     const templater = value
     const gem = templater(gemSupport)
-    templater._gem = gem
+    templater.newest = gem
     gem.ownerGem = ownerGem
     gemSupport.oldest = gem
-    // gemSupport.newest = gem
-
-    // new
-    //value.gemSupport = gemSupport
-    value.deepCheckEquals = (lastProps) => {
-      const oldProps = value.cloneProps
-      const newProps = deepClone(oldProps)
-      return deepEqual(lastProps, newProps)
-    }
 
     gem.ownerGem = ownerGem
     ownerGem.children.push(gem)
@@ -154,6 +145,28 @@ function processSubjectValue(
 
     return
   }
+
+  // *if processing WAS a gem BUT NOW its some other non-gem value
+  if (result.gem) {
+    // put the template back
+    const lastFirstChild = template.clone || template// result.gem.clones[0] // template.lastFirstChild
+    lastFirstChild.parentNode.insertBefore(template, lastFirstChild)
+
+    const stagger = counts.removed
+    const animated = result.gem.destroy(stagger)
+    counts.removed = stagger + animated
+    delete result.gem
+
+    const clone = updateBetweenTemplates(
+      value,
+      lastFirstChild // ✅ this will be removed
+    ) // the template will be remove in here
+
+    template.clone = clone
+
+    return
+  }
+
 
   const before = template.clone || template // Either the template is on the doc OR its the first element we last put on doc
 
@@ -226,6 +239,7 @@ export function processGemResult(
   if(result.gem) {
     // are we just updating an if we already had?
     if(result.gem.isLikeGem(gem)) {
+      // components
       if(result instanceof Function) {
         const newGem = result(result.gem.gemSupport)
         result.gem.updateByGem(newGem)

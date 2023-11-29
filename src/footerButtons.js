@@ -1,6 +1,5 @@
-import { html } from "./web-gems/render.js"
+import { html, gem } from "./web-gems/index.js"
 import { animateIn, animateOut } from "./animations.js"
-import { component } from "./component.js"
 
 export let footerButtons = ({
   currentFrame,
@@ -12,29 +11,11 @@ export let footerButtons = ({
   startGame,
   restartGame,
   endGame
-}) => ({ render, async, init, state }) => {
+}) => () => {
   // footerButtons.js
-  let counter = 0
-
-  state(() => [counter, x => counter = x])
-
-  /*
-  init(() => {
-    console.log('👉 i should only ever run once')
-
-    setInterval(async(() => {
-      ++counter
-      console.log('counter fired', counter)
-    }), 3000)
-  })
-  */
-
-  console.log('counter', counter)
-
   return html`
     <!--footerButtons.js-->
     <div style="padding-top:1em;">
-      <button onclick=${() => {console.log('current counter',counter);++counter}}>counter:${counter}</button>
       <hr />
       ${currentFrame === 0 && html`
         <button type="button" id="player_add_button"
@@ -75,4 +56,4 @@ export let footerButtons = ({
   `
 }
 
-footerButtons = component(footerButtons)
+footerButtons = gem(footerButtons)

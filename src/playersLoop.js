@@ -1,7 +1,6 @@
-import { html } from "./web-gems/render.js"
 import { playerFrames } from "./playerFrames.js"
 import { animateIn, animateOut } from "./animations.js"
-import { component } from "./component.js"
+import { gem, key, html } from "./web-gems/index.js"
 
 export function getPlayerScore (player) {
   return player.scores.reduce((all,score) => {
@@ -33,7 +32,7 @@ export let playersLoop = ({
 
   return html`
     <!--playersLoop.js -->
-    ${players.map((player, playerIndex) => html.for(player)`
+    ${players.map((player, playerIndex) => key(player).html`
       <div id=${`player_${playerIndex}`}
         class:insert=${animateIn} class:remove=${animateOut}
         style=${
@@ -72,21 +71,25 @@ export let playersLoop = ({
               <div>
                 ${ players.length > 1 && isPlayerIndexWinning(playerIndex) && '🐺' }  
                 ${ player.won && '🏆' }
-                <a style=${player.edit ? 'background-color:orange;' : ''} onclick=${() => player.edit = !player.edit}>✏️</a>
+
+                <a style=${player.edit ? 'background-color:orange;' : ''}
+                  onclick=${() => player.edit = !player.edit}
+                >✏️</a>
+
+                ${(!gameStarted || (gameStarted && player.edit)) && html`
+                  <a id=${`player_${playerIndex}_remove`} 
+                    onclick=${() => {
+                      if(gameStarted && !confirm(`Confirm remove player ${playerIndex + 1} ${player.name}`)) return
+                      players.splice(playerIndex,1)
+                    }}
+                  >🗑️</a>
+                `}
               </div>
             </div>
           </div>
 
           <!-- frame info-->
-          ${gameStarted && playerFrames({player, currentFrame, playerTurn, playerIndex, frameScoreModalDetails})}
-          
-          ${(!gameStarted || (gameStarted && player.edit)) && html`
-            <div style="text-align: center;padding-top:1em">
-              <button id=${`player_${playerIndex}_remove`} 
-                onclick=${() => players.splice(playerIndex,1)}
-              >🗑️ remove player ${playerIndex+1}</button>
-            </div>
-          `}
+          ${gameStarted && playerFrames({player, currentFrame, playerTurn, playerIndex, frameScoreModalDetails})}          
         </div>
       </div>
     `)}
@@ -94,4 +97,4 @@ export let playersLoop = ({
 }
 
 
-playersLoop = component(playersLoop)
+playersLoop = gem(playersLoop)

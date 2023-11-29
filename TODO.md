@@ -1,6 +1,7 @@
-- EVERYONE needs to use:
-  - footerButtons = component(footerButtons)
-  - lets only march changes up as far as props have changed
+- Fix init only running once
+- Have an index that exports everything
+- Rename web-gems to gems
+- PERFORMANCE: Reduce number of full renders
 
 - Consider how array without a key work in terms of redrawing
 - Consider what if an issue if some content contains {__gemVar0} as actual content?
@@ -17,6 +18,7 @@
 ## Documentations
 
 ### React differences
+- Use html`` instead of ()
 - The boolean -true- will render to screen
 - No import hooks
 - Render template syntax is ${} instead of {}

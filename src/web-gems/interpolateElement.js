@@ -7,7 +7,6 @@ export function interpolateElement(
   context, // variables used to evaluate
   ownerGem,
 ) {
-  // interpolateAttributes(element, context, ownerGem)
   const result = interpolateElementChild(element, context)
 
   if(result.keys.length) {

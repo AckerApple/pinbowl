@@ -14,7 +14,6 @@ export function buildItemGemMap(
 
   const context = gem.update()
 
-  // interpolateAttributes(temporary, context, gem)
   interpolateElement(temporary, context, gem)
   
   const clones = []
@@ -53,13 +52,11 @@ export function buildItemGemMap(
     if(waitFor) {
       const n = nextSibling
       setTimeout(() => {
-        // insertBefore.parentNode.insertBefore(n, insertBefore)
         n.style.visibility = 'visible'
         classNameList.forEach(className => n.classList.add(className))
       }, waitFor)
-      
+
       n.style.visibility = 'hidden'
-      // insertBefore.parentNode.insertBefore(n, insertBefore)
     } else {
       classNameList.forEach(className => nextSibling.classList.add(className))
     }
@@ -72,19 +69,3 @@ export function buildItemGemMap(
 
   gem.clones.push( ...clones )
 }
-
-export function html(strings, ...values) {
-  return new Gem(strings, values)
-}
-
-html.for = (
-  arrayValue
-) => {
-  return (strings, ...values) => {
-    const gem = html(strings, ...values)
-    gem.arrayValue = arrayValue
-    return gem
-  }
-}
-
-export const $ = html // alias

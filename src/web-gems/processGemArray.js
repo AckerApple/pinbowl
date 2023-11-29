@@ -34,8 +34,8 @@ export function processGemArray(
     if (subGem.arrayValue === undefined) {
       // appears arrayValue is not there but maybe arrayValue is actually the value of undefined
       if (!Object.keys(subGem).includes('arrayValue')) {
-        const err = new Error('Use html.for(item)`...` instead of html`...` to template an Array. Example: array.map(item => html.for(item)``)')
-        err.code = 'replace-with-for'
+        const err = new Error('Use key(item).html`...` instead of html`...` to template an Array')
+        err.code = 'replace-with-key'
         throw err
       }
     }

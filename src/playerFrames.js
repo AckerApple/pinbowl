@@ -1,8 +1,7 @@
-import { html } from "./web-gems/render.js"
-import { showFrameScoreModal } from "./app.js"
+import { gem, key, html } from "./web-gems/index.js"
 import { getPlayerScore } from "./playersLoop.js"
 import { animateIn, animateOut } from "./animations.js"
-import { component } from "./component.js"
+import { showFrameScoreModal } from "./game.js"
 
 export let playerFrames = ({
   player, currentFrame, playerTurn, playerIndex, frameScoreModalDetails
@@ -11,7 +10,7 @@ export let playerFrames = ({
     <div style="display: flex;flex-wrap:wrap"
       class:insert=${animateIn} class:remove=${animateOut}
     >
-      ${player.frames.map((frame, frameIndex) => html.for(frame)`
+      ${player.frames.map((frame, frameIndex) => key(frame).html`
         <a id=${`player_${playerIndex}_frame_${frameIndex}`}
           class:insert=${animateIn} class:remove=${animateOut}
           style=${
@@ -33,11 +32,11 @@ export let playerFrames = ({
 
     <div style="padding:.75em;display:flex;gap:1em;flex-wrap:wrap;justify-content: center;">
       <!--score-->
-      ${score({player, component:'score'})}
+      ${score({player})}
     </div>
   `
 }
-playerFrames = component(playerFrames)
+playerFrames = gem(playerFrames)
 
 export let score = ({player}) => () => html`
   <div style="text-align: center;">
@@ -46,7 +45,7 @@ export let score = ({player}) => () => html`
     ${getPlayerScore(player)}
   </div>
 `
-score = component(score)
+score = gem(score)
 
 export let frameScore = ({player, playerTurn, playerIndex, frameIndex, currentFrame}) => () => html`
   <!-- playerFrames.frameScore.js -->
@@ -72,4 +71,4 @@ export let frameScore = ({player, playerTurn, playerIndex, frameIndex, currentFr
     `}
   </div>
 `
-frameScore = component(frameScore)
+frameScore = gem(frameScore)
