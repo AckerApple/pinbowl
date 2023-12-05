@@ -1,6 +1,5 @@
 import { ValueSubject } from "./ValueSubject.js"
 import { deepClone, deepEqual } from "./deepFunctions.js"
-import { isSpecialAttr } from "./interpolateAttributes.js"
 import { isGemComponent } from "./interpolateTemplate.js"
 import { getGemSupport } from "./renderAppToElement.js"
 export const variablePrefix = '__gemVar'
@@ -14,7 +13,7 @@ export class Gem {
   // only present when a child of a gem
   // ownerGem: Gem
   
-  // present only when an array
+  // present only when an array. Populated by this.key()
   // arrayValue: any[]
 
   constructor(strings, values) {
@@ -23,17 +22,22 @@ export class Gem {
     // this.updateValues(values)
   }
 
+  /** Used for array, such as array.map(), calls aka array.map(x => html``.key(x)) */
+  key(arrayValue) {
+    this.arrayValue = arrayValue
+    return this
+  }
+
   destroy(
     stagger = 0,
     byParent, // who's destroying me? if byParent, ignore possible animations
   ) {
-    this.children.forEach(kid => {
-      kid.destroy(0, true)
-    })
+    this.children.forEach((kid, index) => kid.destroy(0, true))
     this.destroySubscriptions()
 
     if(!byParent) {
-      stagger = this.destroyClones(stagger)
+      const result = this.destroyClones(stagger)
+      stagger = result.stagger
     }
 
     return stagger
@@ -45,106 +49,17 @@ export class Gem {
   }
 
   destroyClones(
-    stagger = 0
+    stagger = 0,
   ) {
-    this.clones.reverse().forEach(clone => {
-      let waitFor = 0
-      if(clone.getAttributeNames) {
-        waitFor = clone.getAttributeNames().reduce((max, name) => {
-          if(isSpecialAttr(name)) {
-            const splits = name.split(':')
-            const attrType = splits.shift() // remove class
-            const value = clone.getAttribute(name)
-
-            // remove element styling logic
-            if(attrType === 'class') {
-              if(splits[0] === 'remove') {
-                let classList = value.split(' ')
-                let length = 0
-                let newMax = max
-
-                let newClassList = classList.filter(className => {
-                  const valueSplit = className.split(':')
-                  const specialName = valueSplit[0]
-                  if(specialName === 'capture') {
-                    const capture = valueSplit[1]
-                    if(capture === 'position') {
-                      captureElementPosition(clone)
-                      return false
-                    }
-                  }
-
-                  if(specialName === 'length') {
-                    const timeout = Number(valueSplit[1])
-                    length = timeout
-                    if(newMax < timeout) {
-                      newMax = timeout
-                    }
-                    return false
-                  }
-
-                  return true
-                }, max)
-                
-                let waitToAdd = 0
-                newClassList = newClassList.filter(className => {
-                  const valueSplit = className.split(':')
-
-                  if(valueSplit.length > 1) {
-
-                    const specialName = valueSplit[0]
-                    if(specialName === 'stagger') {
-                      waitToAdd = Number(valueSplit[1])
-                      const totalTime = waitToAdd * stagger
-                      waitToAdd = totalTime
-
-                      ++stagger
-
-                      if(!totalTime) {
-                        return false
-                      }
-
-                      const newTotalTime = totalTime + length
-                      if(newMax < newTotalTime) {
-                        newMax = newTotalTime
-                      }
-                      
-                      return false
-                    }
-                  }
-
-                  return true
-                })
-
-                // begin to remove element by adding class first
-                if(waitToAdd) {
-                  setTimeout(() =>
-                    newClassList.forEach(className =>
-                      clone.classList.add(className)
-                    )  
-                  , waitToAdd)
-                } else {
-                  newClassList.forEach(className =>
-                    clone.classList.add(className)
-                  )
-                }
-
-                return newMax
-              }
-            }
-          }
-
-          return max
-        }, 0)
+    this.clones.reverse().forEach((clone, index) => {
+      let promise = Promise.resolve()
+      if(clone.ondestroy) {
+        promise = elementDestroyCheck(clone, stagger)
       }
 
-      if(waitFor) {
-        const myClone = clone
-        setTimeout(() => myClone.parentNode.removeChild(myClone), waitFor)
-        return
-      }
-
-      clone.parentNode.removeChild(clone)
+      promise.then(() =>
+        clone.parentNode.removeChild(clone)
+      )
     })
     this.clones.length = 0
     
@@ -233,12 +148,8 @@ export class Gem {
 
       if(value instanceof Gem && compareTo instanceof Gem) {        
         value.ownerGem = this // let children know I own them
-        //value.gemSupport = this.gemSupport
-        this.children.push(value) // record children I created
-        
-        // TODO: This maybe redundant because the first condition already rejects if not defined
+        this.children.push(value) // record children I created        
         value.lastTemplateString || value.getTemplate().string // ensure last template string is generated
-        compareTo.lastTemplateString || compareTo.getTemplate().string // ensure last template string is generated
 
         if(value.isLikeGem(compareTo)) {
           return true
@@ -248,8 +159,6 @@ export class Gem {
       }
       
       return true
-      // Cannot compare simple values
-      // return value === compareTo
     })
 
     if(allVarsMatch) {
@@ -397,24 +306,6 @@ function bindSubjectFunction(value, gem) {
   return subjectFunction
 }
 
-function captureElementPosition(element) {
-  element.style.zIndex = element.style.zIndex || 1
-  const toTop = element.offsetTop + 'px'
-  const toLeft = element.offsetLeft + 'px'  
-  const toWidth = (element.clientWidth + (element.offsetWidth - element.clientWidth) + 1) + 'px'
-  const toHeight = (element.clientHeight + (element.offsetHeight - element.clientHeight) + 1) + 'px'
-  
-  // element.style.position = 'fixed'
-  // allow other elements that are being removed to have a moment to figure out where they currently sit
-  setTimeout(() => {
-    element.style.top = toTop
-    element.style.left = toLeft  
-    element.style.width = toWidth
-    element.style.height = toHeight
-    element.style.position = 'fixed'
-  }, 0)
-}
-
 function setValueRedraw(
   templater, // latest gem function to call for rendering
   existing,
@@ -452,4 +343,28 @@ function setValueRedraw(
 
     return regem
   }
+}
+
+
+function elementDestroyCheck(
+  nextSibling,
+  stagger,
+) {
+  const onDestroyDoubleWrap = nextSibling.ondestroy // nextSibling.getAttribute('onDestroy')
+  if(!onDestroyDoubleWrap) {
+    return
+  }
+
+  const onDestroyWrap = onDestroyDoubleWrap.gemFunction
+  if(!onDestroyWrap) {
+    return
+  }
+
+  const onDestroy = onDestroyWrap.gemFunction
+  if(!onDestroy) {
+    return
+  }
+
+  const event = {target: nextSibling, stagger}
+  return onDestroy(event)
 }

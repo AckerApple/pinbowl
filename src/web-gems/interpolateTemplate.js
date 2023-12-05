@@ -70,8 +70,7 @@ function processSubjectValue(
       value,
       result, // Function will attach result.gem
       template,
-      undefined,
-      counts
+      {counts},
     )
 
     return
@@ -88,24 +87,7 @@ function processSubjectValue(
       throw error
     }
 
-    /*
-    const oldGem = result.gem
-    const oldSupport = oldGem?.gemSupport
-    const gemSupport = oldSupport || getGemSupport( value )
-    */
     const gemSupport = getGemSupport( value )
-
-    /*
-    if(oldSupport) {
-      console.log('old check')
-      const oldProps = oldSupport.templater.cloneProps
-      const newProps = gemSupport.templater.cloneProps
-      const isCommonEqual = oldProps === undefined && oldProps === newProps
-      if( isCommonEqual || deepEqual(newProps, oldProps) ) {
-        console.log('➡️ we do not need to continue rendering')
-      }
-    }
-    */
     
     value.setCallback( ownerGem.gemSupport.async )
 
@@ -139,8 +121,9 @@ function processSubjectValue(
       gem,
       result, // The element set here will be removed from document
       template,
-      undefined,
-      counts,
+      {
+        counts,
+      }
     )
 
     return
@@ -212,8 +195,10 @@ export function processGemResult(
   gem,
   result, // used for recording past and current value
   insertBefore, // <template end interpolate />
-  index,
-  counts, // {added:0, removed:0}
+  {
+    index,
+    counts, // {added:0, removed:0}
+  }
 ) {
   const template = gem.getTemplate()
 
@@ -223,7 +208,7 @@ export function processGemResult(
 
     if(existing?.gem.isLikeGem(gem)) {
       existing.gem.updateByGem(gem)
-      return 
+      return
     }
 
     const lastFirstChild = insertBefore // gem.clones[0] // insertBefore.lastFirstChild
@@ -257,6 +242,8 @@ export function processGemResult(
 
   buildItemGemMap(gem, template, before, counts)
   result.gem = gem // let reprocessing know we saw this previously as an if
+
+  return
 }
 
 

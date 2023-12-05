@@ -16,56 +16,64 @@ export function buildItemGemMap(
 
   interpolateElement(temporary, context, gem)
   
-  const clones = []
+  const clones = buildClones(temporary, insertBefore, counts)
+  gem.clones.push( ...clones )
+}
 
+function buildClones(
+  temporary,
+  insertBefore,
+  counts, // {removed:0, added:0}
+) {
+  const clones = []
   const templateClone = temporary.children[0]
   const sibling = templateClone // a div we added
   let nextSibling = sibling.nextSibling
   temporary.removeChild(templateClone) // remove the div
+  
   while (nextSibling) {
     const nextNextSibling = nextSibling.nextSibling
-    temporary.removeChild(nextSibling)
-    let waitFor = 0
-
-    const classInsert = nextSibling.getAttribute && nextSibling.getAttribute('class:insert')
-    let classNameList = []
-    if(classInsert) {
-      classNameList = classInsert.split(' ').filter(className => {
-        const splits = className.split(':')
-
-        if(splits.length > 1) {
-          const name = splits[0]
-          const value = splits[1]
-
-          if(name === 'stagger') {
-            waitFor = value * counts.added
-            ++counts.added
-          }
-
-          return false
-        }
-
-        return true
-      })
-    }
-
-    if(waitFor) {
-      const n = nextSibling
-      setTimeout(() => {
-        n.style.visibility = 'visible'
-        classNameList.forEach(className => n.classList.add(className))
-      }, waitFor)
-
-      n.style.visibility = 'hidden'
-    } else {
-      classNameList.forEach(className => nextSibling.classList.add(className))
-    }
-    
-    insertBefore.parentNode.insertBefore(nextSibling, insertBefore)
-
+    buildSibling(nextSibling, temporary, insertBefore, counts)
     clones.push(nextSibling)
     nextSibling = nextNextSibling
   }
 
-  gem.clones.push( ...clones )
+  return clones
+}
+
+function buildSibling(
+  nextSibling,
+  temporary,
+  insertBefore,
+  counts, // {removed:0, added:0}
+) {
+  temporary.removeChild(nextSibling)
+
+  if(nextSibling.getAttribute) {
+    elementInitCheck(nextSibling, counts)
+  }
+  
+  insertBefore.parentNode.insertBefore(nextSibling, insertBefore)  
+}
+
+function elementInitCheck(nextSibling, counts) {
+  const onInitDoubleWrap = nextSibling.oninit // nextSibling.getAttribute('oninit')
+  if(!onInitDoubleWrap) {
+    return
+  }
+
+  const onInitWrap = onInitDoubleWrap.gemFunction
+  if(!onInitWrap) {
+    return
+  }
+
+  const onInit = onInitWrap.gemFunction
+  if(!onInit) {
+    return
+  }
+
+  const event = {target: nextSibling, stagger: counts.added}
+  onInit(event)
+
+  ++counts.added
 }

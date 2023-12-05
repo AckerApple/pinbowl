@@ -1,6 +1,6 @@
-import { gem, key, html } from "./web-gems/index.js"
+import { gem, html } from "./web-gems/index.js"
 import { getPlayerScore } from "./playersLoop.js"
-import { animateIn, animateOut } from "./animations.js"
+import { animateDestroy, animateInit } from "./animations.js"
 import { showFrameScoreModal } from "./game.js"
 
 export let playerFrames = ({
@@ -8,11 +8,11 @@ export let playerFrames = ({
 }) => () => {
   return html`<!--playerFrames.js-->
     <div style="display: flex;flex-wrap:wrap"
-      class:insert=${animateIn} class:remove=${animateOut}
+      oninit=${animateInit} ondestroy=${animateDestroy}
     >
-      ${player.frames.map((frame, frameIndex) => key(frame).html`
+      ${player.frames.map((frame, frameIndex) => html`
         <a id=${`player_${playerIndex}_frame_${frameIndex}`}
-          class:insert=${animateIn} class:remove=${animateOut}
+          oninit=${animateInit} ondestroy=${animateDestroy}
           style=${
             'display:flex;flex-direction:column;flex-grow:1;border:1px solid white;' +
             (currentFrame === frameIndex ? 'font-weight:bold;' : '') +
@@ -27,7 +27,7 @@ export let playerFrames = ({
           <hr style="margin: 0;" />
           ${frameScore({frameIndex, player, currentFrame, playerTurn, playerIndex, frameScoreModalDetails})}
         </a>
-      `)}
+      `.key(frame))}
     </div>
 
     <div style="padding:.75em;display:flex;gap:1em;flex-wrap:wrap;justify-content: center;">
@@ -64,7 +64,7 @@ export let frameScore = ({player, playerTurn, playerIndex, frameIndex, currentFr
     `}
 
     ${player.scores[frameIndex] !== undefined && html`
-      <div class:insert=${animateIn} class:remove=${animateOut}>
+      <div oninit=${animateInit} ondestroy=${animateDestroy}>
         ${player.scores[frameIndex] === 3 && (playerIndex!=playerTurn || frameIndex!=currentFrame) && '💎'}
         ${player.scores[frameIndex] == undefined ? '' : player.scores[frameIndex]}
       </div>

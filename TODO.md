@@ -1,9 +1,6 @@
-- Fix init only running once
-- Have an index that exports everything
-- Rename web-gems to gems
-- PERFORMANCE: Reduce number of full renders
-
-- Consider how array without a key work in terms of redrawing
+- Component Children?!??
+- Rename web-gems to gems?
+  - consider everware?
 - Consider what if an issue if some content contains {__gemVar0} as actual content?
   - Maybe first replace all "fake" {gemVar0} with something we can drop them back in with
 - Test switching an components return string

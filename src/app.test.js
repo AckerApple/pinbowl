@@ -1,4 +1,5 @@
 import { globalSubCount } from "./web-gems/Subject.js"
+import { wait } from "./web-gems/index.js"
 
 export default async function runTest() {
   try {
@@ -49,11 +50,11 @@ export default async function runTest() {
     document.getElementById('player_1_frame_4').click()
     document.getElementById('score_1_button').click() // winner
 
-    await sleep(2)
+    await wait(2)
 
     document.getElementById('end_game_button').click()
 
-    await sleep(2)
+    await wait(2)
     
     document.getElementById('player_0_remove').click()
     document.getElementById('player_0_remove').click() // removes player 2 who is now 1
@@ -67,12 +68,4 @@ export default async function runTest() {
     console.error('error', error)
     alert('❌ tests failed: ' + error.message)
   }
-}
-
-function sleep(ms) {
-  return new Promise(res => {
-    setTimeout(() => {
-      res()
-    }, ms)
-  })
 }

@@ -1,5 +1,5 @@
 import { html, gem } from "./web-gems/index.js"
-import { animateIn, animateOut } from "./animations.js"
+import { animateDestroy, animateInit } from "./animations.js"
 
 export let footerButtons = ({
   currentFrame,
@@ -7,8 +7,7 @@ export let footerButtons = ({
   playersLength,
   
   removeAllPlayers,
-  addPlayer,
-  startGame,
+  game,
   restartGame,
   endGame
 }) => () => {
@@ -19,35 +18,35 @@ export let footerButtons = ({
       <hr />
       ${currentFrame === 0 && html`
         <button type="button" id="player_add_button"
-          class:insert=${animateIn} class:remove=${animateOut}
-          onclick=${addPlayer}
+          oninit=${animateInit}
+          onclick=${() => game.addPlayer()}
         >👤 Add ${playersLength + 1}${(x => (x === '1' && 'st') || (x === '2' && 'nd')  || (x === '3' && 'rd') || 'th')((playersLength+1).toString().slice(-1))} Player</button>
       `}
 
       ${!gameStarted && currentFrame === 0 && playersLength > 1 && html`
         <button type="button" id="player_add_button"
-          class:insert=${animateIn} class:remove=${animateOut}
+          oninit=${animateInit} ondestroy=${animateDestroy}
           onclick=${removeAllPlayers}
         >❌ 👤 Remove All Players</button>
       `}
 
       ${!gameStarted && playersLength > 0 && html`
       <button type="button" id="start_game_button"
-        class:insert=${animateIn} class:remove=${animateOut}
-        onclick=${startGame}
+        oninit=${animateInit} ondestroy=${animateDestroy}
+        onclick=${() => game.start()}
       >🟢 start game</button>
       `}
 
       ${gameStarted && html`
         <button type="button"
-          class:insert=${animateIn} class:remove=${animateOut}
+          oninit=${animateInit} ondestroy=${animateDestroy}
           onclick=${restartGame}
         >🔄 restart game</button>
       `}
 
       ${gameStarted && html`
         <button type="button" id="end_game_button" class="animate__animated"
-          class:insert=${animateIn} class:remove=${animateOut}
+          oninit=${animateInit} ondestroy=${animateDestroy}
         onclick=${endGame}
         >🔄 end game</button>
       `}

@@ -1,6 +1,6 @@
 import { playerFrames } from "./playerFrames.js"
-import { animateIn, animateOut } from "./animations.js"
-import { gem, key, html } from "./web-gems/index.js"
+import { animateDestroy, animateInit } from "./animations.js"
+import { gem, html } from "./web-gems/index.js"
 
 export function getPlayerScore (player) {
   return player.scores.reduce((all,score) => {
@@ -32,9 +32,9 @@ export let playersLoop = ({
 
   return html`
     <!--playersLoop.js -->
-    ${players.map((player, playerIndex) => key(player).html`
+    ${players.map((player, playerIndex) => html`
       <div id=${`player_${playerIndex}`}
-        class:insert=${animateIn} class:remove=${animateOut}
+        oninit=${animateInit} ondestroy=${animateDestroy}
         style=${
           "border-radius:.5em;text-align: left;flex-grow:1;" +
           (gameStarted && playerTurn === playerIndex ? 'width:100%;border:.2em solid yellow;font-size:1.2em;line-height:1.1em;' : 'border:1px solid white;')
@@ -92,9 +92,8 @@ export let playersLoop = ({
           ${gameStarted && playerFrames({player, currentFrame, playerTurn, playerIndex, frameScoreModalDetails})}          
         </div>
       </div>
-    `)}
+    `.key(player))}
   `
 }
-
 
 playersLoop = gem(playersLoop)

@@ -18,7 +18,7 @@ export function processGemArray(
     if(lessLength || subArrayValue !== item.gem.arrayValue) {
       const last = result.lastArray[index]
       const gem = last.gem
-      gem.destroy(counts.removed)
+      gem.destroy(counts.removed, false)
       ++removed
       ++counts.removed
       return false
@@ -34,8 +34,8 @@ export function processGemArray(
     if (subGem.arrayValue === undefined) {
       // appears arrayValue is not there but maybe arrayValue is actually the value of undefined
       if (!Object.keys(subGem).includes('arrayValue')) {
-        const err = new Error('Use key(item).html`...` instead of html`...` to template an Array')
-        err.code = 'replace-with-key'
+        const err = new Error('Use html`...`.key(item) instead of html`...` to template an Array')
+        err.code = 'add-array-key'
         throw err
       }
     }
@@ -53,8 +53,10 @@ export function processGemArray(
       subGem,
       result,
       before,
-      index,
-      counts,
+      {
+        index,
+        counts,
+      }
     )
   })
 

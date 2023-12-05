@@ -30,9 +30,10 @@ export function interpolateAttributes(
         const callback = newAttrValue => {
           if(newAttrValue instanceof Function) {
             child[attrName] = function(...args) {
-              // await Promise.resolve() // Prevent Chrome [Violation] 'click' handler took {N}ms
               newAttrValue(child, args)
             }
+
+            child[attrName].gemFunction = newAttrValue
 
             return
           }
@@ -69,5 +70,5 @@ export function interpolateAttributes(
 }
 
 export function isSpecialAttr(attrName) {
-  return attrName.search(/^(class|style)(\:|\.)/) >= 0
+  return attrName.search(/^(class|style)(\.)/) >= 0
 }

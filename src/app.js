@@ -4,8 +4,9 @@ import { getPlayerScore, playersLoop } from "./playersLoop.js"
 import { footerButtons } from "./footerButtons.js"
 import { debugApp } from "./debugApp.js"
 import { Game } from "./game.js"
+import { animateDestroy } from "./animations.js"
 
-export let SmallBowlApp = () => ({state, init, async}) => {
+export let SmallBowlApp = () => ({state}) => {
   let game = new Game()
 
   let frameScoreModalDetails = {
@@ -21,25 +22,6 @@ export let SmallBowlApp = () => ({state, init, async}) => {
     debug, x => debug = x,
     frameScoreModalDetails, x => frameScoreModalDetails = x,
   ])
-
-  function startGame() {
-    console.info('🟢 Starting new game...')
-    game.gameStarted = true
-    game.players.forEach(player => player.edit = false)
-  }
-
-  function addPlayer() {
-    game.players.push({
-      name: `Player ${game.players.length + 1}`,
-      frames: [0,1,2,3,4],
-      scores: [],
-      edit: true,
-      gameover: false,
-      won: false,
-    })
-
-    console.info('✅ player added', game.players.length)
-  }
 
   const endGame = () => {
     restartGame()
@@ -106,6 +88,11 @@ export let SmallBowlApp = () => ({state, init, async}) => {
 
     setTimeout(() => {
       const elm = document.getElementById('player_' + game.playerTurn)
+
+      if(!elm) {
+        return // tests move quickly and element may no longer by on stage
+      }
+
       elm.scrollIntoView({
         behavior: 'smooth'
       })
@@ -156,9 +143,13 @@ export let SmallBowlApp = () => ({state, init, async}) => {
   function scoreByModal(score) {
     const {player, playerIndex, frameIndex} = frameScoreModalDetails
     scorePlayerFrame(score, player, playerIndex, frameIndex)
+    closeScoreModal()
+  }
+
+  const closeScoreModal = () => animateDestroy({target:enterScore, capturePosition: false}).then(() => {
     enterScore.close()
     delete frameScoreModalDetails.player
-  }
+  })
 
   function scorePlayerFrame(score, player, playerIndex, frameIndex) {
     if(!player.edit) {
@@ -182,16 +173,18 @@ export let SmallBowlApp = () => ({state, init, async}) => {
   return html`
     <!-- new pinbowl game -->
     <h2>🎳 ${game.players.length ? game.players.length+' Player' : 'New'} Pinbowl game</h2>
+    
+    <!-- 👤 players loop -->
     <div style="display: flex;flex-wrap: wrap;gap:.5em">
-      <!-- 👤 players loop -->
       ${playersLoop({...game, frameScoreModalDetails})}
     </div>
 
     ${footerButtons({
+      game,
       currentFrame: game.currentFrame,
       gameStarted: game.gameStarted,
       playersLength: game.players.length,
-      removeAllPlayers, addPlayer, startGame, restartGame, endGame,
+      removeAllPlayers, restartGame, endGame,
     })}
     
     <div style="font-size:0.8em;opacity:.5" onclick=${() => debug = !debug}>
@@ -236,7 +229,7 @@ export let SmallBowlApp = () => ({state, init, async}) => {
       </div>
       
       <div style="padding:.5em">
-        <button type="button" onclick="enterScore.close()" style="min-width:200px;">🅧 cancel</button>
+        <button type="button" onclick=${closeScoreModal} style="min-width:200px;">🅧 cancel</button>
       </div>
     </dialog>
   `

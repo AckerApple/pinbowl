@@ -1,6 +1,6 @@
 import { gemDebug } from "./gemDebug.js"
 import { gameDebug } from "./gameDebug.js"
-import { animateIn, animateOut } from "./animations.js"
+import { animateDestroy, animateInit } from "./animations.js"
 import { html, gem } from "./web-gems/index.js"
 
 export let debugApp = (game) => ({state}) => {
@@ -17,7 +17,7 @@ export let debugApp = (game) => ({state}) => {
 
   return html`
     <!--debugApp.js-->
-    <div class:insert=${animateIn} class:remove=${animateOut}>
+    <div oninit=${animateInit} ondestroy=${animateDestroy}>
       <h2>🐞</h2>
       ${gameDebug(game)}
 
