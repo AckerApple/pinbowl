@@ -7,6 +7,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "deploy": "npm run build && npm run save",
+    "build": "cp -R src/. ./",
     "save": "git add . && git commit -m \"update\" && git push",
     "update": "npm install taggedjs && cp node_modules/taggedjs/index.js src/tagged.js"
   },

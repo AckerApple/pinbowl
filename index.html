@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Pin Bowl</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+    content="viewport-fit=cover, width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+  <meta name="apple-mobile-web-app-title" content="App" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <!-- emoji as favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎳</text></svg>" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" type="text/css" rel="stylesheet" />
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      color: white;
+      font-family: Arial, Helvetica, sans-serif;
+      height: 100%;
+      padding: 0;
+      margin: 0;
+      background: #666 linear-gradient(to top, #666, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0)) no-repeat;
+      /* Create a gradient from black to transparent */
+    }
+
+    html {
+      scroll-behavior: smooth;
+      font-size: calc(22px + .4vw);
+      line-height: 1.25em;
+    }
+
+    input[type="checkbox"],
+    input[type="radio"] {
+      width: 1em;
+      height: 1em;
+    }
+
+    li {
+      padding-bottom: 1em;
+    }
+
+    select,
+    textarea,
+    button,
+    input {
+      padding: .5vw;
+      border-radius: .5vw;
+      font-size: .9em;
+    }
+  </style>
+  <script type="module">
+    import app from './app.js'
+    app()
+  </script>
+</head>
+
+<body>
+  <noscript style="color:red">Javascript is required but is turned off on your device</noscript>
+  <table cellPadding="0" cellSpacing="0" border="0" style="width: 100%;height: 100%;">
+    <tr>
+      <td valign="center" style="text-align: center;">
+        <small-bowl-app></small-bowl-app>
+      </td>
+    </tr>
+  </table>
+</body>
+
+</html>
