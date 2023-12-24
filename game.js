@@ -114,8 +114,8 @@ export class Game {
     this.increasePlayerTurn()
     this.changePlayerTurn.next()
   }
-
-  scorePlayerFrame(score, player, playerIndex, frameIndex) {
+  
+  editPlayerScore(score, player, playerIndex, frameIndex) {
     if(!player.edit) {
       if(this.playerTurn !== playerIndex) {
         return // wrong player scoring
@@ -127,6 +127,15 @@ export class Game {
     }
   
     player.scores[frameIndex] = score
+  }
+
+  scorePlayerFrame(score, player, playerIndex, frameIndex) {
+    this.editPlayerScore(score, player, playerIndex, frameIndex)
+
+    if(this.playerTurn !== playerIndex) {
+      return // its not current players turn, most likely just a score edit
+    }
+
     this.submitPlayerScore(player)
   }
 

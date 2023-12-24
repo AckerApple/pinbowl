@@ -94,19 +94,35 @@ export const SmallBowlApp = tag(() => {
         ${frameScoreModalDetails.player && html`
           <button type="button" id="score_strike_button" style="flex:1;min-width:200px;padding:.3em"
             onclick=${() => scoreByModal(3)}
-          >💎 STRIKE</button>
+          >
+            💎 STRIKE
+            <br /><br />
+            <div style="opacity:.6;font-size:.8em;">3 points</div>
+          </button>
 
           <button type="button" id="score_spare_button" style="flex:1;min-width:200px;padding:.3em"
             onclick=${() => scoreByModal(2)}
-          >SPARE</button>
+          >
+            SPARE
+            <br /><br />
+            <div style="opacity:.6;font-size:.8em;">2 points</div>
+          </button>
           
           <button type="button" id="score_1_button" style="flex:1;min-width:200px;padding:.3em"
             onclick=${() => scoreByModal(1)}
-          >1 PIN LEFT</button>
+          >
+            1 PIN LEFT
+            <br /><br />
+            <div style="opacity:.6;font-size:.8em;">1 point</div>
+          </button>
           
           <button type="button" id="score_0_button" style="flex:1;min-width:200px;padding:.3em"
             onclick=${() => scoreByModal(0)}
-          >MORE THAN 1 PIN LEFT</button>
+          >
+            MORE THAN 1 PIN LEFT
+            <br /><br />
+            <div style="opacity:.6;font-size:.8em;">0 points</div>
+          </button>
         `}
       </div>
       
