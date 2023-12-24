@@ -1,34 +1,23 @@
-import { gemDebug } from "./gemDebug.js"
+import { tagDebug } from "./tagJsDebug.js"
 import { gameDebug } from "./gameDebug.js"
+import { html, tag, state } from "./taggedjs/index.js"
 import { animateDestroy, animateInit } from "./animations.js"
-import { html, gem } from "./web-gems/index.js"
 
-export let debugApp = (game) => ({state}) => {
-  // debugApp.js
-  let renderCounter = 0
-  let debugGems = false
-
-  state(() => [
-    renderCounter, x => renderCounter = x,
-    debugGems, x => debugGems = x,
-  ])
-
-  ++renderCounter
+export const debugApp = tag((game) => {  
+  let debugTags = state(false, x => [debugTags, debugTags = x])
 
   return html`
     <!--debugApp.js-->
     <div oninit=${animateInit} ondestroy=${animateDestroy}>
       <h2>🐞</h2>
+
       ${gameDebug(game)}
 
-      outer debug counter:${renderCounter}
-
       <button type="button"
-        onclick=${() => debugGems = !debugGems}
-      >debug gems</button> 
+        onclick=${() => debugTags = !debugTags}
+      >debug tags</button> 
 
-      ${debugGems && gemDebug()}
+      ${debugTags && tagDebug()}
     </div>
   `
-}
-debugApp = gem(debugApp)
+})

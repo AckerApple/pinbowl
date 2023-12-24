@@ -1,13 +1,13 @@
-import { wait } from "./web-gems/index.js"
+import { wait } from "./taggedjs/index.js"
 
 export const animateInit = async ({target, stagger}) => {
-  target.style.visibility = 'hidden'
+  target.style.opacity = 0
   
   if(stagger) {
     await wait(stagger * 300)
   }
 
-  target.style.visibility = 'visible'
+  target.style.opacity = 1
   target.classList.add('animate__animated','animate__fadeInDown')
 }
 

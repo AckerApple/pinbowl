@@ -1,27 +1,38 @@
-import { html, gem } from "./web-gems/index.js"
-import { renderAppToElement } from "./web-gems/renderAppToElement.js"
-import { getPlayerScore, playersLoop } from "./playersLoop.js"
+import { providers, state, html, tag, renderAppToElement, onInit } from "./taggedjs/index.js"
+import { playersLoop } from "./playersLoop.js"
 import { footerButtons } from "./footerButtons.js"
 import { debugApp } from "./debugApp.js"
-import { Game } from "./game.js"
+import { Game, frameScoreDetails } from "./game.js"
 import { animateDestroy } from "./animations.js"
 
-export let SmallBowlApp = () => ({state}) => {
-  let game = new Game()
+export const SmallBowlApp = tag(() => {
+  // app.js - SmallBowlApp
+  const frameScoreModalDetails = state(frameScoreDetails)
 
-  let frameScoreModalDetails = {
-    player: undefined,
-    playerIndex: undefined,
-    frameIndex: undefined,
-  }
+  const game = providers.create(Game)
+  let debug = state(false, x => [debug, debug = x])
 
-  let debug = false
+  onInit(() => {
+    // one time subscriptions
+    game.tieBreaker.subscribe(() => alert('🤗 Multiple winners, get ready for an additional round!'))
+    game.winner.subscribe(leader => alert(`🎉 Winner is Player ${leader.playerIndex + 1}, ${leader.player.name}`))
+    game.lastFrameStrike.subscribe(() => alert('💥 Strike on the last frame! Another frame added.\n\nFor now, it\'s the next players turn.'))
+    game.changePlayerTurn.subscribe(() => {
+      setTimeout(() => {
+        const elm = document.getElementById('player_' + game.playerTurn)
+  
+        if(!elm) {
+          return // tests move quickly and element may no longer by on stage
+        }
+  
+        elm.scrollIntoView({
+          behavior: 'smooth'
+        })
+      }, 300)  
+    })
 
-  state(() => [
-    game, x => game = x,
-    debug, x => debug = x,
-    frameScoreModalDetails, x => frameScoreModalDetails = x,
-  ])
+    console.info('👍 game initialized')
+  })
 
   const endGame = () => {
     restartGame()
@@ -33,116 +44,12 @@ export let SmallBowlApp = () => ({state}) => {
       return
     }
     
-    game.playerTurn = 0
-    game.currentFrame = 0
-
-    game.players.forEach(player => {
-      player.won = false
-      player.frames.length = 5
-      player.scores = []
-      player.gameover = false
-    })
-  }
-
-  function increasePlayerTurn() {
-    ++game.playerTurn
-                        
-    if(game.playerTurn >= game.players.length){
-      console.info('⤴️ Back up to first player')
-      ++game.currentFrame
-      game.playerTurn=0
-
-      if(game.players.every(player => player.gameover)) {
-        runGameOver()
-      }
-    } else {
-      console.info('⤵️ Next players turn')
-    }
-
-    if(game.players[game.playerTurn].gameover) {
-      increasePlayerTurn()
-    }
-  }
-
-  function submitPlayerScore(player) {    
-    // maybe player game over
-    if(player.scores.length === player.frames.length) {
-      // its not a 3, game over
-      if(player.scores[player.scores.length - 1] !== 3) {
-        player.gameover = true
-      }
-
-      // its a 3, make a new frame
-      if(player.scores[player.frames.length-1] === 3){
-        player.frames.push(player.frames.length)
-        alert('💥 Strike on the last frame! Another frame added.\n\nFor now, it\'s the next players turn.')
-      }  
-    }
-
-    if(game.players.every(player => player.gameover)) {
-      runGameOver()
-      return
-    }
-
-    increasePlayerTurn()
-
-    setTimeout(() => {
-      const elm = document.getElementById('player_' + game.playerTurn)
-
-      if(!elm) {
-        return // tests move quickly and element may no longer by on stage
-      }
-
-      elm.scrollIntoView({
-        behavior: 'smooth'
-      })
-    }, 300)
-  }
-
-  function runGameOver() {
-    const leadersMeta = game.players.reduce((all,player, playerIndex) => {
-      const score = getPlayerScore(player)
-	    if(score > all[0]) {
-        all[0] = score
-        all[1] = [{player, playerIndex}]
-        return all
-      }
-
-      // tie
-      if(score === all[0]) {
-        all[1].push({player, playerIndex})
-        return all
-      }
-
-      return all
-    }, [-1,[]])
-
-    const leaders = leadersMeta[1]
-
-    if(leaders.length > 1) {
-      alert('🤗 Multiple winners, get ready for an additional round!')
-      leaders.forEach(({player}) => {
-        player.frames.push(player.frames.length)
-        player.gameover = false
-      })
-      game.playerTurn = leaders[0].playerIndex
-      ++game.currentFrame
-      return
-    }
-
-    leaders[0].player.won = true
-    game.playerTurn = -1
-    game.currentFrame = -1
-
-    // let screen render
-    setTimeout(() => {
-      alert(`🎉 Winner is Player ${leaders[0].playerIndex + 1}, ${leaders[0].player.name}`)
-    }, 1)
+    game.restart()
   }
 
   function scoreByModal(score) {
     const {player, playerIndex, frameIndex} = frameScoreModalDetails
-    scorePlayerFrame(score, player, playerIndex, frameIndex)
+    game.scorePlayerFrame(score, player, playerIndex, frameIndex)
     closeScoreModal()
   }
 
@@ -150,42 +57,17 @@ export let SmallBowlApp = () => ({state}) => {
     enterScore.close()
     delete frameScoreModalDetails.player
   })
-
-  function scorePlayerFrame(score, player, playerIndex, frameIndex) {
-    if(!player.edit) {
-      if(game.playerTurn !== playerIndex) {
-        return // wrong player scoring
-      }
-    
-      if(frameIndex !== game.currentFrame) {
-        return // ignore
-      }
-    }
-  
-    player.scores[frameIndex] = score
-    submitPlayerScore(player)
-  }
-
-  function removeAllPlayers() {
-    game.players.length = 0
-  }
   
   return html`
     <!-- new pinbowl game -->
     <h2>🎳 ${game.players.length ? game.players.length+' Player' : 'New'} Pinbowl game</h2>
     
     <!-- 👤 players loop -->
-    <div style="display: flex;flex-wrap: wrap;gap:.5em">
-      ${playersLoop({...game, frameScoreModalDetails})}
+    <div style="display: flex;flex-wrap: wrap;">
+      ${playersLoop({frameScoreModalDetails})}
     </div>
 
-    ${footerButtons({
-      game,
-      currentFrame: game.currentFrame,
-      gameStarted: game.gameStarted,
-      playersLength: game.players.length,
-      removeAllPlayers, restartGame, endGame,
-    })}
+    ${footerButtons({restartGame, endGame})}
     
     <div style="font-size:0.8em;opacity:.5" onclick=${() => debug = !debug}>
       ✍️ written & created by Acker Apple
@@ -206,7 +88,7 @@ export let SmallBowlApp = () => ({state}) => {
       ondragend="const {t,e,d}={t:this,e:event,d:this.drag};if (d.initX === d.x) {d.x=d.x+e.offsetX-(d.startX-d.x);d.y=d.y+e.offsetY-(d.startY-d.y);this.style.transform=translate3d(d.x+'px', d.y+'px', 0)};this.draggable=false"
     >
       <div style="padding:.25em;background-color:#999999;color:white;" onmousedown="this.parentNode.draggable=true"
-      >Select your score - ${frameScoreModalDetails.player ? 'true' : 'false'}</div>
+      >🎳 Select your score</div>
       
       <div style="display:flex;flex-wrap:wrap;gap:1em;padding:1em">
         ${frameScoreModalDetails.player && html`
@@ -233,9 +115,7 @@ export let SmallBowlApp = () => ({state}) => {
       </div>
     </dialog>
   `
-}
-
-SmallBowlApp = gem(SmallBowlApp)
+})
 
 export default () => {
   const element = document.getElementsByTagName('small-bowl-app')[0]

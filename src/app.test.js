@@ -1,9 +1,13 @@
-import { globalSubCount } from "./web-gems/Subject.js"
-import { wait } from "./web-gems/index.js"
+import { wait, Subject } from "./taggedjs/index.js"
 
 export default async function runTest() {
+  runTest.testing = true
+  console.info('⏳ testing started...')
+  
+  await wait(0) // let display update runTest.testing before actually testing
+  
   try {
-    const startCount = globalSubCount
+    const startCount = Subject.globalSubCount
     const playerAddButton = document.getElementById('player_add_button')
      
     playerAddButton.click()
@@ -59,13 +63,16 @@ export default async function runTest() {
     document.getElementById('player_0_remove').click()
     document.getElementById('player_0_remove').click() // removes player 2 who is now 1
    
-    if(globalSubCount != startCount ) {
-      throw new Error(`Expected ${startCount} subscriptions at the end but counted ${globalSubCount}`)
+    if(Subject.globalSubCount != startCount ) {
+      throw new Error(`Expected ${startCount} subscriptions at the end but counted ${Subject.globalSubCount}`)
     }
     
     alert('✅ all tests passed')
+    console.info('✅ all tests passed')
   } catch (error) {
     console.error('error', error)
     alert('❌ tests failed: ' + error.message)
   }
+  
+  runTest.testing = false
 }

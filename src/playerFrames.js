@@ -1,11 +1,13 @@
-import { gem, html } from "./web-gems/index.js"
-import { getPlayerScore } from "./playersLoop.js"
+import { tag, html, providers } from "./taggedjs/index.js"
 import { animateDestroy, animateInit } from "./animations.js"
-import { showFrameScoreModal } from "./game.js"
+import { showFrameScoreModal } from "./showFrameScoreModal.js"
+import { Game, getPlayerScore } from "./game.js"
 
-export let playerFrames = ({
-  player, currentFrame, playerTurn, playerIndex, frameScoreModalDetails
-}) => () => {
+export const playerFrames = tag(({
+  player, playerIndex, frameScoreModalDetails
+}) => {
+  const game = providers.inject( Game )
+
   return html`<!--playerFrames.js-->
     <div style="display: flex;flex-wrap:wrap"
       oninit=${animateInit} ondestroy=${animateDestroy}
@@ -15,17 +17,31 @@ export let playerFrames = ({
           oninit=${animateInit} ondestroy=${animateDestroy}
           style=${
             'display:flex;flex-direction:column;flex-grow:1;border:1px solid white;' +
-            (currentFrame === frameIndex ? 'font-weight:bold;' : '') +
-            (playerTurn === playerIndex && currentFrame === frameIndex ? '' : 'cursor:default;')
+            (game.currentFrame === frameIndex ? 'font-weight:bold;' : '') +
+            (game.playerTurn === playerIndex && game.currentFrame === frameIndex ? '' : 'cursor:default;')
           }
-          onclick=${() => showFrameScoreModal(player, playerIndex, frameIndex, frameScoreModalDetails)}
+          onclick=${() => {
+            if(!(game.playerTurn === playerIndex && game.currentFrame === frameIndex)) {
+              console.warn('skip score edit click')
+              if(!player.edit) {
+                return // not allowed to edit
+              }
+            }
+
+            showFrameScoreModal(player, playerIndex, frameIndex, frameScoreModalDetails)
+          }}
         >
           <div style="display:flex;padding:0 .2em;">
             <span style="flex-grow:1;font-size:0.7em;opacity:.7">${frameIndex+1}</span>
-            <span>${frameIndex === currentFrame ? html`<span>🔵</span>` : ''}</span>
+            <span>${frameIndex === game.currentFrame ? html`<span>🔵</span>` : ''}</span>
           </div>
           <hr style="margin: 0;" />
-          ${frameScore({frameIndex, player, currentFrame, playerTurn, playerIndex, frameScoreModalDetails})}
+          ${frameScore({
+            frameIndex,
+            player,
+            playerIndex,
+            frameScoreModalDetails
+          })}
         </a>
       `.key(frame))}
     </div>
@@ -35,40 +51,46 @@ export let playerFrames = ({
       ${score({player})}
     </div>
   `
-}
-playerFrames = gem(playerFrames)
+})
 
-export let score = ({player}) => () => html`
+export const score = tag(({player}) => html`
   <div style="text-align: center;">
     ${!player.gameover && html`<strong>SCORE:</strong>`}
     ${player.gameover && html`<strong>FINAL SCORE:</strong>`}
     ${getPlayerScore(player)}
   </div>
-`
-score = gem(score)
+`)
 
-export let frameScore = ({player, playerTurn, playerIndex, frameIndex, currentFrame}) => () => html`
+export const frameScore = tag(({
+  player,
+  playerIndex,
+  frameIndex,
+}) => {
+  const game = providers.inject( Game )
+
+  return html`
   <!-- playerFrames.frameScore.js -->
   <div
     style=${
       'display:flex;flex-grow:1;justify-content: center;align-items: center;text-align:center;' +
-      (playerTurn === playerIndex ? 'min-width:15vw;min-height:15vw;' : '') + 
-      (playerTurn === playerIndex && currentFrame === frameIndex ? 'background:rgba(255,234,142,.8);' : '')
+      (game.playerTurn === playerIndex ? 'min-width:15vw;min-height:15vw;' : '') + 
+      (game.playerTurn === playerIndex && game.currentFrame === frameIndex ? 'background:rgba(255,234,142,.8);' : '')
     }
   >
     <!-- tap to score -->
-    ${playerTurn === playerIndex && currentFrame === frameIndex && player.scores[frameIndex] == undefined && html`
-      <div style="opacity:.5;font-size:.8em;line-height:1em;">
+    ${game.playerTurn === playerIndex && game.currentFrame === frameIndex && player.scores[frameIndex] == undefined && html`
+      <div style="opacity:.5;font-size:.8em;line-height:1em;"
+        class="animate__animated animate__jello animate__infinite animate__slower"
+      >
         tap<br />to<br />score
       </div>
     `}
 
     ${player.scores[frameIndex] !== undefined && html`
       <div oninit=${animateInit} ondestroy=${animateDestroy}>
-        ${player.scores[frameIndex] === 3 && (playerIndex!=playerTurn || frameIndex!=currentFrame) && '💎'}
+        ${player.scores[frameIndex] === 3 && (playerIndex!=game.playerTurn || frameIndex!=game.currentFrame) && '💎'}
         ${player.scores[frameIndex] == undefined ? '' : player.scores[frameIndex]}
       </div>
     `}
   </div>
-`
-frameScore = gem(frameScore)
+`})
