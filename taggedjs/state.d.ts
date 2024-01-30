@@ -1,16 +1,14 @@
-import { TagSupport } from "./getTagSupport.js";
 export type StateConfig = ((x?: any) => [any, any]);
-export type StateConfigArray = StateConfig[];
-export type State = {
-    newest: StateConfigArray;
-    oldest?: StateConfigArray;
-};
-export type StateTagSupport = TagSupport & {
-    state?: State;
-};
-export declare const config: {
+export type StateConfigArray = {
+    callback: StateConfig;
+    lastValue?: any;
+}[];
+export type Config = {
     array: StateConfigArray;
     rearray: StateConfigArray;
+};
+export type State = {
+    newest: StateConfigArray;
 };
 /**
  * @template T
@@ -19,3 +17,5 @@ export declare const config: {
  */
 export declare function state<T>(defaultValue: T, getSetMethod?: (x: T) => [T, T]): T;
 export declare function getStateValue(state: StateConfig): any;
+export declare class StateEchoBack {
+}

@@ -1,7 +1,8 @@
-import { processTagResult } from "./interpolateTemplate.js";
+import { processTagResult } from "./processTagResult.function.js";
 export function processTagArray(result, value, // arry of Tag classes
 template, // <template end interpolate />
-ownerTag, counts) {
+ownerTag, options) {
+    const clones = [];
     result.lastArray = result.lastArray || []; // {tag, index}[] populated in processTagResult
     let removed = 0;
     /** 🗑️ remove previous items first */
@@ -12,15 +13,24 @@ ownerTag, counts) {
         if (lessLength || subArrayValue !== item.tag.arrayValue) {
             const last = result.lastArray[index];
             const tag = last.tag;
-            tag.destroy(counts.removed, false);
+            tag.destroy({
+                stagger: options.counts.removed,
+                byParent: false
+            });
             ++removed;
-            ++counts.removed;
+            ++options.counts.removed;
             return false;
         }
         return true;
     });
+    // const masterBefore = template || (template as any).clone
+    const before = template || template.clone;
     value.forEach((subTag, index) => {
-        subTag.tagSupport = ownerTag.tagSupport;
+        // subTag.tagSupport = ownerTag.tagSupport
+        // const itemMemory = subTag.tagSupport.memory
+        subTag.tagSupport = { ...ownerTag.tagSupport };
+        subTag.tagSupport.memory = { ...ownerTag.tagSupport.memory };
+        subTag.tagSupport.memory.context = {}; // itemMemory
         subTag.ownerTag = ownerTag;
         ownerTag.children.push(subTag);
         if (subTag.arrayValue === undefined) {
@@ -36,14 +46,14 @@ ownerTag, counts) {
             if (previous.tag.arrayValue === subTag.arrayValue) {
                 previous.tag.updateValues(subTag.values);
             }
-            return;
+            return [];
         }
-        const before = template || template.clone;
-        processTagResult(subTag, result, before, {
+        const nextClones = processTagResult(subTag, result, before, {
             index,
-            counts,
+            ...options,
         });
+        clones.push(...nextClones);
     });
-    return;
+    return clones;
 }
 //# sourceMappingURL=processTagArray.js.map

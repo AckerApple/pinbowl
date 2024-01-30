@@ -8,6 +8,7 @@ import { animateDestroy } from "./animations.js"
 export const SmallBowlApp = tag(() => {
   // app.js - SmallBowlApp
   const frameScoreModalDetails = state(frameScoreDetails)
+  // let frameScoreModalDetails = state(frameScoreDetails, x => [frameScoreDetails, frameScoreDetails = x])
 
   const game = providers.create(Game)
   let debug = state(false, x => [debug, debug = x])
@@ -63,9 +64,10 @@ export const SmallBowlApp = tag(() => {
     <h2>🎳 ${game.players.length ? game.players.length+' Player' : 'New'} Pinbowl game</h2>
     
     <!-- 👤 players loop -->
-    <div style="display: flex;flex-wrap: wrap;">
+    <div id="players_loop" style="display: flex;flex-wrap: wrap;">
       ${playersLoop({frameScoreModalDetails})}
     </div>
+    <!-- end: 👤 players loop -->
 
     ${footerButtons({restartGame, endGame})}
     

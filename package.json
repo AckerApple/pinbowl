@@ -7,14 +7,17 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "deploy": "npm run build && npm run save",
-    "build": "cp -R src/. ./",
+    "build": "cp -R src/. ./ && echo \"✅ built\"",
+    "build:watch": "chokidar 'src/**/*' -c 'npm run build'",
     "save": "git add . && git commit -m \"update\" && git push",
-    "update": "npm install taggedjs && cp node_modules/taggedjs/index.js src/tagged.js"
+    "update": "npm install taggedjs && cp node_modules/taggedjs/index.js src/tagged.js",
+    "postinstall": "npm run update"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "chokidar-cli": "^3.0.0",
     "taggedjs": "^0.0.12"
   }
 }

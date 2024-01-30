@@ -1,4 +1,3 @@
-import { interpolateElement } from "./interpolateElement.js";
 import { getTagSupport } from "./getTagSupport.js";
 import { runBeforeRender } from "./tagRunner.js";
 export function renderAppToElement(app, element, props) {
@@ -7,26 +6,20 @@ export function renderAppToElement(app, element, props) {
     // have a function setup and call the tagWrapper with (props, {update, async, on})
     const result = applyTagUpdater(wrapper);
     const { tag, tagSupport } = result;
-    let lastTag;
-    tagSupport.mutatingRender = () => {
-        runBeforeRender(tagSupport, tag);
-        tag.beforeRedraw();
-        const fromTag = lastTag = wrapper.wrapper();
-        fromTag.setSupport(tag.tagSupport);
-        tag.afterRender();
-        tag.updateByTag(fromTag);
-        if (lastTag) {
-            lastTag.destroy(0);
-        }
-        return lastTag;
-    };
+    tag.appElement = element;
+    addAppTagRender(tagSupport, tag);
     const context = tag.updateValues(tag.values);
-    const template = tag.getTemplate();
-    element.innerHTML = template.string;
-    interpolateElement(element, context, tag);
+    const templateElm = document.createElement('template');
+    templateElm.setAttribute('tag-detail', 'app-template-placeholder');
+    element.appendChild(templateElm);
+    tag.buildBeforeElement(templateElm);
+    element.tag = tag;
+    element.tags = app.original.tags;
+    element.setUse = app.original.setUse;
+    return tag;
 }
 export function applyTagUpdater(wrapper) {
-    const tagSupport = getTagSupport(wrapper);
+    const tagSupport = getTagSupport(0, wrapper);
     runBeforeRender(tagSupport);
     // Call the apps function for our tag templater
     const templater = tagSupport.templater;
@@ -34,5 +27,22 @@ export function applyTagUpdater(wrapper) {
     tag.tagSupport = tagSupport;
     tag.afterRender();
     return { tag, tagSupport };
+}
+/** Overwrites arguments.tagSupport.mutatingRender */
+export function addAppTagRender(tagSupport, tag) {
+    let lastTag;
+    tagSupport.mutatingRender = () => {
+        runBeforeRender(tagSupport, tag);
+        tag.beforeRedraw();
+        const templater = tagSupport.templater; // wrapper
+        const fromTag = lastTag = templater.wrapper();
+        fromTag.setSupport(tag.tagSupport);
+        tag.afterRender();
+        tag.updateByTag(fromTag);
+        if (lastTag) {
+            lastTag.destroy({ stagger: 0 });
+        }
+        return lastTag;
+    };
 }
 //# sourceMappingURL=renderAppToElement.js.map

@@ -16,6 +16,7 @@ export const footerButtons = tag(({
       <!-- add player -->
       ${game.currentFrame === 0 && html`
         <button type="button" id="player_add_button"
+          name=${'player_add_button'}
           oninit=${animateInit} ondestroy=${animateDestroy}
           onclick=${() => game.addPlayer()}
         >👤 Add ${game.players.length + 1}${(x => (x === '1' && 'st') || (x === '2' && 'nd')  || (x === '3' && 'rd') || 'th')((game.players.length+1).toString().slice(-1))} Player</button>

@@ -1,8 +1,13 @@
 export type Subscription = (() => void) & {
     unsubscribe: () => any;
 };
-type Subscriber = () => any;
-export declare class Subject {
+type Subscriber = (value?: any) => any;
+export interface SubjectLike {
+    subscribe: (callback: (value?: any) => any) => any;
+    isSubject?: boolean;
+}
+export declare class Subject implements SubjectLike {
+    isSubject: boolean;
     subscribers: Subscriber[];
     value?: any;
     subscribe(callback: Subscriber): Subscription;

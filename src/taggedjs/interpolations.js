@@ -1,6 +1,6 @@
 export const interpolateReplace = /(?:<[^>]*>)|({__tagVar[^}]+})/g;
 /** replaces ${x} with <template id="x-start"></template><template id="x-end"></template> */
-export function interpolateToTemplates(template) {
+export function interpolateToTemplates(template, { depth }) {
     const keys = [];
     const string = template.replace(interpolateReplace, (match, expression) => {
         if (match.startsWith('<')) {
@@ -10,7 +10,7 @@ export function interpolateToTemplates(template) {
         const noBraces = expression.substring(1, expression.length - 1);
         const id = noBraces;
         keys.push(id);
-        return `<template interpolate end id="${id}"></template>`;
+        return `<template interpolate end id="${id}" depth="${depth}"></template>`;
     });
     return { string, keys };
 }

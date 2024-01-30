@@ -1,17 +1,20 @@
-import { setUse } from "./tagRunner.js";
-/** When undefined, it means a tag is being built for the first time so do run init(s) */
-export let initCurrentTag;
-export function setCurrentInitTag(tag) {
-    initCurrentTag = tag;
+import { setUse } from "./setUse.function.js";
+function setCurrentTagSupport(support) {
+    setUse.memory.initCurrentSupport = support;
 }
 export function onInit(callback) {
-    if (!initCurrentTag) {
-        callback();
+    if (!setUse.memory.initCurrentSupport) {
+        console.warn('possible init issue?');
+        return;
+    }
+    if (!setUse.memory.initCurrentSupport.memory.init) {
+        setUse.memory.initCurrentSupport.memory.init = callback;
+        callback(); // fire init
     }
 }
 setUse({
-    beforeRender: (_tagSupport, tag) => {
-        setCurrentInitTag(tag);
+    beforeRender: (tagSupport) => {
+        setCurrentTagSupport(tagSupport);
     }
 });
 //# sourceMappingURL=onInit.js.map

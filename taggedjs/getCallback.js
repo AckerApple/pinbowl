@@ -1,16 +1,16 @@
+import { setUse } from "./setUse.function.js";
 import { getStateValue } from "./state.js";
-import { setUse } from "./tagRunner.js";
 export let getCallback = () => (callback) => () => {
     throw new Error('The real callback function was called and that should never occur');
 };
 setUse({
     beforeRender: (tagSupport) => {
-        tagSupport.callbacks = [];
+        tagSupport.memory.callbacks = [];
         getCallback = () => {
             const callbackMaker = (callback) => {
                 const trigger = () => {
-                    const state = tagSupport.state;
-                    const oldest = callbackMaker.state; // state.oldest as StateConfigArray
+                    const state = tagSupport.memory.state;
+                    const oldest = callbackMaker.state;
                     const newest = state.newest;
                     // ensure that the oldest has the latest values first
                     updateState(newest, oldest);
@@ -27,27 +27,33 @@ setUse({
                         });
                     }
                 };
-                const state = tagSupport.state;
+                const state = tagSupport.memory.state;
                 trigger.state = state;
                 return trigger;
             };
-            const callbacks = tagSupport.callbacks;
+            const callbacks = tagSupport.memory.callbacks;
             callbacks.push(callbackMaker);
             return callbackMaker;
         };
     },
     afterRender: (tagSupport) => {
-        const callbacks = tagSupport.callbacks;
+        const callbacks = tagSupport.memory.callbacks;
         callbacks.forEach(callback => {
-            const state = tagSupport.state;
+            const state = tagSupport.memory.state;
             callback.state = [...state.newest];
         });
-    }
+    },
+    afterTagClone(_oldTag, newTag) {
+        // do not transfer callbacks
+        newTag.tagSupport.memory.callbacks = [];
+    },
 });
 function updateState(stateFrom, stateTo) {
     stateFrom.forEach((state, index) => {
-        const oldValue = getStateValue(state);
-        const [checkValue] = stateTo[index](oldValue);
+        const oldValue = getStateValue(state.callback);
+        // const [checkValue] = stateTo[index].callback( oldValue )
+        stateTo[index].callback(oldValue);
+        stateTo[index].lastValue = oldValue;
     });
 }
 //# sourceMappingURL=getCallback.js.map

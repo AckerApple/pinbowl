@@ -1,5 +1,3 @@
-import { wait } from "./taggedjs/index.js"
-
 export const animateInit = async ({target, stagger}) => {
   target.style.opacity = 0
   
@@ -43,4 +41,10 @@ export function captureElementPosition(element) {
     element.style.height = toHeight
     element.style.position = 'fixed'
   }, 0)
+}
+
+function wait(time) {
+  return new Promise((res) => {
+    setTimeout(res, time)
+  })
 }

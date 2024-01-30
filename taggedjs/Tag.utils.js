@@ -1,6 +1,5 @@
-import { getTagSupport } from "./getTagSupport.js";
-import { config as providers } from "./providers.js";
 import { ValueSubject } from "./ValueSubject.js";
+import { redrawTag } from "./redrawTag.function.js";
 import { runBeforeRender } from "./tagRunner.js";
 export function getSubjectFunction(value, tag) {
     return new ValueSubject(bindSubjectFunction(value, tag));
@@ -38,48 +37,27 @@ export function bindSubjectFunction(value, tag) {
 export function setValueRedraw(templater, // latest tag function to call for rendering
 existing, ownerTag) {
     // redraw does not communicate to parent
-    templater.redraw = () => {
+    templater.redraw = (force // forces redraw on children
+    ) => {
         // Find previous variables
         const existingTag = existing.tag;
-        const tagSupport = existingTag?.tagSupport || getTagSupport(templater); // this.tagSupport
-        // signify to other operations that a rendering has occurred so they do not need to render again
-        ++tagSupport.renderCount;
-        existing.tagSupport = tagSupport;
-        // const self = this as any
-        const self = templater;
-        tagSupport.mutatingRender = tagSupport.mutatingRender || existing.tagSupport?.mutatingRender || ( /* TODO: we might be able to remove this last OR */self.tagSupport.mutatingRender);
-        const runtimeOwnerTag = existingTag?.ownerTag || ownerTag;
-        runBeforeRender(tagSupport, tagSupport.oldest);
-        if (tagSupport.oldest) {
-            tagSupport.oldest.beforeRedraw();
-        }
-        else {
-            providers.ownerTag = runtimeOwnerTag;
-        }
-        const retag = templater.wrapper();
-        retag.tagSupport = tagSupport;
-        if (tagSupport.oldest) {
-            tagSupport.oldest.afterRender();
-        }
-        else {
-            retag.afterRender();
-        }
-        templater.newest = retag;
-        retag.ownerTag = runtimeOwnerTag;
-        const oldest = tagSupport.oldest = tagSupport.oldest || retag;
-        tagSupport.newest = retag;
-        const oldestTagSupport = oldest.tagSupport;
-        oldest.tagSupport = oldestTagSupport || tagSupport;
-        oldest.tagSupport.templater = templater;
-        // retag.getTemplate() // cause lastTemplateString to render
-        retag.setSupport(tagSupport);
-        const isSameTag = existingTag && existingTag.isLikeTag(retag);
-        // If previously was a tag and seems to be same tag, then just update current tag with new values
-        if (isSameTag) {
-            oldest.updateByTag(retag);
+        const { remit, retag } = redrawTag(existingTag, templater, ownerTag);
+        existing.tagSupport = retag.tagSupport;
+        if (!remit) {
             return;
         }
         existing.set(templater);
+        if (force) {
+            const context = existingTag.tagSupport.memory.context;
+            Object.values(context).forEach((item) => {
+                if (!item.value?.isTemplater) {
+                    return;
+                }
+                runBeforeRender(item.tag.tagSupport, item.tag);
+                item.tag.beforeRedraw();
+                item.value.redraw();
+            });
+        }
         return retag;
     };
 }

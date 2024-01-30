@@ -1,4 +1,5 @@
-import { wait, Subject } from "./taggedjs/index.js"
+import { Subject } from "./taggedjs/index.js"
+import { wait } from "./wait.function.js"
 
 export default async function runTest() {
   runTest.testing = true

@@ -1,11 +1,14 @@
-import { Tag } from "./Tag.class.js";
+import { Tag, TagMemory } from "./Tag.class.js";
 import { TemplaterResult } from "./tag.js";
 export interface TagSupport {
+    depth: number;
+    memory: TagMemory;
     templater?: TemplaterResult;
     /** Indicator of re-rending. Saves from double rending something already rendered */
     renderCount: 0;
-    mutatingRender: () => any;
-    render: () => any;
+    mutatingRender: (force?: boolean) => any;
+    render: (force?: boolean) => any;
+    renderExistingTag: (tag: Tag, newTemplater: TemplaterResult) => boolean;
     /**
      *
      * @param {*} props value.props
@@ -17,4 +20,4 @@ export interface TagSupport {
     oldest?: Tag;
     newest?: Tag;
 }
-export declare function getTagSupport(templater?: TemplaterResult): TagSupport;
+export declare function getTagSupport(depth: number, templater?: TemplaterResult): TagSupport;

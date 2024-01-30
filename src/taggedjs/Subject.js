@@ -1,18 +1,23 @@
 export class Subject {
+    isSubject = true;
     subscribers = [];
     value;
     // unsubcount = 0 // 🔬 testing
     subscribe(callback) {
         this.subscribers.push(callback);
-        Subject.globalSubs.push(callback); // 🔬 testing
-        ++Subject.globalSubCount;
+        SubjectClass.globalSubs.push(callback); // 🔬 testing
+        SubjectClass.globalSubCount$.set(SubjectClass.globalSubCount$.value + 1);
         const unsubscribe = () => {
-            removeSubFromArray(this.subscribers, callback);
-            removeSubFromArray(Subject.globalSubs, callback); // 🔬 testing
-            --Subject.globalSubCount;
+            unsubscribe.unsubscribe();
         };
         // Return a function to unsubscribe from the BehaviorSubject
-        unsubscribe.unsubscribe = unsubscribe;
+        unsubscribe.unsubscribe = () => {
+            removeSubFromArray(this.subscribers, callback);
+            removeSubFromArray(SubjectClass.globalSubs, callback); // 🔬 testing
+            SubjectClass.globalSubCount$.set(SubjectClass.globalSubCount$.value - 1);
+            // any double unsubscribes will be ignored
+            unsubscribe.unsubscribe = () => undefined;
+        };
         return unsubscribe;
     }
     set(value) {
@@ -31,8 +36,8 @@ function removeSubFromArray(subscribers, callback) {
         subscribers.splice(index, 1);
     }
 }
-;
-Subject.globalSubCount = 0 // for ease of debugging
-;
-Subject.globalSubs = []; // 🔬 testing
+const SubjectClass = Subject;
+SubjectClass.globalSubs = []; // 🔬 for testing
+SubjectClass.globalSubCount$ = new Subject(); // for ease of debugging
+SubjectClass.globalSubCount$.set(0);
 //# sourceMappingURL=Subject.js.map

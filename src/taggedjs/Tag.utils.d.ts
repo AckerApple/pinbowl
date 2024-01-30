@@ -1,6 +1,12 @@
+import { TagSupport } from "./getTagSupport.js";
 import { ValueSubject } from "./ValueSubject.js";
-import { Tag } from "./Tag.class.js";
 import { TemplaterResult } from "./tag.js";
+import { Subject } from "./Subject.js";
+import { Tag } from "./Tag.class.js";
+export type TagSubject = Subject & {
+    tagSupport: TagSupport;
+    tag: Tag;
+};
 export declare function getSubjectFunction(value: any, tag: Tag): ValueSubject;
 /**
  * @param {*} value
@@ -18,7 +24,7 @@ export declare function bindSubjectFunction(value: (...args: any[]) => any, tag:
  * @param {Tag} ownerTag
  */
 export declare function setValueRedraw(templater: TemplaterResult, // latest tag function to call for rendering
-existing: any, ownerTag: Tag): void;
+existing: TagSubject, ownerTag: Tag): void;
 export declare function elementDestroyCheck(nextSibling: Element & {
     ondestroy?: () => any;
 }, stagger: number): any;

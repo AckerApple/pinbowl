@@ -1,12 +1,15 @@
 import { deepClone } from "./deepFunctions.js";
-import { setUse } from "./tagRunner.js";
-export const config = {
+import { setUse } from "./setUse.function.js";
+// TODO: rename
+setUse.memory.providerConfig = {
     providers: [],
     currentTag: undefined,
     ownerTag: undefined,
 };
 function get(constructMethod) {
-    return config.providers.find(provider => provider.constructMethod === constructMethod);
+    const config = setUse.memory.providerConfig;
+    const providers = config.providers;
+    return providers.find(provider => provider.constructMethod === constructMethod);
 }
 export const providers = {
     /**
@@ -22,6 +25,7 @@ export const providers = {
         }
         // Providers with provider requirements just need to use providers.create() and providers.inject()
         const instance = constructMethod.constructor ? new constructMethod() : constructMethod();
+        const config = setUse.memory.providerConfig;
         config.providers.push({
             constructMethod,
             instance,
@@ -39,6 +43,7 @@ export const providers = {
         if (oldValue) {
             return oldValue.instance;
         }
+        const config = setUse.memory.providerConfig;
         let owner = {
             ownerTag: config.ownerTag
         };
@@ -56,13 +61,14 @@ export const providers = {
             }
             owner = owner.ownerTag; // cause reloop
         }
-        const msg = `Could not inject provider: ${constructor}`;
+        const msg = `Could not inject provider: ${constructor.name} ${constructor}`;
         console.warn(`${msg}. Available providers`, config.providers);
         throw new Error(msg);
     }
 };
 setUse({
     beforeRedraw: (_tagSupport, tag) => {
+        const config = setUse.memory.providerConfig;
         config.currentTag = tag;
         config.ownerTag = tag.ownerTag;
         if (tag.providers.length) {
@@ -71,6 +77,7 @@ setUse({
         }
     },
     afterRender: (_tagSupport, tag) => {
+        const config = setUse.memory.providerConfig;
         tag.providers = [...config.providers];
         config.providers.length = 0;
     }

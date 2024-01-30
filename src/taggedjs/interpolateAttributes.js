@@ -1,9 +1,10 @@
-import { Subject } from "./Subject.js";
 import { inputAttribute } from "./inputAttribute.js";
+import { isSubjectInstance } from "./isInstance.js";
 const startRegX = /^\s*{/;
 const endRegX = /}\s*$/;
 export function interpolateAttributes(child, scope, ownerTag) {
-    child.getAttributeNames().forEach(attrName => {
+    const attrNames = child.getAttributeNames();
+    attrNames.forEach(attrName => {
         const value = child.getAttribute(attrName);
         const isSpecial = isSpecialAttr(attrName);
         // An attempt to replicate React
@@ -19,7 +20,7 @@ export function interpolateAttributes(child, scope, ownerTag) {
                 };
                 return;
             }
-            if (result instanceof Subject) {
+            if (isSubjectInstance(result)) {
                 child.removeAttribute(attrName);
                 const callback = (newAttrValue) => {
                     if (newAttrValue instanceof Function) {
@@ -32,9 +33,11 @@ export function interpolateAttributes(child, scope, ownerTag) {
                     }
                     if (isSpecial) {
                         inputAttribute(attrName, newAttrValue, child);
+                        return;
                     }
                     if (newAttrValue) {
                         child.setAttribute(attrName, newAttrValue);
+                        return;
                     }
                     const isDeadValue = newAttrValue === undefined || newAttrValue === false || newAttrValue === null;
                     if (isDeadValue) {
@@ -46,14 +49,10 @@ export function interpolateAttributes(child, scope, ownerTag) {
                 };
                 const sub = result.subscribe(callback);
                 ownerTag.cloneSubs.push(sub); // this is where unsubscribe is picked up
+                // child.setAttribute(attrName, result.value)
+                // callback(result.value)
                 return;
             }
-            // child.setAttribute(attrName, result)
-            /*
-            if(attrName === 'style') {
-              return
-            }
-            */
             child.setAttribute(attrName, result.value);
             return;
         }
@@ -63,6 +62,7 @@ export function interpolateAttributes(child, scope, ownerTag) {
         }
     });
 }
+/** Looking for (class | style) followed by a period */
 export function isSpecialAttr(attrName) {
     return attrName.search(/^(class|style)(\.)/) >= 0;
 }
