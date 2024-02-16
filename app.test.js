@@ -3,17 +3,35 @@ import { wait } from "./wait.function.js"
 
 export default async function runTest() {
   runTest.testing = true
+  await wait(1000) // let display update runTest.testing before actually testing
   console.info('⏳ testing started...')
   
   await wait(0) // let display update runTest.testing before actually testing
   
   try {
     const startCount = Subject.globalSubCount
-    const playerAddButton = document.getElementById('player_add_button')
-     
+    let playerAddButton = document.getElementById('player_add_button')
+    
+    expect(document.querySelectorAll('#player_0_input').length).toBe(0)
+    expect(document.querySelectorAll('#player_1_input').length).toBe(0)
+    
+    console.log('adding player 1...')
+    await wait(1000) // let display update runTest.testing before actually testing
     playerAddButton.click()
+    await wait(1000) // let display update runTest.testing before actually testing
+
+    // document.getElementById('player_0_input').blur()
+    
+    expect(document.querySelectorAll('#player_0_input').length).toBe(1)
+    expect(document.querySelectorAll('#player_1_input').length).toBe(0)
+    
+    console.log('adding player 2...')
+    playerAddButton = document.getElementById('player_add_button')
     playerAddButton.click()
-  
+
+    expect(document.querySelectorAll('#player_0_input').length).toBe(1)
+    expect(document.querySelectorAll('#player_1_input').length).toBe(1)
+
     const player0Input = document.getElementById('player_0_input')
     const player1Input = document.getElementById('player_1_input')
     
@@ -23,46 +41,94 @@ export default async function runTest() {
     player0Input.onkeyup({target:player0Input})
     player1Input.onkeyup({target:player1Input})
     
+    expect(document.querySelectorAll('#player_0_input').length).toBe(1)
+    expect(document.querySelectorAll('#player_1_input').length).toBe(1)
+
     document.getElementById('start_game_button').click()
+
+    expect(document.getElementById('score_strike_button')).toBe(null)
+
     
     // frame 1 - strike
-    document.getElementById('player_0_frame_0').click()
-    document.getElementById('score_strike_button').click()
-    document.getElementById('player_1_frame_0').click()
-    document.getElementById('score_strike_button').click()
+    document.getElementById('player_0_frame_0').onclick()
+    expect(document.getElementById('score_strike_button')).toBeDefined()
+    await document.getElementById('score_strike_button').onclick()
+    
+    await wait(1000)
+    expect(document.getElementById('score_strike_button')).toBe(null)
+    
+    document.getElementById('player_1_frame_0').onclick()
+    document.getElementById('score_strike_button').onclick()
 
     // frame 2 - spare
-    document.getElementById('player_0_frame_1').click()
-    document.getElementById('score_spare_button').click()
-    document.getElementById('player_1_frame_1').click()
-    document.getElementById('score_spare_button').click()
+    document.getElementById('player_0_frame_1').onclick()
+    document.getElementById('score_spare_button').onclick()
+    document.getElementById('player_1_frame_1').onclick()
+    document.getElementById('score_spare_button').onclick()
 
     // frame 3 - 1
-    document.getElementById('player_0_frame_2').click()
-    document.getElementById('score_1_button').click()
-    document.getElementById('player_1_frame_2').click()
-    document.getElementById('score_1_button').click()
+    document.getElementById('player_0_frame_2').onclick()
+    document.getElementById('score_1_button').onclick()
+    document.getElementById('player_1_frame_2').onclick()
+    document.getElementById('score_1_button').onclick()
 
     // frame 4 - 0
-    document.getElementById('player_0_frame_3').click()
-    document.getElementById('score_0_button').click()
-    document.getElementById('player_1_frame_3').click()
-    document.getElementById('score_0_button').click()
+    document.getElementById('player_0_frame_3').onclick()
+    document.getElementById('score_0_button').onclick()
+    document.getElementById('player_1_frame_3').onclick()
+    document.getElementById('score_0_button').onclick()
 
     // frame 5 - 0
-    document.getElementById('player_0_frame_4').click()
-    document.getElementById('score_0_button').click()
-    document.getElementById('player_1_frame_4').click()
-    document.getElementById('score_1_button').click() // winner
-
-    await wait(2)
-
-    document.getElementById('end_game_button').click()
-
-    await wait(2)
+    document.getElementById('player_0_frame_4').onclick()
+    document.getElementById('score_0_button').onclick()
+    document.getElementById('player_1_frame_4').onclick()
     
-    document.getElementById('player_0_remove').click()
+    const winner = document.getElementById('score_1_button').onclick() // winner
+    expect(winner instanceof Promise).toBeDefined()
+    expect(await winner).toBe('no-data-ever')
+    
+    document.getElementById('closeAlert').onclick()
+    
+    console.info('test game completed. ending...')
+
+    const promise = document.getElementById('end_game_button').onclick()
+    await document.getElementById('confirmAlert').onclick()
+    await promise
+
+    let addPlayerButtons = document.querySelectorAll('#player_add_button')
+    expect(addPlayerButtons.length).toBe(1)
+
+    console.info('removing player 2...')
+
+    let p1remove = document.getElementById('player_1_remove')
+    if(!p1remove) {
+      throw new Error('Player 2 remove button expected to be there')
+    }
+
+    console.info('removing player 1...')
+    let p0remove = document.getElementById('player_0_remove')
+    p0remove.click()
+
+    await wait(1000)
+
+    p1remove = document.getElementById('player_1_remove')
+    if(p1remove) {
+      throw new Error('Player 2 remove button expected to have been removed')
+    }
+
     document.getElementById('player_0_remove').click() // removes player 2 who is now 1
+
+    await wait(1000)
+
+    p0remove = document.getElementById('player_0_remove')
+    if(p0remove) {
+      throw new Error('Player 1 remove button expected to have been removed')
+    }
+
+    let removeAllPlayers = p0remove = document.getElementById('remove_all_players')
+    if(removeAllPlayers) {
+      throw new Error('Remove all players button NOT expected to be on document')
+    }
    
     if(Subject.globalSubCount != startCount ) {
       throw new Error(`Expected ${startCount} subscriptions at the end but counted ${Subject.globalSubCount}`)
@@ -76,4 +142,27 @@ export default async function runTest() {
   }
   
   runTest.testing = false
+}
+
+function expect(received) {
+  return {
+    toBeDefined: () => {
+      if(received !== undefined) {
+        return
+      }
+
+      const message = `Expected ${JSON.stringify(received)} to be defined`
+      console.error(message, {received, expected})
+      throw new Error(message)
+    },
+    toBe: (expected) => {
+      if(received === expected) {
+        return
+      }
+
+      const message = `Expected ${JSON.stringify(received)} to be ${JSON.stringify(expected)}`
+      console.error(message, {received, expected})
+      throw new Error(message)
+    }
+  }
 }

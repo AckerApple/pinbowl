@@ -4,56 +4,47 @@ export let getCallback = () => (callback) => () => {
     throw new Error('The real callback function was called and that should never occur');
 };
 setUse({
-    beforeRender: (tagSupport) => {
-        tagSupport.memory.callbacks = [];
-        getCallback = () => {
-            const callbackMaker = (callback) => {
-                const trigger = () => {
-                    const state = tagSupport.memory.state;
-                    const oldest = callbackMaker.state;
-                    const newest = state.newest;
-                    // ensure that the oldest has the latest values first
-                    updateState(newest, oldest);
-                    // run the callback
-                    const promise = callback();
-                    // send the oldest state changes into the newest
-                    updateState(oldest, newest);
-                    tagSupport.render();
-                    if (promise instanceof Promise) {
-                        promise.finally(() => {
-                            // send the oldest state changes into the newest
-                            updateState(oldest, newest);
-                            tagSupport.render();
-                        });
-                    }
-                };
-                const state = tagSupport.memory.state;
-                trigger.state = state;
-                return trigger;
-            };
-            const callbacks = tagSupport.memory.callbacks;
-            callbacks.push(callbackMaker);
-            return callbackMaker;
-        };
-    },
-    afterRender: (tagSupport) => {
-        const callbacks = tagSupport.memory.callbacks;
-        callbacks.forEach(callback => {
-            const state = tagSupport.memory.state;
-            callback.state = [...state.newest];
-        });
-    },
-    afterTagClone(_oldTag, newTag) {
-        // do not transfer callbacks
-        newTag.tagSupport.memory.callbacks = [];
-    },
+    beforeRender: (tagSupport) => initMemory(tagSupport),
+    beforeRedraw: (tagSupport) => initMemory(tagSupport),
+    // afterRender: (tagSupport: TagSupport) => {},
 });
 function updateState(stateFrom, stateTo) {
     stateFrom.forEach((state, index) => {
-        const oldValue = getStateValue(state.callback);
-        // const [checkValue] = stateTo[index].callback( oldValue )
-        stateTo[index].callback(oldValue);
-        stateTo[index].lastValue = oldValue;
+        const fromValue = getStateValue(state);
+        const callback = stateTo[index].callback;
+        if (callback) {
+            callback(fromValue); // set the value
+        }
+        stateTo[index].lastValue = fromValue; // record the value
     });
+}
+function initMemory(tagSupport) {
+    getCallback = () => {
+        const oldState = setUse.memory.stateConfig.array;
+        const callbackMaker = (callback) => {
+            const trigger = (...args) => triggerStateUpdate(tagSupport, callback, oldState, ...args);
+            return trigger;
+        };
+        return callbackMaker;
+    };
+}
+function triggerStateUpdate(tagSupport, callback, oldState, ...args) {
+    const state = tagSupport.memory.state;
+    const newest = state.newest;
+    // ensure that the oldest has the latest values first
+    updateState(newest, oldState);
+    // run the callback
+    const promise = callback(...args);
+    // send the oldest state changes into the newest
+    updateState(oldState, newest);
+    tagSupport.render();
+    // TODO: turn back on below
+    if (promise instanceof Promise) {
+        promise.finally(() => {
+            // send the oldest state changes into the newest
+            updateState(oldState, newest);
+            tagSupport.render();
+        });
+    }
 }
 //# sourceMappingURL=getCallback.js.map

@@ -1,4 +1,4 @@
-export const animateInit = async ({target, stagger}) => {
+export const animateInit = async ({target, stagger}) => {/* animateInit */
   target.style.opacity = 0
   
   if(stagger) {
@@ -9,7 +9,7 @@ export const animateInit = async ({target, stagger}) => {
   target.classList.add('animate__animated','animate__fadeInDown')
 }
 
-export const animateDestroy = async ({target, stagger, capturePosition=true}) => {
+export const animateDestroy = async ({target, stagger, capturePosition=true}) => {/* animateDestroy */
   if(capturePosition) {
     captureElementPosition(target)
   }

@@ -6,12 +6,12 @@ export function inputAttribute(name, value, element) {
     }
     // Example: class.width-full = "true"
     if (names[0] === 'class') {
-        names.pop();
+        names.shift();
         if (value) {
-            names.forEach(name => element.classList.remove(name));
+            names.forEach(name => element.classList.add(name));
         }
         else {
-            names.forEach(name => element.classList.add(name));
+            names.forEach(name => element.classList.remove(name));
         }
         return;
     }

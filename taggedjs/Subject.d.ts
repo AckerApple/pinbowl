@@ -6,7 +6,7 @@ export interface SubjectLike {
     subscribe: (callback: (value?: any) => any) => any;
     isSubject?: boolean;
 }
-export declare class Subject implements SubjectLike {
+export declare class Subject<T> implements SubjectLike {
     isSubject: boolean;
     subscribers: Subscriber[];
     value?: any;

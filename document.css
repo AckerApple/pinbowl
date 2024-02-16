@@ -9,8 +9,9 @@ body {
   height: 100%;
   padding: 0;
   margin: 0;
-  background: #666 linear-gradient(to top, #666, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0)) no-repeat;
   /* Create a gradient from black to transparent */
+  background: #666 linear-gradient(to top, #666, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0)) no-repeat;
+  background-attachment: fixed;
 }
 
 html {

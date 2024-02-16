@@ -90,9 +90,9 @@ export const playersLoop = tag(
 
                 ${(!game.gameStarted || (game.gameStarted && player.edit)) && html`
                   <a id=${`player_${playerIndex}_remove`} 
-                    onclick=${() => {
-                      if(game.gameStarted && !confirm(`Confirm remove player ${playerIndex + 1} ${player.name}`)) return
-                      game.players.splice(playerIndex,1)
+                    onclick=${async () => {
+                      if(game.gameStarted && !await game.confirm(`Confirm remove player ${playerIndex + 1} ${player.name}`)) return
+                      game.removePlayer(playerIndex)
                     }}
                   >🗑️</a>
                 `}
@@ -110,8 +110,6 @@ export const playersLoop = tag(
       </div>
     </div>
   `.key(player))
-
-  // console.log('playersContent',playersContent)
 
   return html`
     <!-- playersLoop.js -->

@@ -3,7 +3,7 @@ import { setUse } from "./setUse.function.js";
 // TODO: rename
 setUse.memory.providerConfig = {
     providers: [],
-    currentTag: undefined,
+    currentTagSupport: undefined,
     ownerTag: undefined,
 };
 function get(constructMethod) {
@@ -12,11 +12,6 @@ function get(constructMethod) {
     return providers.find(provider => provider.constructMethod === constructMethod);
 }
 export const providers = {
-    /**
-     * @template T
-     * @param {(new (...args: any[]) => T) | () => T} constructor
-     * @returns {T}
-     */
     create: (constructMethod) => {
         const existing = get(constructMethod);
         if (existing) {
@@ -48,7 +43,7 @@ export const providers = {
             ownerTag: config.ownerTag
         };
         while (owner.ownerTag) {
-            const ownerProviders = owner.ownerTag.providers;
+            const ownerProviders = owner.ownerTag.tagSupport.memory.providers;
             const provider = ownerProviders.find(provider => {
                 if (provider.constructMethod === constructor) {
                     return true;
@@ -67,19 +62,25 @@ export const providers = {
     }
 };
 setUse({
-    beforeRedraw: (_tagSupport, tag) => {
-        const config = setUse.memory.providerConfig;
-        config.currentTag = tag;
-        config.ownerTag = tag.ownerTag;
-        if (tag.providers.length) {
-            config.providers.length = 0;
-            config.providers.push(...tag.providers);
-        }
+    beforeRender: (tagSupport, ownerTag) => {
+        run(tagSupport, ownerTag);
     },
-    afterRender: (_tagSupport, tag) => {
+    beforeRedraw: (tagSupport, tag) => {
+        run(tagSupport, tag.ownerTag);
+    },
+    afterRender: (tagSupport) => {
         const config = setUse.memory.providerConfig;
-        tag.providers = [...config.providers];
+        tagSupport.memory.providers = [...config.providers];
         config.providers.length = 0;
     }
 });
+function run(tagSupport, ownerTag) {
+    const config = setUse.memory.providerConfig;
+    config.currentTagSuport = tagSupport;
+    config.ownerTag = ownerTag;
+    if (tagSupport.memory.providers.length) {
+        config.providers.length = 0;
+        config.providers.push(...tagSupport.memory.providers);
+    }
+}
 //# sourceMappingURL=providers.js.map

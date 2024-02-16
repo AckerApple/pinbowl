@@ -1,14 +1,7 @@
 export function buildClones(temporary, insertBefore) {
     const clones = [];
-    const templateClone = temporary.children[0];
-    /*
-    if(!templateClone) {
-      return []
-    }
-    */
-    const sibling = templateClone; // a div we added
-    let nextSibling = sibling.nextSibling;
-    temporary.removeChild(templateClone); // remove the div
+    const template = temporary.children[0];
+    let nextSibling = template.content.firstChild;
     while (nextSibling) {
         const nextNextSibling = nextSibling.nextSibling;
         buildSibling(nextSibling, insertBefore);

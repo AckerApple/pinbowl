@@ -28,7 +28,7 @@ export const playerFrames = tag(({
               }
             }
 
-            showFrameScoreModal(player, playerIndex, frameIndex, frameScoreModalDetails)
+            return showFrameScoreModal(player, playerIndex, frameIndex, frameScoreModalDetails)
           }}
         >
           <div style="display:flex;padding:0 .2em;">

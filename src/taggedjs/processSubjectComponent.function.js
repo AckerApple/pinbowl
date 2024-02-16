@@ -1,51 +1,51 @@
-import { getTagSupport } from "./getTagSupport.js";
 import { runBeforeRedraw, runBeforeRender } from "./tagRunner.js";
 import { setUse } from "./setUse.function.js";
 import { processTagResult } from "./processTagResult.function.js";
 export function processSubjectComponent(value, result, template, ownerTag, options) {
-    const anyValue = value;
-    if (anyValue.tagged !== true) {
-        let name = anyValue.name || anyValue.constructor?.name;
+    // TODO: This below check not needed in production mode
+    if (value.tagged !== true) {
+        let name = value.wrapper.original.name || value.wrapper.original.constructor?.name;
         if (name === 'Function') {
             name = undefined;
         }
-        const label = name || anyValue.toString().substring(0, 120);
+        const label = name || value.wrapper.original.toString().substring(0, 120);
         const error = new Error(`Not a tag component. Wrap your function with tag(). Example tag(props => html\`\`) on component:\n\n${label}\n\n`);
         throw error;
     }
     const templater = value;
-    const tagSupport = result.tagSupport || getTagSupport(ownerTag.tagSupport.depth + 1, templater);
+    const tagSupport = value.tagSupport;
     tagSupport.mutatingRender = () => {
         // Is this NOT my first render
         if (result.tag) {
             const exit = tagSupport.renderExistingTag(result.tag, templater);
             if (exit) {
-                return;
+                return result.tag;
             }
         }
         // draw to my parent
         const newest = tagSupport.newest = ownerTag.tagSupport.render();
         return newest;
     };
-    let tag = templater.newest;
+    let retag = templater.newest;
     const providers = setUse.memory.providerConfig;
     providers.ownerTag = ownerTag;
-    let isFirstTime = !tag;
-    runBeforeRender(tagSupport, tag);
-    if (options.forceElement) {
-        isFirstTime = true;
-        const oldTag = tag;
-        // only true when options.forceElement
-        if (oldTag) {
-            runBeforeRedraw(oldTag.tagSupport, oldTag);
-        }
-    }
+    const isFirstTime = !retag || options.forceElement;
     if (isFirstTime) {
-        tag = templater.forceRenderTemplate(tagSupport, ownerTag);
+        if (!retag) {
+            runBeforeRender(tagSupport, ownerTag);
+        }
+        // only true when options.forceElement
+        if (retag) {
+            runBeforeRedraw(tagSupport, retag);
+        }
+        retag = templater.forceRenderTemplate(tagSupport, ownerTag);
     }
-    ownerTag.children.push(tag);
-    tag.setSupport(tagSupport);
-    const clones = processTagResult(tag, result, // The element set here will be removed from document. Also result.tag will be added in here
+    ownerTag.children.push(retag);
+    tagSupport.latestProps = retag.tagSupport.props;
+    tagSupport.latestClonedProps = retag.tagSupport.clonedProps;
+    tagSupport.memory = retag.tagSupport.memory;
+    retag.setSupport(tagSupport);
+    const clones = processTagResult(retag, result, // The element set here will be removed from document. Also result.tag will be added in here
     template, // <template end interpolate /> (will be removed)
     options);
     return clones;

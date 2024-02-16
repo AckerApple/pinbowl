@@ -1,7 +1,11 @@
 import { TagSupport } from "./getTagSupport.js";
-import { TemplaterResult } from "./tag.js";
+import { TagComponent, TemplaterResult } from "./templater.utils.js";
 import { Tag } from "./Tag.class.js";
-export declare function renderAppToElement(app: (...args: unknown[]) => TemplaterResult, element: Element, props: unknown): Tag;
+export declare function renderAppToElement(app: TagComponent, // (...args: unknown[]) => TemplaterResult,
+element: Element, props: unknown): {
+    tag: Tag;
+    tags: TagComponent[];
+};
 export declare function applyTagUpdater(wrapper: TemplaterResult): {
     tag: Tag;
     tagSupport: TagSupport;

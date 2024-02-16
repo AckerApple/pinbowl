@@ -1,23 +1,21 @@
+import { Props } from "./Props.js";
 import { Tag, TagMemory } from "./Tag.class.js";
-import { TemplaterResult } from "./tag.js";
-export interface TagSupport {
-    depth: number;
+import { TemplaterResult } from "./templater.utils.js";
+export declare class TagSupport {
+    templater: TemplaterResult;
+    props?: unknown;
+    clonedProps: Props;
+    latestProps: Props;
+    latestClonedProps: Props;
     memory: TagMemory;
-    templater?: TemplaterResult;
-    /** Indicator of re-rending. Saves from double rending something already rendered */
-    renderCount: 0;
-    mutatingRender: (force?: boolean) => any;
-    render: (force?: boolean) => any;
-    renderExistingTag: (tag: Tag, newTemplater: TemplaterResult) => boolean;
-    /**
-     *
-     * @param {*} props value.props
-     * @param {*} newProps value.newProps
-     * @param {*} compareToProps compareSupport.templater.props
-     * @returns {boolean}
-     */
-    hasPropChanges: (props: any, newProps: any, compareToProps: any) => boolean;
+    constructor(templater: TemplaterResult, props?: unknown);
     oldest?: Tag;
     newest?: Tag;
+    hasPropChanges(props: any, // natural props
+    pastCloneProps: any, // previously cloned props
+    compareToProps: any): boolean;
+    mutatingRender(): Tag;
+    render(): Tag;
+    renderExistingTag(tag: Tag, newTemplater: TemplaterResult): boolean;
 }
-export declare function getTagSupport(depth: number, templater?: TemplaterResult): TagSupport;
+export declare function getTagSupport(templater: TemplaterResult, props?: Props): TagSupport;

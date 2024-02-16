@@ -1,9 +1,21 @@
 import { Subject } from "./taggedjs/index.js"
 
+/**
+ * @typedef {Object} Player
+ * @property {string} name - The name of the player.
+ * @property {number[]} frames - Array of frame numbers.
+ * @property {number[]} scores - Array of scores.
+ * @property {boolean} edit - Indicates if the player's information is editable.
+ * @property {boolean} gameover - Indicates if the game for the player is over.
+ * @property {boolean} won - Indicates if the player has won the game.
+ */
+
 export class Game {
-  playerTurn = 0
+  playerTurn = -1
   gameStarted = false
   currentFrame = 0
+
+  /** @type {Player[]}  */
   players = []
 
   tieBreaker = new Subject()
@@ -14,6 +26,7 @@ export class Game {
   start() {
     console.info('🟢 Starting new game...')
     this.gameStarted = true
+    this.playerTurn = 0
     this.players.forEach(player => player.edit = false)
   }
 
@@ -30,6 +43,10 @@ export class Game {
     console.info('✅ player added', this.players.length)
   }
 
+  /**
+   * 
+   * @returns {Player | undefined}
+   */
   runGameOver() {
     const leadersMeta = this.players.reduce((all,player, playerIndex) => {
       const score = getPlayerScore(player)
@@ -65,10 +82,9 @@ export class Game {
     this.playerTurn = -1
     this.currentFrame = -1
 
-    // let screen render
-    setTimeout(() => {
-      this.winner.set(leaders[0])
-    }, 1)
+    this.winner.set(leaders[0])
+
+    return leaders[0]
   }
   
   increasePlayerTurn() {
@@ -80,7 +96,7 @@ export class Game {
       this.playerTurn=0
 
       if(this.players.every(player => player.gameover)) {
-        this.runGameOver()
+        return this.runGameOver()
       }
     } else {
       console.info('⤵️ Next players turn')
@@ -107,8 +123,7 @@ export class Game {
     }
 
     if(this.players.every(player => player.gameover)) {
-      this.runGameOver()
-      return
+      return this.runGameOver()
     }
 
     this.increasePlayerTurn()
@@ -136,10 +151,16 @@ export class Game {
       return // its not current players turn, most likely just a score edit
     }
 
-    this.submitPlayerScore(player)
+    return this.submitPlayerScore(player)
+  }
+
+  removePlayer(playerIndex) {
+    this.players.splice(playerIndex,1)
+    console.info(`⬇️ removed player ${playerIndex+1} now ${this.players.length} players`)
   }
 
   removeAllPlayers() {
+    console.info(`⬇️⬇️ removing all ${this.players.length} players`)
     this.players.length = 0
   }
 
@@ -154,23 +175,32 @@ export class Game {
       player.gameover = false
     })
   }
+
+  alertData = {message:'', resolve: () => undefined}
+  alert(message) {
+    this.alertData.message = message
+    this.alertData.confirm = false
+    return new Promise(resolve => {
+      this.alertData.resolve = resolve
+      document.getElementById('alertDialog').showModal()
+    })
+  }
+
+  confirm(message) {
+    this.alertData.message = message
+    this.alertData.confirm = true
+    return new Promise(resolve => {
+      this.alertData.resolve = resolve
+      document.getElementById('alertDialog').showModal()
+    })
+  }
+
 }
 
 export function getPlayerScore (player) {
   return player.scores.reduce((all,score) => {
     return all + score
   },0)
-}
-
-/**
- * Creates an instance of a class.
- * @template T
- * @param {new (...args: any[]) => T} classType - The class constructor function.
- * @param {any} args - The arguments to pass to the class constructor.
- * @returns {T} - The created instance of the class.
- */
-function provide(classType) {
-  const object = new classType()
 }
 
 export const frameScoreDetails = {

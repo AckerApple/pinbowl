@@ -6,7 +6,6 @@ export function setUse(use) {
         beforeRedraw: use.beforeRedraw || (() => undefined),
         afterRender: use.afterRender || (() => undefined),
         beforeDestroy: use.beforeDestroy || (() => undefined),
-        afterTagClone: use.afterTagClone || (() => undefined),
     };
     setUse.tagUse.push(useMe);
 }

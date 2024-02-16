@@ -20,11 +20,16 @@ function upperTagDebugProvider() {
   }
 }
 
-export const tagDebug = tag(() => {
-  // tagDebug.js
-  let renderCount = state(0, x => [renderCount, renderCount = x])
-  let counter = state(0, x => [counter, counter = x])
-  let initCounter = state(0, x => [initCounter, initCounter = x])
+export const tagDebug = tag(() => {// tagDebug.js
+  let renderCount = state(0)(x => [renderCount, renderCount = x])
+  let counter = state(0)(x => [counter, counter = x])
+  let initCounter = state(0)(x => [initCounter, initCounter = x])
+  /*
+  let renderCount = state0(0, x => [renderCount, renderCount = x])
+  let counter = state0(0, x => [counter, counter = x])
+  let initCounter = state0(0, x => [initCounter, initCounter = x])
+  */
+
 
   const provider = providers.create( tagDebugProvider )
   console.log('provider',provider)
@@ -83,8 +88,9 @@ export const tagDebug = tag(() => {
 const providerDebug = tag(() => {
   const provider = providers.inject( tagDebugProvider )
   const upperProvider = provider.upper // providers.inject( upperTagDebugProvider )
-
-  let renderCount = state(0, x => [renderCount, renderCount = x])
+  
+  let renderCount = state(0)(x => [renderCount, renderCount = x])
+  // let renderCount = state0(0, x => [renderCount, renderCount = x])
 
   ++renderCount
 

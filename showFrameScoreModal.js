@@ -12,5 +12,5 @@ export function showFrameScoreModal(
   console.info('⠷ Showing frame scoring modal', frameScoreModalDetails)
   
   enterScore.showModal()
-  animateInit({target: enterScore})
+  return animateInit({target: enterScore})
 }

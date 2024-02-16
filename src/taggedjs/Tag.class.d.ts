@@ -3,7 +3,8 @@ import { Provider } from "./providers.js";
 import { Subscription } from "./Subject.js";
 import { Counts } from "./interpolateTemplate.js";
 import { State } from "./state.js";
-export declare const variablePrefix = "__tagVar";
+import { InterpolatedTemplates } from "./interpolations.js";
+export declare const variablePrefix = "__tagvar";
 export declare const escapeVariable: string;
 export declare const escapeSearch: RegExp;
 export type Context = {
@@ -12,7 +13,15 @@ export type Context = {
 export type TagMemory = Record<string, any> & {
     context: Context;
     state: State;
+    providers: Provider[];
 };
+export interface TagTemplate {
+    interpolation: InterpolatedTemplates;
+    string: string;
+    strings: string[];
+    values: unknown[];
+    context: Context;
+}
 export declare class Tag {
     strings: string[];
     values: any[];
@@ -24,14 +33,12 @@ export declare class Tag {
     ownerTag?: Tag;
     insertBefore?: Element;
     appElement?: Element;
-    arrayValue?: any[];
+    arrayValue?: unknown;
     constructor(strings: string[], values: any[]);
-    providers: Provider[];
     beforeRedraw(): void;
     afterRender(): void;
-    afterClone(newTag: Tag): void;
     /** Used for array, such as array.map(), calls aka array.map(x => html``.key(x)) */
-    key(arrayValue: any[]): this;
+    key(arrayValue: unknown): this;
     destroy(options?: DestroyOptions): Promise<number>;
     destroySubscriptions(): void;
     destroyClones({ stagger }?: DestroyOptions): Promise<number>;
@@ -40,12 +47,7 @@ export declare class Tag {
     /** A method of passing down the same render method */
     setSupport(tagSupport: TagSupport): void;
     updateConfig(strings: string[], values: any[]): void;
-    getTemplate(): {
-        string: string;
-        strings: string[];
-        values: any[];
-        context: Context;
-    };
+    getTemplate(): TagTemplate;
     isLikeTag(tag: Tag): boolean;
     update(): Context;
     updateValues(values: any[]): Context;
@@ -62,6 +64,6 @@ type DestroyOptions = {
 export type ElementBuildOptions = {
     counts: Counts;
     forceElement?: boolean;
-    depth: number;
 };
+export declare function processNewValue(hasValue: boolean, value: any, context: Context, variableName: string, tag: Tag): void;
 export {};

@@ -1,16 +1,21 @@
+import { getTagSupport } from "./getTagSupport.js";
 import { processTagResult } from "./processTagResult.function.js";
 export function processTagArray(result, value, // arry of Tag classes
 template, // <template end interpolate />
 ownerTag, options) {
     const clones = [];
     result.lastArray = result.lastArray || []; // {tag, index}[] populated in processTagResult
+    result.template = template;
     let removed = 0;
     /** 🗑️ remove previous items first */
     result.lastArray = result.lastArray.filter((item, index) => {
-        const lessLength = value.length - 1 < index - removed;
+        const newLength = value.length - 1;
+        const at = index - removed;
+        const lessLength = newLength < at;
         const subTag = value[index - removed];
         const subArrayValue = subTag?.arrayValue;
-        if (lessLength || subArrayValue !== item.tag.arrayValue) {
+        const destroyItem = lessLength || subArrayValue !== item.tag.arrayValue;
+        if (destroyItem) {
             const last = result.lastArray[index];
             const tag = last.tag;
             tag.destroy({
@@ -26,13 +31,14 @@ ownerTag, options) {
     // const masterBefore = template || (template as any).clone
     const before = template || template.clone;
     value.forEach((subTag, index) => {
-        // subTag.tagSupport = ownerTag.tagSupport
-        // const itemMemory = subTag.tagSupport.memory
-        subTag.tagSupport = { ...ownerTag.tagSupport };
-        subTag.tagSupport.memory = { ...ownerTag.tagSupport.memory };
-        subTag.tagSupport.memory.context = {}; // itemMemory
+        subTag.tagSupport = getTagSupport({}); // {...ownerTag.tagSupport} // ownerTag.tagSupport.templater
+        subTag.tagSupport.mutatingRender = () => {
+            ownerTag.tagSupport.render();
+            return subTag;
+        }; // fake having a render function
         subTag.ownerTag = ownerTag;
         ownerTag.children.push(subTag);
+        // check for html``.key()
         if (subTag.arrayValue === undefined) {
             // appears arrayValue is not there but maybe arrayValue is actually the value of undefined
             if (!Object.keys(subTag).includes('arrayValue')) {
@@ -43,15 +49,25 @@ ownerTag, options) {
         }
         const previous = result.lastArray[index];
         if (previous) {
-            if (previous.tag.arrayValue === subTag.arrayValue) {
+            const isSame = previous.tag.arrayValue === subTag.arrayValue;
+            if (isSame) {
                 previous.tag.updateValues(subTag.values);
             }
             return [];
         }
+        console.log('"----new array item----"', "----new array item----", { index, length: value.length, value });
         const nextClones = processTagResult(subTag, result, before, {
             index,
             ...options,
         });
+        /*
+        // not used
+        updateExistingValue(
+          subTag.tagSupport.templater,
+          subTag.tagSupport,
+          subTag,
+        )
+        */
         clones.push(...nextClones);
     });
     return clones;

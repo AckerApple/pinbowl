@@ -5,12 +5,10 @@ import { Game } from "./game.js"
 export const footerButtons = tag(({
   restartGame,
   endGame
-}) => {
-  // footerButtons.js
+}) => {// footerButtons.js
   const game = providers.inject(Game)
 
-  return html`
-    <!--footerButtons.js-->
+  return html`<!--footerButtons.js-->
     <div style="padding-top:1em;">
       <hr />
       <!-- add player -->
@@ -23,7 +21,7 @@ export const footerButtons = tag(({
       `}
 
       ${!game.gameStarted && game.currentFrame === 0 && game.players.length > 1 && html`
-        <button type="button" id="player_add_button"
+        <button type="button" id="remove_all_players"
           oninit=${animateInit} ondestroy=${animateDestroy}
           onclick=${() => game.removeAllPlayers()}
         >❌ 👤 Remove All Players</button>
@@ -46,7 +44,7 @@ export const footerButtons = tag(({
       ${game.gameStarted && html`
         <button type="button" id="end_game_button" class="animate__animated"
           oninit=${animateInit} ondestroy=${animateDestroy}
-        onclick=${endGame}
+          onclick=${endGame}
         >🔄 end game</button>
       `}
       <hr />

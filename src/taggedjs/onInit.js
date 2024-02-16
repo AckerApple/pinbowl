@@ -13,8 +13,7 @@ export function onInit(callback) {
     }
 }
 setUse({
-    beforeRender: (tagSupport) => {
-        setCurrentTagSupport(tagSupport);
-    }
+    beforeRender: tagSupport => setCurrentTagSupport(tagSupport),
+    beforeRedraw: tagSupport => setCurrentTagSupport(tagSupport),
 });
 //# sourceMappingURL=onInit.js.map

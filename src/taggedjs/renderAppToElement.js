@@ -1,6 +1,13 @@
-import { getTagSupport } from "./getTagSupport.js";
 import { runBeforeRender } from "./tagRunner.js";
-export function renderAppToElement(app, element, props) {
+const appElements = [];
+export function renderAppToElement(app, // (...args: unknown[]) => TemplaterResult,
+element, props) {
+    const appElmIndex = appElements.findIndex(appElm => appElm.element === element);
+    if (appElmIndex >= 0) {
+        appElements[appElmIndex].tag.destroy();
+        appElements.splice(appElmIndex, 1);
+        console.warn('Found and destroyed app element already rendered to element', { element });
+    }
     // Create the app which returns [props, runOneTimeFunction]
     const wrapper = app(props);
     // have a function setup and call the tagWrapper with (props, {update, async, on})
@@ -8,22 +15,21 @@ export function renderAppToElement(app, element, props) {
     const { tag, tagSupport } = result;
     tag.appElement = element;
     addAppTagRender(tagSupport, tag);
-    const context = tag.updateValues(tag.values);
+    // const context = tag.updateValues(tag.values)
     const templateElm = document.createElement('template');
     templateElm.setAttribute('tag-detail', 'app-template-placeholder');
     element.appendChild(templateElm);
     tag.buildBeforeElement(templateElm);
-    element.tag = tag;
-    element.tags = app.original.tags;
     element.setUse = app.original.setUse;
-    return tag;
+    appElements.push({ element, tag });
+    return { tag, tags: app.original.tags };
 }
 export function applyTagUpdater(wrapper) {
-    const tagSupport = getTagSupport(0, wrapper);
-    runBeforeRender(tagSupport);
+    const tagSupport = wrapper.tagSupport; // getTagSupport(0, wrapper)
+    runBeforeRender(tagSupport, undefined);
     // Call the apps function for our tag templater
-    const templater = tagSupport.templater;
-    const tag = templater.wrapper();
+    // const templater = tagSupport.templater as TemplaterResult
+    const tag = wrapper.wrapper(); // templater.wrapper()
     tag.tagSupport = tagSupport;
     tag.afterRender();
     return { tag, tagSupport };
@@ -32,16 +38,19 @@ export function applyTagUpdater(wrapper) {
 export function addAppTagRender(tagSupport, tag) {
     let lastTag;
     tagSupport.mutatingRender = () => {
-        runBeforeRender(tagSupport, tag);
         tag.beforeRedraw();
         const templater = tagSupport.templater; // wrapper
         const fromTag = lastTag = templater.wrapper();
-        fromTag.setSupport(tag.tagSupport);
+        // tagSupport.props = fromTag.tagSupport.props
+        tagSupport.latestProps = fromTag.tagSupport.props;
+        tagSupport.latestClonedProps = fromTag.tagSupport.clonedProps;
+        fromTag.setSupport(tagSupport);
         tag.afterRender();
         tag.updateByTag(fromTag);
         if (lastTag) {
             lastTag.destroy({ stagger: 0 });
         }
+        tagSupport.newest = fromTag;
         return lastTag;
     };
 }
