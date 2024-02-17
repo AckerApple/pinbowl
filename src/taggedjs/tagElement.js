@@ -26,7 +26,6 @@ element, props) {
     return { tag, tags: app.original.tags };
 }
 export function applyTagUpdater(wrapper) {
-    console.log('********************');
     const tagSupport = wrapper.tagSupport; // getTagSupport(0, wrapper)
     runBeforeRender(tagSupport, undefined);
     // Call the apps function for our tag templater

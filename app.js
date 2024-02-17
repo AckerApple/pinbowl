@@ -74,15 +74,10 @@ export const SmallBowlApp = tag(() => {
       enterScore.close()
     })
   }
-
-  // let counter = state0(0, x => [counter, counter = x])
-  let counter = state(0)(x => [counter, counter = x])
   
   return html`
     <!-- new pinbowl game -->
     <h2>🎳 ${game.players.length ? game.players.length+' Player' : 'New'} Pinbowl game</h2>
-    ${counter}
-    <button onclick=${() => ++counter}>counter</button>
     
     <!-- 👤 players loop -->
     <div id="players_loop" style="display: flex;flex-wrap: wrap;">

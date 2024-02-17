@@ -105,9 +105,7 @@ function processSubjectValue(newAttrValue, child, attrName, isSpecial, howToSet)
     if (newAttrValue instanceof Function) {
         ;
         child[attrName] = function (...args) {
-            console.log(`processing ${attrName} ------------- start`);
             const result = newAttrValue(child, args);
-            console.log(`processing ${attrName} ------------- end`);
             return result;
         };
         child[attrName].tagFunction = newAttrValue;

@@ -104,15 +104,10 @@ export function updateExistingValue(existing, value, tag) {
         const oldWrapper = existingTag.tagSupport.templater.wrapper;
         const newWrapper = value?.wrapper;
         const wrapMatch = oldWrapper && newWrapper && oldWrapper?.original === newWrapper?.original;
-        const isSameTag = existingTag.lastTemplateString === value.lastTemplateString;
-        console.log('existingTag', {
-            lastTag: existingTag.lastTemplateString,
-            value,
-            isSameTag,
-            // template: (existing as any).template
-        });
-        if (isSameTag) {
-            console.log('**********');
+        // TODO: We shouldn't need both of these
+        const isSameTag = value && existingTag.lastTemplateString === value.lastTemplateString;
+        const isSameTag2 = value && value.getTemplate && existingTag.isLikeTag(value);
+        if (isSameTag || isSameTag2) {
             processTag(value, existing, existing.template, existingTag, // tag,
             {
                 counts: {
@@ -122,24 +117,6 @@ export function updateExistingValue(existing, value, tag) {
             });
             return;
         }
-        if (value.getTemplate && existingTag.isLikeTag(value)) {
-            console.log('got in');
-            processTag(value, existing, existing.template, existingTag, {
-                counts: {
-                    added: 0,
-                    removed: 0,
-                }
-            });
-            return;
-            /*
-            return updateExistingTag(
-              value as TemplaterResult,
-              existingTag,
-              existingSubTag,
-            )
-            */
-            //throw 'maybe here'
-        }
         if (wrapMatch) {
             return updateExistingTag(value, existingTag, existingSubTag);
         }
@@ -147,10 +124,6 @@ export function updateExistingValue(existing, value, tag) {
             destroyTagMemory(existingTag, existingSubTag, subjectValue);
             delete existingSubTag.tag;
         }
-    }
-    else if (ogTag) {
-        console.log('🍎🍎🍎🍎🍎🍎🍎🍎🍎');
-        return updateExistingTag(value, ogTag, existingSubTag);
     }
     // now its a function
     if (value instanceof Function) {

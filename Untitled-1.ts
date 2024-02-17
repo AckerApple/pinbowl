@@ -22,7 +22,7 @@ function expect(received) {
   }
 }
 
-(() => {
+const run = () => {
     const playerAddButton = document.getElementById('player_add_button')
 
     expect(document.querySelectorAll('#player_0_input').length).toBe(0)
@@ -42,5 +42,7 @@ function expect(received) {
     expect(document.querySelectorAll('#player_0_input').length).toBe(1)
     expect(document.querySelectorAll('#player_1_input').length).toBe(1)
 
-    expect(2).toBe(1)
-})()
+    // expect(4).toBe(5)
+}
+
+setTimeout(run, 3000)

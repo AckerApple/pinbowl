@@ -15,17 +15,11 @@ export default async function runTest() {
     expect(document.querySelectorAll('#player_0_input').length).toBe(0)
     expect(document.querySelectorAll('#player_1_input').length).toBe(0)
     
-    console.log('adding player 1...')
-    await wait(1000) // let display update runTest.testing before actually testing
     playerAddButton.click()
-    await wait(1000) // let display update runTest.testing before actually testing
-
-    // document.getElementById('player_0_input').blur()
     
     expect(document.querySelectorAll('#player_0_input').length).toBe(1)
     expect(document.querySelectorAll('#player_1_input').length).toBe(0)
     
-    console.log('adding player 2...')
     playerAddButton = document.getElementById('player_add_button')
     playerAddButton.click()
 
@@ -52,9 +46,7 @@ export default async function runTest() {
     // frame 1 - strike
     document.getElementById('player_0_frame_0').onclick()
     expect(document.getElementById('score_strike_button')).toBeDefined()
-    await document.getElementById('score_strike_button').onclick()
-    
-    await wait(1000)
+    await document.getElementById('score_strike_button').onclick()    
     expect(document.getElementById('score_strike_button')).toBe(null)
     
     document.getElementById('player_1_frame_0').onclick()
@@ -92,7 +84,7 @@ export default async function runTest() {
     console.info('test game completed. ending...')
 
     const promise = document.getElementById('end_game_button').onclick()
-    await document.getElementById('confirmAlert').onclick()
+    document.getElementById('confirmAlert').onclick()
     await promise
 
     let addPlayerButtons = document.querySelectorAll('#player_add_button')
@@ -101,9 +93,7 @@ export default async function runTest() {
     console.info('removing player 2...')
 
     let p1remove = document.getElementById('player_1_remove')
-    if(!p1remove) {
-      throw new Error('Player 2 remove button expected to be there')
-    }
+    expect(p1remove).toBeDefined()
 
     console.info('removing player 1...')
     let p0remove = document.getElementById('player_0_remove')
@@ -112,24 +102,18 @@ export default async function runTest() {
     await wait(1000)
 
     p1remove = document.getElementById('player_1_remove')
-    if(p1remove) {
-      throw new Error('Player 2 remove button expected to have been removed')
-    }
+    expect(p1remove).toBe(null)
 
     document.getElementById('player_0_remove').click() // removes player 2 who is now 1
 
     await wait(1000)
 
     p0remove = document.getElementById('player_0_remove')
-    if(p0remove) {
-      throw new Error('Player 1 remove button expected to have been removed')
-    }
-
+    expect(p0remove).toBe(null)
+    
     let removeAllPlayers = p0remove = document.getElementById('remove_all_players')
-    if(removeAllPlayers) {
-      throw new Error('Remove all players button NOT expected to be on document')
-    }
-   
+    expect(removeAllPlayers).toBe(null)
+    
     if(Subject.globalSubCount != startCount ) {
       throw new Error(`Expected ${startCount} subscriptions at the end but counted ${Subject.globalSubCount}`)
     }

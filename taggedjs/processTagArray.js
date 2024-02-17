@@ -55,19 +55,10 @@ ownerTag, options) {
             }
             return [];
         }
-        console.log('"----new array item----"', "----new array item----", { index, length: value.length, value });
         const nextClones = processTagResult(subTag, result, before, {
             index,
             ...options,
         });
-        /*
-        // not used
-        updateExistingValue(
-          subTag.tagSupport.templater,
-          subTag.tagSupport,
-          subTag,
-        )
-        */
         clones.push(...nextClones);
     });
     return clones;

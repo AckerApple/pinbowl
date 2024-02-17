@@ -31,6 +31,16 @@ export const playersLoop = tag(
     return leader.playerIndex === targetPlayerIndex
   }
 
+  function playerInputBlur(player) {
+    if(game.gameStarted) {
+      return // must be manually closed during in-game edits
+    }
+    
+    player.edit = false // auto close edit after name input
+
+    console.log('------ blur about to end', game.players.length)
+  }
+
   const playersContent = game.players.map((player, playerIndex) => html`
     <div name=${`test-player_${playerIndex}`} id=${`player_${playerIndex}`}
       oninit=${animateInit} ondestroy=${animateDestroy}
@@ -66,7 +76,7 @@ export const playersLoop = tag(
                     <input id=${`player_${playerIndex}_input`}
                       oninit=${({target}) => target.select()}
                       onclick=${({target}) => !game.gameStarted && target.select()}
-                      onblur=${() => game.gameStarted || (player.edit = false)}
+                      onblur=${() => playerInputBlur(player)}
                       onkeyup=${({target}) => player.name=target.value}
                       value=${player.name}
                     />

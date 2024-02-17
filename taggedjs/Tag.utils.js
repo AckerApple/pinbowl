@@ -11,15 +11,7 @@ existing, ownerTag) {
     templater.redraw = (force // forces redraw on children
     ) => {
         const existingTag = existing.tag;
-        console.log('aaaaaaaaa start setValueRedraw aaaaaaaaa', {
-            oldCount
-        });
         const { remit, retag } = redrawTag(existingTag, templater, ownerTag);
-        console.log('aaaaaaaaa end setValueRedraw aaaaaaaaa', {
-            oldCount,
-            renderCount: existing.tagSupport?.memory.renderCount,
-            newRenderCount: retag.tagSupport.memory.renderCount,
-        });
         existing.tagSupport = retag.tagSupport;
         if (!remit) {
             return;
