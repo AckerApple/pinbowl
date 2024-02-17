@@ -23,9 +23,11 @@ function updateExistingTagComponent(tag, tempResult, existingSubject, subjectVal
         isSameTag = oldFunction === newFunction;
     }
     const oldTagSetup = existingTag.tagSupport;
+    const oldProps = oldTagSetup.props;
     oldTagSetup.latestProps = latestProps;
-    // oldTagSetup.latestClonedProps = tempResult.tagSupport.clonedProps
-    oldTagSetup.latestClonedProps = tempResult.tagSupport.latestClonedProps;
+    const oldClonedProps = oldTagSetup.latestClonedProps;
+    oldTagSetup.latestClonedProps = tempResult.tagSupport.clonedProps;
+    // oldTagSetup.latestClonedProps = tempResult.tagSupport.latestClonedProps
     if (!isSameTag) {
         // TODO: this may not be in use
         destroyTagMemory(existingTag, existingSubject, subjectValue);
@@ -36,13 +38,14 @@ function updateExistingTagComponent(tag, tempResult, existingSubject, subjectVal
         let oldCloneProps = subjectTagSupport.props;
         // if the new props are NOT HTML children, then clone the props for later render cycle comparing
         if (!isTagInstance(subjectTagSupport.props)) {
-            oldCloneProps = deepClone(subjectTagSupport.props); // tagSupport.clonedProps
+            oldCloneProps = deepClone(subjectTagSupport.props);
         }
-        const oldProps = subjectTagSupport?.props; // tagSupport.props
+        // const oldProps = subjectTagSupport?.props // tagSupport.props
         if (existingTag) {
-            const equal = oldTagSetup.hasPropChanges(oldProps, oldCloneProps, latestProps);
-            console.log('xxxxx', equal);
-            if (equal) {
+            // const equal = oldTagSetup.hasPropChanges(oldProps, oldCloneProps, latestProps)
+            const equal = oldTagSetup.hasPropChanges(latestProps, oldClonedProps, oldProps);
+            // no changes detected so no need to continue to render
+            if (!equal) {
                 return;
             }
         }
@@ -64,8 +67,8 @@ function updateExistingTag(templater, ogTag, existingSubject) {
     const retag = templater.wrapper();
     // move my props onto tagSupport
     tagSupport.latestProps = retag.tagSupport.props;
-    // tagSupport.latestClonedProps = retag.tagSupport.clonedProps
-    tagSupport.latestClonedProps = retag.tagSupport.latestClonedProps;
+    tagSupport.latestClonedProps = retag.tagSupport.clonedProps;
+    // tagSupport.latestClonedProps = retag.tagSupport.latestClonedProps
     tagSupport.memory = retag.tagSupport.memory;
     retag.setSupport(tagSupport);
     templater.newest = retag;

@@ -79,15 +79,23 @@ export default async function runTest() {
     expect(winner instanceof Promise).toBeDefined()
     expect(await winner).toBe('no-data-ever')
     
-    document.getElementById('closeAlert').onclick()
+    await document.getElementById('closeAlert').onclick()
     
     console.info('test game completed. ending...')
-
-    const promise = document.getElementById('end_game_button').onclick()
-    document.getElementById('confirmAlert').onclick()
-    await promise
-
+    
     let addPlayerButtons = document.querySelectorAll('#player_add_button')
+    expect(addPlayerButtons.length).toBe(0)
+
+    const endPromise = document.getElementById('end_game_button').onclick()
+
+    addPlayerButtons = document.querySelectorAll('#player_add_button')
+    expect(addPlayerButtons.length).toBe(0)
+
+    const endConfirmPromise = document.getElementById('confirmAlert').onclick()
+    await endConfirmPromise
+    await endPromise
+
+    addPlayerButtons = document.querySelectorAll('#player_add_button')
     expect(addPlayerButtons.length).toBe(1)
 
     console.info('removing player 2...')
@@ -95,11 +103,15 @@ export default async function runTest() {
     let p1remove = document.getElementById('player_1_remove')
     expect(p1remove).toBeDefined()
 
-    console.info('removing player 1...')
     let p0remove = document.getElementById('player_0_remove')
+    console.info('*********', p0remove)
+    expect(p0remove).toBeDefined()
+
+    p0remove = document.getElementById('player_0_remove')
+    console.info('removing player 1...', p0remove)
     p0remove.click()
 
-    await wait(1000)
+    // await wait(1000)
 
     p1remove = document.getElementById('player_1_remove')
     expect(p1remove).toBe(null)
@@ -107,7 +119,6 @@ export default async function runTest() {
     document.getElementById('player_0_remove').click() // removes player 2 who is now 1
 
     await wait(1000)
-
     p0remove = document.getElementById('player_0_remove')
     expect(p0remove).toBe(null)
     
@@ -131,7 +142,7 @@ export default async function runTest() {
 function expect(received) {
   return {
     toBeDefined: () => {
-      if(received !== undefined) {
+      if(received !== undefined && received !== null) {
         return
       }
 

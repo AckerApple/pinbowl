@@ -25,9 +25,9 @@ export class TagSupport {
         this.latestClonedProps = latestProps;
         // if the latest props are not HTML children, then clone the props for later render cycles to compare
         if (!isTagInstance(props)) {
-            props = deepClone(latestProps);
+            this.latestClonedProps = deepClone(latestProps);
         }
-        // this.clonedProps = this.latestClonedProps
+        this.clonedProps = this.latestClonedProps;
     }
     // TODO: these below may not be in use
     oldest;
@@ -35,9 +35,11 @@ export class TagSupport {
     hasPropChanges(props, // natural props
     pastCloneProps, // previously cloned props
     compareToProps) {
-        const oldProps = this.props;
+        // const oldProps = this.props
+        const oldProps = compareToProps;
         const isCommonEqual = props === undefined && props === compareToProps;
-        return isCommonEqual || deepEqual(pastCloneProps, oldProps);
+        const isEqual = isCommonEqual || deepEqual(pastCloneProps, props);
+        return !isEqual;
     }
     mutatingRender() {
         const message = 'Tag function "render()" was called in sync but can only be called async';
@@ -57,10 +59,14 @@ export class TagSupport {
         }
         const oldTemplater = tag.tagSupport.templater;
         const nowProps = newTemplater.tagSupport.props; // natural props
-        const oldProps = oldTemplater?.tagSupport.props; // previously cloned props
+        // const oldClonedProps = newTemplater.tagSupport.clonedProps // natural props
+        const oldClonedProps = oldTemplater.tagSupport.clonedProps; // natural props
+        // const oldClonedProps = oldTemplater?.tagSupport.clonedProps // previously cloned props
         // const newProps = newTemplater.tagSupport.clonedProps // new props cloned
-        const newProps = newTemplater.tagSupport.latestClonedProps; // new props cloned
-        return renderTag(this, nowProps, oldProps, newProps, this.templater);
+        const oldProps = oldTemplater?.tagSupport.props; // new props cloned
+        // const newProps = newTemplater.tagSupport.latestClonedProps // new props cloned
+        return renderTag(this, nowProps, oldClonedProps, oldProps, // newProps,
+        this.templater);
     }
 }
 export function getTagSupport(templater, props) {
@@ -68,10 +74,7 @@ export function getTagSupport(templater, props) {
     return tagSupport;
 }
 function providersChangeCheck(tag) {
-    const providersWithChanges = tag.tagSupport.memory.providers.filter(provider => {
-        console.log('******** __________');
-        return !deepEqual(provider.instance, provider.clone);
-    });
+    const providersWithChanges = tag.tagSupport.memory.providers.filter(provider => !deepEqual(provider.instance, provider.clone));
     // reset clones
     providersWithChanges.forEach(provider => {
         const appElement = tag.getAppElement();
@@ -102,10 +105,10 @@ function getTagsWithProvider(tag, provider, memory = []) {
     return memory;
 }
 function renderTag(tagSupport, nowProps, // natural props
+oldCloneProps, // now props cloned
 oldProps, // previously NOT cloned props
-newProps, // now props cloned
 templater) {
-    const hasPropsChanged = tagSupport.hasPropChanges(nowProps, newProps, oldProps);
+    const hasPropsChanged = tagSupport.hasPropChanges(nowProps, oldCloneProps, oldProps);
     tagSupport.newest = templater.redraw(); // No change detected, just redraw me only
     if (!hasPropsChanged) {
         return true;
