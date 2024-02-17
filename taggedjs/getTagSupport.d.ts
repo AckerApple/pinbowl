@@ -4,8 +4,8 @@ import { TemplaterResult } from "./templater.utils.js";
 export declare class TagSupport {
     templater: TemplaterResult;
     props?: unknown;
-    clonedProps: Props;
     latestProps: Props;
+    clonedProps: Props;
     latestClonedProps: Props;
     memory: TagMemory;
     constructor(templater: TemplaterResult, props?: unknown);

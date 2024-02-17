@@ -84,7 +84,7 @@ export default async function runTest() {
     console.info('test game completed. ending...')
 
     const promise = document.getElementById('end_game_button').onclick()
-    document.getElementById('confirmAlert').onclick()
+    await document.getElementById('confirmAlert').onclick()
     await promise
 
     let addPlayerButtons = document.querySelectorAll('#player_add_button')
