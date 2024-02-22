@@ -1,83 +1,9 @@
-import { setValueRedraw } from "./Tag.utils.js";
-import { deepClone } from "./deepFunctions.js";
-import { isSubjectInstance, isTagComponent, isTagInstance } from "./isInstance.js";
+import { isSubjectInstance, isTagArray, isTagComponent } from "./isInstance.js";
 import { bindSubjectCallback } from "./bindSubjectCallback.function.js";
-import { isTagArray, processTag } from "./processSubjectValue.function.js";
+import { processTag } from "./processSubjectValue.function.js";
 import { processTagArray } from "./processTagArray.js";
-function updateExistingTagComponent(tag, tempResult, existingSubject, subjectValue) {
-    const latestProps = tempResult.tagSupport.props;
-    let existingTag = existingSubject.tag;
-    // previously was something else, now a tag component
-    if (!existingTag) {
-        setValueRedraw(tempResult, existingSubject, tag);
-        tempResult.redraw();
-        return;
-    }
-    // tag existingTag
-    const oldWrapper = existingTag.tagSupport.templater.wrapper;
-    const newWrapper = tempResult.wrapper;
-    let isSameTag = false;
-    if (oldWrapper && newWrapper) {
-        const oldFunction = oldWrapper.original;
-        const newFunction = newWrapper.original;
-        isSameTag = oldFunction === newFunction;
-    }
-    const oldTagSetup = existingTag.tagSupport;
-    const oldProps = oldTagSetup.props;
-    oldTagSetup.latestProps = latestProps;
-    const oldClonedProps = oldTagSetup.latestClonedProps;
-    oldTagSetup.latestClonedProps = tempResult.tagSupport.clonedProps;
-    // oldTagSetup.latestClonedProps = tempResult.tagSupport.latestClonedProps
-    if (!isSameTag) {
-        // TODO: this may not be in use
-        destroyTagMemory(existingTag, existingSubject, subjectValue);
-    }
-    else {
-        const subjectTagSupport = subjectValue?.tagSupport;
-        // old props may have changed, reclone first
-        let oldCloneProps = subjectTagSupport.props;
-        // if the new props are NOT HTML children, then clone the props for later render cycle comparing
-        if (!isTagInstance(subjectTagSupport.props)) {
-            oldCloneProps = deepClone(subjectTagSupport.props);
-        }
-        // const oldProps = subjectTagSupport?.props // tagSupport.props
-        if (existingTag) {
-            // const equal = oldTagSetup.hasPropChanges(oldProps, oldCloneProps, latestProps)
-            const equal = oldTagSetup.hasPropChanges(latestProps, oldClonedProps, oldProps);
-            // no changes detected so no need to continue to render
-            if (!equal) {
-                return;
-            }
-        }
-    }
-    setValueRedraw(tempResult, existingSubject, tag);
-    oldTagSetup.templater = tempResult;
-    const redraw = tempResult.redraw();
-    existingSubject.value.tag = oldTagSetup.newest = redraw;
-    if (!isSameTag) {
-        existingSubject.tag = redraw;
-        subjectValue.tagSupport = tempResult.tagSupport;
-    }
-    return;
-}
-function updateExistingTag(templater, ogTag, existingSubject) {
-    const tagSupport = ogTag.tagSupport;
-    const oldest = tagSupport.oldest;
-    oldest.beforeRedraw();
-    const retag = templater.wrapper();
-    // move my props onto tagSupport
-    tagSupport.latestProps = retag.tagSupport.props;
-    tagSupport.latestClonedProps = retag.tagSupport.clonedProps;
-    // tagSupport.latestClonedProps = retag.tagSupport.latestClonedProps
-    tagSupport.memory = retag.tagSupport.memory;
-    retag.setSupport(tagSupport);
-    templater.newest = retag;
-    tagSupport.newest = retag;
-    oldest.afterRender();
-    ogTag.updateByTag(retag);
-    existingSubject.set(templater);
-    return;
-}
+import { updateExistingTagComponent } from "./updateExistingTagComponent.function.js";
+import { updateExistingTag } from "./updateExistingTag.function.js";
 export function updateExistingValue(existing, value, tag) {
     const subjectValue = existing.value;
     const ogTag = subjectValue?.tag;
@@ -148,7 +74,7 @@ export function updateExistingValue(existing, value, tag) {
     existingSubTag.set(value); // let ValueSubject now of newest value
     return;
 }
-function destroyTagMemory(existingTag, existingSubject, subjectValue) {
+export function destroyTagMemory(existingTag, existingSubject, subjectValue) {
     delete existingSubject.tag;
     delete existingSubject.tagSupport;
     delete subjectValue.tagSupport;

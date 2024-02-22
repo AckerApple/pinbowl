@@ -6,10 +6,9 @@ export function getSubjectFunction(value, tag) {
 }
 export function setValueRedraw(templater, // latest tag function to call for rendering
 existing, ownerTag) {
-    const oldCount = existing.tagSupport?.memory.renderCount;
+    // const oldCount = existing.tagSupport?.memory.renderCount
     // redraw does not communicate to parent
-    templater.redraw = (force // forces redraw on children
-    ) => {
+    templater.redraw = () => {
         const existingTag = existing.tag;
         const { remit, retag } = redrawTag(existingTag, templater, ownerTag);
         existing.tagSupport = retag.tagSupport;
@@ -17,17 +16,6 @@ existing, ownerTag) {
             return;
         }
         existing.set(templater);
-        if (force) {
-            const tagSupport = existingTag.tagSupport;
-            const memory = tagSupport.memory;
-            const context = memory.context;
-            Object.values(context).forEach((item) => {
-                if (!item.value?.isTemplater) {
-                    return;
-                }
-                item.value.redraw();
-            });
-        }
         return retag;
     };
 }

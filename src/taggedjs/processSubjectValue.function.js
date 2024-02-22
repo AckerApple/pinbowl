@@ -1,9 +1,10 @@
 import { processSubjectComponent } from "./processSubjectComponent.function.js";
 import { processTagResult } from "./processTagResult.function.js";
-import { isTagComponent, isTagInstance } from "./isInstance.js";
+import { isTagArray, isTagComponent, isTagInstance } from "./isInstance.js";
 import { processTagArray } from "./processTagArray.js";
-import { getTagSupport } from "./getTagSupport.js";
+import { TagSupport } from "./TagSupport.class.js";
 import { updateBetweenTemplates } from "./interpolateTemplate.js";
+import { ValueSubject } from "./ValueSubject.js";
 var ValueTypes;
 (function (ValueTypes) {
     ValueTypes["tag"] = "tag";
@@ -22,9 +23,6 @@ function getValueType(value) {
         return ValueTypes.tagArray;
     }
     return ValueTypes.value;
-}
-export function isTagArray(value) {
-    return value instanceof Array && value.every(x => isTagInstance(x));
 }
 export function processSubjectValue(value, result, // could be tag via result.tag
 template, // <template end interpolate /> (will be removed)
@@ -91,7 +89,8 @@ tag, // owner
 options) {
     // first time seeing this tag?
     if (!value.tagSupport) {
-        value.tagSupport = getTagSupport({});
+        value.tagSupport = new TagSupport({}, // the template is provided via html`` call
+        new ValueSubject([]));
         // asking me to render will cause my parent to render
         value.tagSupport.mutatingRender = tag.tagSupport.mutatingRender;
         value.tagSupport.oldest = value.tagSupport.oldest || value;

@@ -14,6 +14,7 @@ export type State = {
 };
 /** Used for variables that need to remain the same variable during render passes */
 export declare function state<T>(defaultValue: T | (() => T)): (x?: (y: T) => [T, T]) => T;
+export declare function onNextStateOnly(callback: () => unknown): void;
 export declare function getStateValue(state: StateConfigItem): any;
 export declare class StateEchoBack {
 }

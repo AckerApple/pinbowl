@@ -1,6 +1,8 @@
 import { Tag } from "./Tag.class.js";
-import { TagSupport } from "./getTagSupport.js";
+import { TagSupport } from "./TagSupport.class.js";
 import { Props } from "./Props.js";
+import { ValueSubject } from "./ValueSubject.js";
+import { TagChildren } from "./tag.js";
 export type Wrapper = (() => Tag) & {
     original: () => Tag;
 };
@@ -10,7 +12,7 @@ export declare class TemplaterResult {
     newest?: Tag;
     oldest?: Tag;
     tagSupport: TagSupport;
-    constructor(props: Props);
+    constructor(props: Props, children: TagChildren);
     redraw?: (force?: boolean) => Tag | undefined;
     isTemplater: boolean;
     forceRenderTemplate(tagSupport: TagSupport, ownerTag: Tag): Tag;
@@ -23,5 +25,5 @@ export interface TemplateRedraw extends TemplaterResult {
     redraw: () => Tag | undefined;
 }
 export type TagComponent = (props: Props, // props or children
-children?: Tag) => Tag;
-export declare function getNewProps(props: Props, templater: TemplaterResult): any;
+children?: ValueSubject<Tag[]>) => Tag;
+export declare function alterProps(props: Props, templater: TemplaterResult): any;

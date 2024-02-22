@@ -1,4 +1,4 @@
-import { TagSupport } from "./getTagSupport.js";
+import { TagSupport } from "./TagSupport.class.js";
 import { Provider } from "./providers.js";
 import { Subscription } from "./Subject.js";
 import { Counts } from "./interpolateTemplate.js";
@@ -22,6 +22,9 @@ export interface TagTemplate {
     values: unknown[];
     context: Context;
 }
+export declare class ArrayValueNeverSet {
+    isArrayValueNeverSet: boolean;
+}
 export declare class Tag {
     strings: string[];
     values: any[];
@@ -33,10 +36,8 @@ export declare class Tag {
     ownerTag?: Tag;
     insertBefore?: Element;
     appElement?: Element;
-    arrayValue?: unknown;
+    arrayValue: unknown | ArrayValueNeverSet;
     constructor(strings: string[], values: any[]);
-    beforeRedraw(): void;
-    afterRender(): void;
     /** Used for array, such as array.map(), calls aka array.map(x => html``.key(x)) */
     key(arrayValue: unknown): this;
     destroy(options?: DestroyOptions): Promise<number>;

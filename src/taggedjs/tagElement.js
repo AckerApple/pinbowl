@@ -1,4 +1,4 @@
-import { runBeforeRender } from "./tagRunner.js";
+import { runAfterRender, runBeforeRedraw, runBeforeRender } from "./tagRunner.js";
 const appElements = [];
 export function tagElement(app, // (...args: unknown[]) => TemplaterResult,
 element, props) {
@@ -16,7 +16,6 @@ element, props) {
     const { tag, tagSupport } = result;
     tag.appElement = element;
     addAppTagRender(tagSupport, tag);
-    // const context = tag.updateValues(tag.values)
     const templateElm = document.createElement('template');
     templateElm.setAttribute('tag-detail', 'app-template-placeholder');
     element.appendChild(templateElm);
@@ -26,34 +25,26 @@ element, props) {
     return { tag, tags: app.original.tags };
 }
 export function applyTagUpdater(wrapper) {
-    const tagSupport = wrapper.tagSupport; // getTagSupport(0, wrapper)
+    const tagSupport = wrapper.tagSupport;
     runBeforeRender(tagSupport, undefined);
     // Call the apps function for our tag templater
-    // const templater = tagSupport.templater as TemplaterResult
-    const tag = wrapper.wrapper(); // templater.wrapper()
+    const tag = wrapper.wrapper();
     tag.tagSupport = tagSupport;
-    tag.afterRender();
+    runAfterRender(tag.tagSupport, tag);
     return { tag, tagSupport };
 }
 /** Overwrites arguments.tagSupport.mutatingRender */
 export function addAppTagRender(tagSupport, tag) {
     let lastTag;
     tagSupport.mutatingRender = () => {
-        tag.beforeRedraw();
+        runBeforeRedraw(tag.tagSupport, tag);
         const templater = tagSupport.templater; // wrapper
         const fromTag = lastTag = templater.wrapper();
-        // tagSupport.props = fromTag.tagSupport.props
         tagSupport.latestProps = fromTag.tagSupport.props;
         tagSupport.latestClonedProps = fromTag.tagSupport.clonedProps;
-        // tagSupport.latestClonedProps = fromTag.tagSupport.latestClonedProps
         fromTag.setSupport(tagSupport);
-        tag.afterRender();
+        runAfterRender(tag.tagSupport, tag);
         tag.updateByTag(fromTag);
-        /*
-        if(lastTag) {
-          lastTag.destroy({stagger: 0})
-        }
-        */
         tagSupport.newest = fromTag;
         return lastTag;
     };

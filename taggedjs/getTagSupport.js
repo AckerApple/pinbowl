@@ -1,13 +1,14 @@
 import { deepClone, deepEqual } from "./deepFunctions.js";
 import { isTagInstance } from "./isInstance.js";
-import { getNewProps } from "./templater.utils.js";
+import { alterProps } from "./templater.utils.js";
 export class TagSupport {
     templater;
     props;
     latestProps; // new props NOT cloned props
     // props from **constructor** are converted for comparing over renders
-    clonedProps;
     latestClonedProps; // This seems to be a duplicate of clonedProps
+    // TODO: see if we can remove
+    clonedProps;
     memory = {
         context: {}, // populated after reading interpolated.values array converted to an object {variable0, variable:1}
         state: {
@@ -20,13 +21,14 @@ export class TagSupport {
     constructor(templater, props) {
         this.templater = templater;
         this.props = props;
-        this.latestProps = props; // getNewProps(props, templater)
-        const latestProps = getNewProps(props, templater);
+        this.latestProps = props;
+        const latestProps = alterProps(props, templater);
         this.latestClonedProps = latestProps;
         // if the latest props are not HTML children, then clone the props for later render cycles to compare
         if (!isTagInstance(props)) {
             this.latestClonedProps = deepClone(latestProps);
         }
+        // TODO: see if we can remove
         this.clonedProps = this.latestClonedProps;
     }
     // TODO: these below may not be in use
@@ -35,11 +37,9 @@ export class TagSupport {
     hasPropChanges(props, // natural props
     pastCloneProps, // previously cloned props
     compareToProps) {
-        // const oldProps = this.props
-        const oldProps = compareToProps;
         const isCommonEqual = props === undefined && props === compareToProps;
         const isEqual = isCommonEqual || deepEqual(pastCloneProps, props);
-        return !isEqual;
+        return !isEqual; // if equal then no changes
     }
     mutatingRender() {
         const message = 'Tag function "render()" was called in sync but can only be called async';
@@ -68,10 +68,6 @@ export class TagSupport {
         return renderTag(this, nowProps, oldClonedProps, oldProps, // newProps,
         this.templater);
     }
-}
-export function getTagSupport(templater, props) {
-    const tagSupport = new TagSupport(templater, props);
-    return tagSupport;
 }
 function providersChangeCheck(tag) {
     const providersWithChanges = tag.tagSupport.memory.providers.filter(provider => !deepEqual(provider.instance, provider.clone));

@@ -1,16 +1,19 @@
 import { getSubjectFunction, setValueRedraw } from "./Tag.utils.js";
 import { ValueSubject } from "./ValueSubject.js";
-import { runAfterRender, runBeforeDestroy, runBeforeRedraw } from "./tagRunner.js";
+import { runBeforeDestroy } from "./tagRunner.js";
 import { isSubjectInstance, isTagComponent, isTagInstance } from "./isInstance.js";
 import { buildClones } from "./render.js";
 import { interpolateElement, interpolateString } from "./interpolateElement.js";
 import { afterElmBuild } from "./interpolateTemplate.js";
 import { elementDestroyCheck } from "./elementDestroyCheck.function.js";
-import { updateExistingValue } from "./updateTag.utils.js";
+import { updateExistingValue } from "./updateExistingValue.function.js";
 export const variablePrefix = '__tagvar';
 export const escapeVariable = '--' + variablePrefix + '--';
 const prefixSearch = new RegExp(variablePrefix, 'g');
 export const escapeSearch = new RegExp(escapeVariable, 'g');
+export class ArrayValueNeverSet {
+    isArrayValueNeverSet = true;
+}
 export class Tag {
     strings;
     values;
@@ -24,16 +27,10 @@ export class Tag {
     insertBefore;
     appElement; // only seen on this.getAppElement().appElement
     // present only when an array. Populated by this.key()
-    arrayValue;
+    arrayValue = new ArrayValueNeverSet();
     constructor(strings, values) {
         this.strings = strings;
         this.values = values;
-    }
-    beforeRedraw() {
-        runBeforeRedraw(this.tagSupport, this);
-    }
-    afterRender() {
-        runAfterRender(this.tagSupport, this);
     }
     /** Used for array, such as array.map(), calls aka array.map(x => html``.key(x)) */
     key(arrayValue) {
@@ -137,6 +134,8 @@ export class Tag {
             }
             const tag = value;
             if (isTagInstance(tag) && isTagInstance(compareTo)) {
+                // TODO: THis "is" is setting data, this is not good
+                console.log('🎃');
                 tag.ownerTag = this; // let children know I own them
                 this.children.push(tag); // record children I created        
                 tag.lastTemplateString || tag.getTemplate().string; // ensure last template string is generated

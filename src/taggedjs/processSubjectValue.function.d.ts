@@ -3,7 +3,6 @@ import { Clones } from "./Clones.type.js";
 import { Tag } from "./Tag.class.js";
 import { Counts, Template } from "./interpolateTemplate.js";
 import { TagSubject } from "./Tag.utils.js";
-export declare function isTagArray(value: any): boolean;
 type processOptions = {
     forceElement?: boolean;
     counts: Counts;

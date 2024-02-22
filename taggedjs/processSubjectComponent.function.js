@@ -31,12 +31,12 @@ export function processSubjectComponent(value, result, template, ownerTag, optio
     providers.ownerTag = ownerTag;
     const isFirstTime = !retag || options.forceElement;
     if (isFirstTime) {
-        if (!retag) {
-            runBeforeRender(tagSupport, ownerTag);
-        }
-        // only true when options.forceElement
         if (retag) {
-            runBeforeRedraw(tagSupport, retag);
+            // runBeforeRedraw(tagSupport, retag)
+            runBeforeRedraw(retag.tagSupport, retag);
+        }
+        else {
+            runBeforeRender(tagSupport, ownerTag);
         }
         retag = templater.forceRenderTemplate(tagSupport, ownerTag);
     }

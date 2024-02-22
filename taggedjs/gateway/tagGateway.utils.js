@@ -1,4 +1,5 @@
-import { redrawTag, tagElement } from "../index.js";
+import { tagElement } from "../index.js";
+// import { onNextStateOnly } from "../state.js"
 import { loadTagGateway } from "./loadTagGateway.function.js";
 const gateways = {};
 export const gatewayTagIds = {};
@@ -61,6 +62,7 @@ function watchElement(id, targetNode, tag, component) {
         }
         for (const mutation of mutationsList) {
             if (mutation.type === 'attributes') {
+                console.log('attributes changed');
                 updateTag();
             }
         }
@@ -75,9 +77,15 @@ function watchElement(id, targetNode, tag, component) {
             return; // no reason to update, same props
         }
         templater.tagSupport.latestProps = newProps;
-        const result = redrawTag(lastTag, templater);
-        // update records
-        gateway.tag = lastTag = result.retag;
+        /*
+        onNextStateOnly(() => {
+          console.log('🔁 redrawing gateway')
+          const result = redrawTag(lastTag, templater)
+          
+          // update records
+          gateway.tag = lastTag = result.retag
+        })
+        */
     }
     loadTagGateway(component);
     const gateway = {
@@ -122,11 +130,13 @@ export function checkByElement(element) {
 export function checkElement(id, element, component) {
     const gateway = element.gateway;
     if (gateway) {
+        console.log('drawing existing gateway =====');
         gateway.updateTag();
         return gateway;
     }
     const props = parsePropsString(element);
     try {
+        console.log('tagging element ***');
         const { tag } = tagElement(component, element, props);
         // watch element AND add to gateways[id].push()
         return watchElement(id, element, tag, component);

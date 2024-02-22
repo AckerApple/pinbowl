@@ -147,7 +147,7 @@ function expect(received) {
       }
 
       const message = `Expected ${JSON.stringify(received)} to be defined`
-      console.error(message, {received, expected})
+      console.error(message, {received})
       throw new Error(message)
     },
     toBe: (expected) => {

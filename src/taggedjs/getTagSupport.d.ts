@@ -5,8 +5,8 @@ export declare class TagSupport {
     templater: TemplaterResult;
     props?: unknown;
     latestProps: Props;
-    clonedProps: Props;
     latestClonedProps: Props;
+    clonedProps: Props;
     memory: TagMemory;
     constructor(templater: TemplaterResult, props?: unknown);
     oldest?: Tag;
@@ -18,4 +18,3 @@ export declare class TagSupport {
     render(): Tag;
     renderExistingTag(tag: Tag, newTemplater: TemplaterResult): boolean;
 }
-export declare function getTagSupport(templater: TemplaterResult, props?: Props): TagSupport;

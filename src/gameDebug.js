@@ -28,7 +28,7 @@ html`
       <div>
         ${name}: ${game[name]}
       </div>
-    `)}
+    `.key(name))}
     <div>gameStarted: ${game.gameStarted ? 'true' : 'false'}</div>
     <div>players: ${game.players.length}</div>
   </div>

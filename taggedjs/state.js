@@ -1,3 +1,4 @@
+import { StateMismatchError } from "./errors.js";
 import { setUse } from "./setUse.function.js";
 // TODO: rename
 setUse.memory.stateConfig = {
@@ -38,6 +39,15 @@ export function state(defaultValue) {
         return initValue;
     };
 }
+const waitingStates = [];
+export function onNextStateOnly(callback) {
+    const config = setUse.memory.stateConfig;
+    if (!config.rearray.length) {
+        callback();
+        return;
+    }
+    waitingStates.push(callback);
+}
 setUse({
     beforeRender: (tagSupport) => initState(tagSupport),
     beforeRedraw: (tagSupport) => initState(tagSupport),
@@ -47,12 +57,12 @@ setUse({
         if (config.rearray.length) {
             if (config.rearray.length !== config.array.length) {
                 const message = `States lengths mismatched ${config.rearray.length} !== ${config.array.length}`;
-                console.error(message, {
+                const error = new StateMismatchError(message, {
                     oldStates: config.array,
                     newStates: config.rearray,
                     component: tagSupport.templater?.wrapper.original
                 });
-                throw new Error(message);
+                throw error;
             }
         }
         // config.rearray.length = 0 // clean up any previous runs
@@ -62,6 +72,8 @@ setUse({
         state.newest = [...config.array];
         // config.array.length = 0
         config.array = [];
+        waitingStates.forEach(callback => callback());
+        waitingStates.length = 0;
     }
 });
 export function getStateValue(
@@ -96,8 +108,14 @@ function initState(tagSupport) {
             config,
             component: tagSupport.templater?.wrapper.original,
             state,
+            expectedClearArray: config.rearray,
         });
-        throw message;
+        throw new StateMismatchError(message, {
+            config,
+            component: tagSupport.templater?.wrapper.original,
+            state,
+            expectedClearArray: config.rearray,
+        });
     }
     // TODO: this maybe redundant and not needed
     config.rearray = []; // .length = 0

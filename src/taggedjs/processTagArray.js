@@ -1,5 +1,7 @@
-import { getTagSupport } from "./getTagSupport.js";
+import { ValueSubject } from "./ValueSubject.js";
+import { TagSupport } from "./TagSupport.class.js";
 import { processTagResult } from "./processTagResult.function.js";
+import { ArrayNoKeyError } from "./errors.js";
 export function processTagArray(result, value, // arry of Tag classes
 template, // <template end interpolate />
 ownerTag, options) {
@@ -31,7 +33,7 @@ ownerTag, options) {
     // const masterBefore = template || (template as any).clone
     const before = template || template.clone;
     value.forEach((subTag, index) => {
-        subTag.tagSupport = getTagSupport({}); // {...ownerTag.tagSupport} // ownerTag.tagSupport.templater
+        subTag.tagSupport = new TagSupport({}, new ValueSubject([]));
         subTag.tagSupport.mutatingRender = () => {
             ownerTag.tagSupport.render();
             return subTag;
@@ -39,13 +41,17 @@ ownerTag, options) {
         subTag.ownerTag = ownerTag;
         ownerTag.children.push(subTag);
         // check for html``.key()
-        if (subTag.arrayValue === undefined) {
-            // appears arrayValue is not there but maybe arrayValue is actually the value of undefined
-            if (!Object.keys(subTag).includes('arrayValue')) {
-                const err = new Error('Use html`...`.key(item) instead of html`...` to template an Array');
-                err.code = 'add-array-key';
-                throw err;
-            }
+        const keyNotSet = subTag.arrayValue;
+        if (keyNotSet?.isArrayValueNeverSet) {
+            const details = {
+                template: subTag.getTemplate().string,
+                array: value,
+                ownerTagContent: ownerTag.lastTemplateString,
+            };
+            const message = 'Use html`...`.key(item) instead of html`...` to template an Array';
+            console.error(message, details);
+            const err = new ArrayNoKeyError(message, details);
+            throw err;
         }
         const previous = result.lastArray[index];
         if (previous) {

@@ -1,4 +1,4 @@
-import { getTagSupport } from "./getTagSupport.js";
+import { TagSupport } from "./TagSupport.class.js";
 import { isTagInstance } from "./isInstance.js";
 import { runAfterRender, runBeforeRedraw, runBeforeRender } from "./tagRunner.js";
 import { setUse } from "./setUse.function.js";
@@ -8,15 +8,15 @@ export class TemplaterResult {
     newest;
     oldest;
     tagSupport;
-    constructor(props) {
-        this.tagSupport = getTagSupport(this, props);
+    constructor(props, children) {
+        this.tagSupport = new TagSupport(this, children, props);
     }
     redraw;
     isTemplater = true;
     forceRenderTemplate(tagSupport, ownerTag) {
         const tag = this.wrapper();
         tag.setSupport(tagSupport);
-        tag.afterRender();
+        runAfterRender(tag.tagSupport, tag);
         this.oldest = tag;
         tagSupport.oldest = tag;
         this.oldest = tag;
@@ -69,8 +69,8 @@ export class TemplaterResult {
         return { remit: true, retag };
     }
 }
-/* rewriter */
-export function getNewProps(props, templater) {
+/* Used to rewrite props that are functions. When they are called it should cause parent rendering */
+export function alterProps(props, templater) {
     function callback(toCall, callWith) {
         const callbackResult = toCall(...callWith);
         templater.newest?.ownerTag?.tagSupport.render();

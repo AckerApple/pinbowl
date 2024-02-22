@@ -1,5 +1,5 @@
 import { Tag } from "./Tag.class.js";
-import { TagSupport } from "./getTagSupport";
+import { TagSupport } from "./TagSupport.class.js";
 import { Config } from "./state";
 interface TagUse {
     beforeRender: (tagSupport: TagSupport, ownerTag: Tag) => void;

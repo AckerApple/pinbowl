@@ -1,23 +1,47 @@
-import { isTagInstance } from "./isInstance.js";
+import { isSubjectInstance, isTagArray, isTagInstance } from "./isInstance.js";
 import { setUse } from "./setUse.function.js";
-import { TemplaterResult, getNewProps } from "./templater.utils.js";
+import { TemplaterResult, alterProps } from "./templater.utils.js";
+import { ValueSubject } from "./ValueSubject.js";
+import { runTagCallback } from "./bindSubjectCallback.function.js";
 export const tags = [];
 let tagCount = 0;
+/** Wraps a tag component in a state manager and always push children to last argument as any array */
 export function tag(tagComponent) {
     const result = (function tagWrapper(props, children) {
-        const isPropTag = isTagInstance(props);
-        const templater = new TemplaterResult(props);
-        const newProps = getNewProps(props, templater);
-        let argProps = newProps;
+        const isPropTag = isTagInstance(props) || isTagArray(props);
         if (isPropTag) {
             children = props;
-            argProps = noPropsGiven;
+            props = undefined;
+        }
+        const { childSubject, madeSubject } = kidsToTagArraySubject(children);
+        const templater = new TemplaterResult(props, childSubject);
+        if (!isPropTag) {
+            // wrap props that are functions
+            alterProps(props, templater);
         }
         function innerTagWrap() {
             const originalFunction = innerTagWrap.original;
-            const props = templater.tagSupport.props; // argProps
-            const tag = originalFunction(props, children);
+            const props = templater.tagSupport.props;
+            const tag = originalFunction(props, childSubject);
             tag.setSupport(templater.tagSupport);
+            if (madeSubject) {
+                childSubject.value.forEach(kid => {
+                    kid.values.forEach((value, index) => {
+                        if (!(value instanceof Function)) {
+                            return;
+                        }
+                        if (kid.values[index].isChildOverride) {
+                            return; // already overwritten
+                        }
+                        // all functions need to report to me
+                        kid.values[index] = function (...args) {
+                            runTagCallback(value, tag.ownerTag, this, args);
+                            // runTagCallback(value, tag, this, args)
+                        };
+                        kid.values[index].isChildOverride = true;
+                    });
+                });
+            }
             return tag;
         }
         innerTagWrap.original = tagComponent;
@@ -30,6 +54,21 @@ export function tag(tagComponent) {
     updateComponent(tagComponent);
     tags.push(tagComponent);
     return result;
+}
+function kidsToTagArraySubject(children) {
+    if (isSubjectInstance(children)) {
+        return { childSubject: children, madeSubject: false };
+    }
+    const kidArray = children;
+    if (isTagArray(kidArray)) {
+        return { childSubject: new ValueSubject(children), madeSubject: true };
+    }
+    const kid = children;
+    if (kid) {
+        kid.arrayValue = 0;
+        return { childSubject: new ValueSubject([kid]), madeSubject: true };
+    }
+    return { childSubject: new ValueSubject([]), madeSubject: true };
 }
 function updateResult(result, tagComponent) {
     result.isTag = true;
