@@ -1,16 +1,13 @@
-import { providers, state, html, tag, tagElement, onInit, getCallback } from "./taggedjs/index.js"
+import { providers, html, tag, tagElement, onInit, getCallback, set, setLet } from "./taggedjs/index.js"
 import { playersLoop } from "./playersLoop.js"
 import { footerButtons } from "./footerButtons.js"
 import { debugApp } from "./debugApp.js"
 import { Game, frameScoreDetails } from "./game.js"
 import { animateDestroy } from "./animations.js"
 
-export const SmallBowlApp = tag(() => {
-  // app.js - SmallBowlApp
-  const frameScoreModalDetails = state(frameScoreDetails)()
-  // const frameScoreModalDetails = state0(frameScoreDetails)
-  let debug = state(false)(x => [debug, debug = x])
-  // let debug = state0(false,x => [debug, debug = x])
+export const SmallBowlApp = tag(() => {// app.js - SmallBowlApp
+  const frameScoreModalDetails = set(frameScoreDetails)
+  let debug = setLet(false)(x => [debug, debug = x])
   const callback = getCallback()
 
   /** @type {Game} */
@@ -113,23 +110,34 @@ export const SmallBowlApp = tag(() => {
           ${game.alertData.message}
         </p>
         
-        <div>
-          <button id="closeAlert" type="button" onclick=${() => {
+        <div style="display:flex;gap:1em;justify-content: center;">
+          <button id="closeAlert" type="button" class="alert-button" onclick=${() => {
             document.getElementById('alertDialog').close()
             setTimeout(() => game.alertData.message='', 1000)
             game.alertData.resolve(false)
           }}>🅧 ${game.alertData.confirm ? 'cancel' : 'close'}</button>
 
           ${game.alertData.confirm && html`
-          <button id="confirmAlert" type="button" onclick=${() => {
-            document.getElementById('alertDialog').close()
-            setTimeout(() => game.alertData.message='', 1000)
-            game.alertData.resolve(true)
-          }}>✅ confirm</button>
+          <button id="confirmAlert" type="button" class="alert-button"
+            onclick=${() => {
+              document.getElementById('alertDialog').close()
+              setTimeout(() => game.alertData.message='', 1000)
+              game.alertData.resolve(true)
+            }}
+          >✅ confirm</button>
         </div>
         `}
       </div>
     </dialog>
+
+    <style>
+      .alert-button:focus,
+      .alert-button:active,
+      .alert-button:hover {
+        border-color:blue;
+        /*border:1px solid blue;*/
+      }
+    </style>
 
     <!-- enter score modal -->
     <dialog id="enterScore" style="padding:0"

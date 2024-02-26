@@ -43,9 +43,8 @@ export function processSubjectComponent(value, result, template, ownerTag, optio
     ownerTag.children.push(retag);
     tagSupport.latestProps = retag.tagSupport.props;
     tagSupport.latestClonedProps = retag.tagSupport.clonedProps;
-    // tagSupport.latestClonedProps = retag.tagSupport.latestClonedProps
     tagSupport.memory = retag.tagSupport.memory;
-    retag.setSupport(tagSupport);
+    retag.tagSupport = tagSupport;
     const clones = processTagResult(retag, result, // The element set here will be removed from document. Also result.tag will be added in here
     template, // <template end interpolate /> (will be removed)
     options);

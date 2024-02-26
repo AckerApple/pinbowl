@@ -15,7 +15,7 @@ export class TemplaterResult {
     isTemplater = true;
     forceRenderTemplate(tagSupport, ownerTag) {
         const tag = this.wrapper();
-        tag.setSupport(tagSupport);
+        tag.tagSupport = tagSupport;
         runAfterRender(tag.tagSupport, tag);
         this.oldest = tag;
         tagSupport.oldest = tag;
@@ -49,8 +49,7 @@ export class TemplaterResult {
         /* AFTER */
         tagSupport.latestProps = retag.tagSupport.props;
         tagSupport.latestClonedProps = retag.tagSupport.clonedProps;
-        // tagSupport.latestClonedProps = retag.tagSupport.latestClonedProps
-        retag.setSupport(tagSupport);
+        retag.tagSupport = tagSupport;
         runAfterRender(tagSupport, retag);
         templater.newest = retag;
         retag.ownerTag = runtimeOwnerTag;
@@ -59,7 +58,6 @@ export class TemplaterResult {
         const oldestTagSupport = oldest.tagSupport;
         oldest.tagSupport = oldestTagSupport || tagSupport;
         oldest.tagSupport.templater = templater;
-        // retag.setSupport(tagSupport)
         const isSameTag = existingTag && existingTag.isLikeTag(retag);
         // If previously was a tag and seems to be same tag, then just update current tag with new values
         if (isSameTag) {
@@ -73,7 +71,10 @@ export class TemplaterResult {
 export function alterProps(props, templater) {
     function callback(toCall, callWith) {
         const callbackResult = toCall(...callWith);
-        templater.newest?.ownerTag?.tagSupport.render();
+        const tagSupport = templater.newest?.ownerTag?.tagSupport;
+        if (tagSupport) {
+            tagSupport.render();
+        }
         return callbackResult;
     }
     const isPropTag = isTagInstance(props);
@@ -91,6 +92,7 @@ function resetFunctionProps(props, callback) {
             newProps[name] = (...args) => {
                 return callback(value, args);
             };
+            newProps[name].original = value;
             return;
         }
         newProps[name] = value;

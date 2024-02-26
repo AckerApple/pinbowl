@@ -1,3 +1,4 @@
+import { expect } from "./expect.js"
 import { Subject } from "./taggedjs/index.js"
 import { wait } from "./wait.function.js"
 
@@ -17,34 +18,36 @@ export default async function runTest() {
     
     playerAddButton.click()
     
-    expect(document.querySelectorAll('#player_0_input').length).toBe(1)
+    let player0inputs = document.querySelectorAll('#player_0_input')
+    expect(player0inputs.length).toBe(1)
+    const player0Input = player0inputs[0]
+    player0Input.value = 'Acker'
+    player0Input.onkeyup({target:player0Input})
     expect(document.querySelectorAll('#player_1_input').length).toBe(0)
     
     playerAddButton = document.getElementById('player_add_button')
     playerAddButton.click()
 
-    expect(document.querySelectorAll('#player_0_input').length).toBe(1)
-    expect(document.querySelectorAll('#player_1_input').length).toBe(1)
+    // player 1 input should now be gone
+    player0inputs = document.querySelectorAll('#player_0_input')
+    expect(player0inputs.length).toBe(0, `expected 1 player input but got ${player0inputs.length}`)
+    expect(document.querySelectorAll('#player_1_input').length).toBe(1, 'expected 2 player input')
 
-    const player0Input = document.getElementById('player_0_input')
     const player1Input = document.getElementById('player_1_input')
-    
-    player0Input.value = 'Acker'
     player1Input.value = 'Mark'
-
-    player0Input.onkeyup({target:player0Input})
     player1Input.onkeyup({target:player1Input})
-    
-    expect(document.querySelectorAll('#player_0_input').length).toBe(1)
+    player0inputs = document.querySelectorAll('#player_0_input')
+    expect(document.querySelectorAll('#player_0_input').length).toBe(0)
     expect(document.querySelectorAll('#player_1_input').length).toBe(1)
 
-    document.getElementById('start_game_button').click()
+    document.getElementById('start_game_button').onclick()
 
     expect(document.getElementById('score_strike_button')).toBe(null)
 
     
     // frame 1 - strike
-    document.getElementById('player_0_frame_0').onclick()
+    const firstScore = document.getElementById('player_0_frame_0').onclick()
+    
     expect(document.getElementById('score_strike_button')).toBeDefined()
     await document.getElementById('score_strike_button').onclick()    
     expect(document.getElementById('score_strike_button')).toBe(null)
@@ -80,11 +83,9 @@ export default async function runTest() {
     expect(await winner).toBe('no-data-ever')
     
     await document.getElementById('closeAlert').onclick()
-    
-    console.info('test game completed. ending...')
-    
+        
     let addPlayerButtons = document.querySelectorAll('#player_add_button')
-    expect(addPlayerButtons.length).toBe(0)
+    expect(addPlayerButtons.length).toBe(0, `Expected player add button count to be 0 but its ${addPlayerButtons.length}`)
 
     const endPromise = document.getElementById('end_game_button').onclick()
 
@@ -98,17 +99,13 @@ export default async function runTest() {
     addPlayerButtons = document.querySelectorAll('#player_add_button')
     expect(addPlayerButtons.length).toBe(1)
 
-    console.info('removing player 2...')
-
     let p1remove = document.getElementById('player_1_remove')
     expect(p1remove).toBeDefined()
 
     let p0remove = document.getElementById('player_0_remove')
-    console.info('*********', p0remove)
     expect(p0remove).toBeDefined()
 
     p0remove = document.getElementById('player_0_remove')
-    console.info('removing player 1...', p0remove)
     p0remove.click()
 
     // await wait(1000)
@@ -120,7 +117,7 @@ export default async function runTest() {
 
     await wait(1000)
     p0remove = document.getElementById('player_0_remove')
-    expect(p0remove).toBe(null)
+    expect(p0remove).toBe(null, 'Expected no player 1 remove button')
     
     let removeAllPlayers = p0remove = document.getElementById('remove_all_players')
     expect(removeAllPlayers).toBe(null)
@@ -137,27 +134,4 @@ export default async function runTest() {
   }
   
   runTest.testing = false
-}
-
-function expect(received) {
-  return {
-    toBeDefined: () => {
-      if(received !== undefined && received !== null) {
-        return
-      }
-
-      const message = `Expected ${JSON.stringify(received)} to be defined`
-      console.error(message, {received})
-      throw new Error(message)
-    },
-    toBe: (expected) => {
-      if(received === expected) {
-        return
-      }
-
-      const message = `Expected ${JSON.stringify(received)} to be ${JSON.stringify(expected)}`
-      console.error(message, {received, expected})
-      throw new Error(message)
-    }
-  }
 }

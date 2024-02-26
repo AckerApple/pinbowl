@@ -1,38 +1,23 @@
 import { animateDestroy, animateInit } from "./animations.js"
-import { state, html, tag, providers, Subject, onInit } from "./taggedjs/index.js"
+import { setLet, html, tag, providers, Subject, onInit } from "./taggedjs/index.js"
 
 function tagDebugProvider() {
   const upper = {
     test: -2,
   }
   // const upper = providers.create( upperTagDebugProvider )
-  console.log('upper',upper)
   return {
     upper,
     test: 1
   }
 }
 
-function upperTagDebugProvider() {
-  return {
-    name: 'upperTagDebugProvider',
-    test: 2
-  }
-}
-
 export const tagDebug = tag(() => {// tagDebug.js
-  let renderCount = state(0)(x => [renderCount, renderCount = x])
-  let counter = state(0)(x => [counter, counter = x])
-  let initCounter = state(0)(x => [initCounter, initCounter = x])
-  /*
-  let renderCount = state0(0, x => [renderCount, renderCount = x])
-  let counter = state0(0, x => [counter, counter = x])
-  let initCounter = state0(0, x => [initCounter, initCounter = x])
-  */
-
+  let renderCount = setLet(0)(x => [renderCount, renderCount = x])
+  let counter = setLet(0)(x => [counter, counter = x])
+  let initCounter = setLet(0)(x => [initCounter, initCounter = x])
 
   const provider = providers.create( tagDebugProvider )
-  console.log('provider',provider)
   
   onInit(() => {
     ++initCounter
@@ -89,8 +74,7 @@ const providerDebug = tag(() => {
   const provider = providers.inject( tagDebugProvider )
   const upperProvider = provider.upper // providers.inject( upperTagDebugProvider )
   
-  let renderCount = state(0)(x => [renderCount, renderCount = x])
-  // let renderCount = state0(0, x => [renderCount, renderCount = x])
+  let renderCount = setLet(0)(x => [renderCount, renderCount = x])
 
   ++renderCount
 

@@ -2,7 +2,7 @@ import { TagSupport } from "./TagSupport.class.js";
 import { Provider } from "./providers.js";
 import { Subscription } from "./Subject.js";
 import { Counts } from "./interpolateTemplate.js";
-import { State } from "./state.js";
+import { State } from "./set.function.js";
 import { InterpolatedTemplates } from "./interpolations.js";
 export declare const variablePrefix = "__tagvar";
 export declare const escapeVariable: string;
@@ -45,8 +45,6 @@ export declare class Tag {
     destroyClones({ stagger }?: DestroyOptions): Promise<number>;
     updateByTag(tag: Tag): void;
     lastTemplateString: string | undefined;
-    /** A method of passing down the same render method */
-    setSupport(tagSupport: TagSupport): void;
     updateConfig(strings: string[], values: any[]): void;
     getTemplate(): TagTemplate;
     isLikeTag(tag: Tag): boolean;

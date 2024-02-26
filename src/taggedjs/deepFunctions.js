@@ -40,7 +40,7 @@ export function deepEqual(obj1, obj2) {
     return isDeepEqual(obj1, obj2, new WeakMap());
 }
 function isDeepEqual(obj1, obj2, visited) {
-    if (obj1 === obj2) {
+    if (obj1 === obj2 || isSameFunctions(obj1, obj2)) {
         return true;
     }
     if (typeof obj1 !== 'object' ||
@@ -63,10 +63,11 @@ function isDeepEqual(obj1, obj2, visited) {
     for (const key of keys1) {
         const keyFound = keys2.includes(key);
         if (!keyFound || !isDeepEqual(obj1[key], obj2[key], visited)) {
-            const bothFunction = obj1[key] instanceof Function && obj2[key] instanceof Function;
-            if (bothFunction && obj1[key].toString() === obj2[key].toString()) {
-                continue;
+            /*
+            if(isSameFunctions(obj1[key], obj2[key])) {
+              continue
             }
+            */
             return false;
         }
     }
@@ -86,5 +87,9 @@ function isDeepEqual(obj1, obj2, visited) {
         return false;
     }
     return true;
+}
+function isSameFunctions(fn0, fn1) {
+    const bothFunction = fn0 instanceof Function && fn1 instanceof Function;
+    return bothFunction && fn0.toString() === fn1.toString();
 }
 //# sourceMappingURL=deepFunctions.js.map

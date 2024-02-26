@@ -57,7 +57,7 @@ export const score = tag(({player}) => html`
   <div style="text-align: center;">
     ${!player.gameover && html`<strong>SCORE:</strong>`}
     ${player.gameover && html`<strong>FINAL SCORE:</strong>`}
-    ${getPlayerScore(player)}
+    ${getPlayerScore(player)} after ${player.scores.length} frames
   </div>
 `)
 

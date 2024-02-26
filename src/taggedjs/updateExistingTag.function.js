@@ -9,8 +9,7 @@ export function updateExistingTag(templater, ogTag, existingSubject) {
     tagSupport.latestClonedProps = retag.tagSupport.clonedProps;
     // tagSupport.latestClonedProps = retag.tagSupport.latestClonedProps
     tagSupport.memory = retag.tagSupport.memory;
-    // retag.tagSupport = tagSupport
-    retag.setSupport(tagSupport);
+    retag.tagSupport = tagSupport;
     templater.newest = retag;
     tagSupport.newest = retag;
     runAfterRender(oldest.tagSupport, oldest);

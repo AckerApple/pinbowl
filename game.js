@@ -183,6 +183,7 @@ export class Game {
     return new Promise(resolve => {
       this.alertData.resolve = resolve
       document.getElementById('alertDialog').showModal()
+      document.getElementById('closeAlert').focus()
     })
   }
 
@@ -192,6 +193,7 @@ export class Game {
     return new Promise(resolve => {
       this.alertData.resolve = resolve
       document.getElementById('alertDialog').showModal()
+      document.getElementById('closeAlert').focus()
     })
   }
 

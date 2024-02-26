@@ -70,7 +70,7 @@ export class Game {
     if(leaders.length > 1) {
       this.tieBreaker.next()
       leaders.forEach(({player}) => {
-        player.frames.push(player.frames.length)
+        player””.frames.push(player.frames.length)
         player.gameover = false
       })
       this.playerTurn = leaders[0].playerIndex
@@ -183,6 +183,7 @@ export class Game {
     return new Promise(resolve => {
       this.alertData.resolve = resolve
       document.getElementById('alertDialog').showModal()
+      document.getElementById('closeAlert').focus()
     })
   }
 
@@ -192,6 +193,7 @@ export class Game {
     return new Promise(resolve => {
       this.alertData.resolve = resolve
       document.getElementById('alertDialog').showModal()
+      document.getElementById('closeAlert').focus()
     })
   }
 

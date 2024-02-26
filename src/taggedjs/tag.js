@@ -14,16 +14,19 @@ export function tag(tagComponent) {
             props = undefined;
         }
         const { childSubject, madeSubject } = kidsToTagArraySubject(children);
+        childSubject.isChildSubject = true;
         const templater = new TemplaterResult(props, childSubject);
-        if (!isPropTag) {
-            // wrap props that are functions
-            alterProps(props, templater);
+        /*
+        if(!isPropTag) {
+          // wrap props that are functions
+          templater.tagSupport.props = alterProps(props, templater)
         }
+        */
         function innerTagWrap() {
             const originalFunction = innerTagWrap.original;
-            const props = templater.tagSupport.props;
+            const props = alterProps(templater.tagSupport.props, templater); // templater.tagSupport.props
             const tag = originalFunction(props, childSubject);
-            tag.setSupport(templater.tagSupport);
+            tag.tagSupport = templater.tagSupport;
             if (madeSubject) {
                 childSubject.value.forEach(kid => {
                     kid.values.forEach((value, index) => {

@@ -1,5 +1,6 @@
 import { deepClone, deepEqual } from "./deepFunctions.js";
 import { isTagArray, isTagComponent, isTagInstance } from "./isInstance.js";
+import { providersChangeCheck } from "./provider.utils.js";
 import { alterProps } from "./templater.utils.js";
 export class TagSupport {
     templater;
@@ -62,11 +63,6 @@ export class TagSupport {
             return true;
         }
         const oldTemplater = tag.tagSupport.templater;
-        /*
-        const nowProps = newTemplater.tagSupport.props // natural props
-        const oldClonedProps = oldTemplater.tagSupport.clonedProps // natural props
-        const oldProps = oldTemplater?.tagSupport.props // new props cloned
-        */
         const hasChanged = hasTagSupportChanged(oldTemplater.tagSupport, newTemplater.tagSupport);
         this.newest = this.templater.redraw(); // No change detected, just redraw me only
         if (!hasChanged) {
@@ -74,37 +70,6 @@ export class TagSupport {
         }
         return false;
     }
-}
-function providersChangeCheck(tag) {
-    const providersWithChanges = tag.tagSupport.memory.providers.filter(provider => !deepEqual(provider.instance, provider.clone));
-    // reset clones
-    providersWithChanges.forEach(provider => {
-        const appElement = tag.getAppElement();
-        handleProviderChanges(appElement, provider);
-        provider.clone = deepClone(provider.instance);
-    });
-}
-function handleProviderChanges(appElement, provider) {
-    const tagsWithProvider = getTagsWithProvider(appElement, provider);
-    tagsWithProvider.forEach(({ tag, renderCount, provider }) => {
-        const unRendered = renderCount === tag.tagSupport.memory.renderCount;
-        if (unRendered) {
-            provider.clone = deepClone(provider.instance);
-            tag.tagSupport.render();
-        }
-    });
-}
-function getTagsWithProvider(tag, provider, memory = []) {
-    const hasProvider = tag.tagSupport.memory.providers.find(xProvider => xProvider.constructMethod === provider.constructMethod);
-    if (hasProvider) {
-        memory.push({
-            tag,
-            renderCount: tag.tagSupport.memory.renderCount,
-            provider: hasProvider
-        });
-    }
-    tag.children.forEach(child => getTagsWithProvider(child, provider, memory));
-    return memory;
 }
 export function hasTagSupportChanged(oldTagSupport, newTagSupport) {
     const oldProps = oldTagSupport.props;
@@ -123,7 +88,48 @@ export function hasPropChanges(props, // natural props
 pastCloneProps, // previously cloned props
 compareToProps) {
     const isCommonEqual = props === undefined && props === compareToProps;
-    const isEqual = isCommonEqual || deepEqual(pastCloneProps, props);
+    if (isCommonEqual) {
+        return false;
+    }
+    let castedProps = props;
+    let castedPastProps = pastCloneProps;
+    // check all prop functions match
+    if (typeof (props) === 'object') {
+        if (!pastCloneProps) {
+            return true;
+        }
+        castedProps = { ...props };
+        castedPastProps = { ...(pastCloneProps || {}) };
+        const allFunctionsMatch = Object.entries(castedProps).every(([key, value]) => {
+            let compare = castedPastProps[key];
+            if (!compare) {
+                return false;
+            }
+            // ensure we are comparing apples to apples as function get wrapped
+            if (compare.original) {
+                compare = compare.original;
+            }
+            if (value.original) {
+                value = value.original;
+            }
+            if (!(value instanceof Function)) {
+                return true; // this will be checked in deepEqual
+            }
+            if (!(compare instanceof Function)) {
+                return false; // its a function now but was not before
+            }
+            if (value.toString() !== compare.toString()) {
+                return false; // both are function but not the same
+            }
+            delete castedProps[key]; // its a function and not needed to be compared
+            delete castedPastProps[key]; // its a function and not needed to be compared
+            return true;
+        });
+        if (!allFunctionsMatch) {
+            return true; // a change has been detected by function comparisons
+        }
+    }
+    const isEqual = deepEqual(pastCloneProps, props);
     return !isEqual; // if equal then no changes
 }
 export function hasKidsChanged(oldTagSupport, newTagSupport) {

@@ -3,14 +3,14 @@ insertBefore, // <template end interpolate />
 { index, counts, forceElement, }) {
     // *for
     if (index !== undefined) {
-        const resultArray = result.lastArray;
-        const existing = resultArray[index];
+        const lastArray = result.lastArray;
+        const existing = lastArray[index];
         if (existing?.tag.isLikeTag(tag)) {
             existing.tag.updateByTag(tag);
             return [];
         }
         // Added to previous array
-        resultArray.push({
+        lastArray.push({
             tag, index
         });
         const lastFirstChild = insertBefore; // tag.clones[0] // insertBefore.lastFirstChild    

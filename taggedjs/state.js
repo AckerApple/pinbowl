@@ -12,32 +12,34 @@ export function state(defaultValue) {
     const restate = config.rearray[config.array.length];
     if (restate) {
         let oldValue = getStateValue(restate);
-        getSetMethod = (x => [oldValue, oldValue = x]);
+        getSetMethod = ((x) => [oldValue, oldValue = x]);
         const push = {
             callback: getSetMethod,
             lastValue: oldValue,
             defaultValue: restate.defaultValue,
         };
         config.array.push(push);
-        return (y) => {
-            push.callback = y || (x => [oldValue, oldValue = x]);
-            return oldValue;
-        };
+        return makeStateResult(oldValue, push);
     }
+    // State first time run
     const defaultFn = defaultValue instanceof Function ? defaultValue : () => defaultValue;
     let initValue = defaultFn();
-    getSetMethod = (x => [initValue, initValue = x]);
+    getSetMethod = ((x) => [initValue, initValue = x]);
     const push = {
         callback: getSetMethod,
         lastValue: initValue,
         defaultValue: initValue,
     };
     config.array.push(push);
+    return makeStateResult(initValue, push);
+}
+function makeStateResult(initValue, push) {
     // return initValue
-    return (y) => {
+    const result = (y) => {
         push.callback = y || (x => [initValue, initValue = x]);
         return initValue;
     };
+    return result;
 }
 const waitingStates = [];
 export function onNextStateOnly(callback) {
@@ -87,11 +89,11 @@ state) {
     const [oldValue] = oldState;
     const [checkValue] = callback(oldValue); // set back to original value
     if (checkValue !== StateEchoBack) {
-        const message = 'State property not used correctly.\n\n' +
-            'For "let" state use `let name = state(default, x => [name, name = x])`\n\n' +
-            'For "const" state use `const name = state(default)`\n\n' +
-            'Problem function:\n' + state + '\n';
-        // console.error(message, {callback, oldState, oldValue, checkValue})
+        const message = 'State property not used correctly. Second item in array is not setting value as expected.\n\n' +
+            'For "let" state use `let name = state(default)(x => [name, name = x])`\n\n' +
+            'For "const" state use `const name = state(default)()`\n\n' +
+            'Problem state:\n' + (callback ? callback.toString() : JSON.stringify(state)) + '\n';
+        console.error(message, { state, callback, oldState, oldValue, checkValue });
         throw new Error(message);
     }
     return oldValue;

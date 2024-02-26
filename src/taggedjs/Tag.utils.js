@@ -1,3 +1,4 @@
+import { TagSupport } from "./TagSupport.class.js";
 import { ValueSubject } from "./ValueSubject.js";
 import { redrawTag } from "./redrawTag.function.js";
 import { bindSubjectCallback } from "./bindSubjectCallback.function.js";
@@ -6,11 +7,11 @@ export function getSubjectFunction(value, tag) {
 }
 export function setValueRedraw(templater, // latest tag function to call for rendering
 existing, ownerTag) {
-    // const oldCount = existing.tagSupport?.memory.renderCount
     // redraw does not communicate to parent
     templater.redraw = () => {
         const existingTag = existing.tag;
-        const { remit, retag } = redrawTag(existingTag, templater, ownerTag);
+        const tagSupport = existingTag?.tagSupport || new TagSupport(templater, templater.tagSupport.children);
+        const { remit, retag } = redrawTag(tagSupport, templater, existingTag, ownerTag);
         existing.tagSupport = retag.tagSupport;
         if (!remit) {
             return;

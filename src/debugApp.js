@@ -1,11 +1,10 @@
 import { tagDebug } from "./tagJsDebug.js"
 import { gameDebug } from "./gameDebug.js"
-import { html, tag, state } from "./taggedjs/index.js"
+import { html, tag, setLet } from "./taggedjs/index.js"
 import { animateDestroy, animateInit } from "./animations.js"
 
 export const debugApp = tag((game) => {  
-  let debugTags = state(false)(x => [debugTags, debugTags = x])
-  // let debugTags = state0(false, x => [debugTags, debugTags = x])
+  let debugTags = setLet(false)(x => [debugTags, debugTags = x])
 
   return html`
     <!--debugApp.js-->

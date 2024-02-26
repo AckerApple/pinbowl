@@ -8,6 +8,7 @@ export * from "./errors.js";
 export * from "./Subject.js";
 export * from "./isInstance.js";
 export * from "./ValueSubject.js";
+export * from "./watch.function.js";
 export * from "./TagSupport.class.js";
 export * from "./gateway/index.js";
 export * from "./redrawTag.function.js";
@@ -19,8 +20,9 @@ export { setUse } from "./setUse.function.js";
 /* hooks */
 // TODO: export *
 export { providers } from "./providers.js";
-// TODO: export *
-export { state } from "./state.js";
+export { set } from "./set.function.js";
+export { setLet } from "./setLet.function.js";
+export { setProp } from "./setProp.function.js";
 export * from "./onInit.js";
 export * from "./onDestroy.js";
 export * from "./getCallback.js";

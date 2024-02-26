@@ -3,7 +3,7 @@ import { setUse } from "./setUse.function.js";
 // TODO: rename
 setUse.memory.providerConfig = {
     providers: [],
-    currentTagSupport: undefined,
+    //currentTagSupport: undefined as TagSupport | undefined,
     ownerTag: undefined,
 };
 function get(constructMethod) {
@@ -76,7 +76,7 @@ setUse({
 });
 function run(tagSupport, ownerTag) {
     const config = setUse.memory.providerConfig;
-    config.currentTagSuport = tagSupport;
+    // config.currentTagSupport = tagSupport
     config.ownerTag = ownerTag;
     if (tagSupport.memory.providers.length) {
         config.providers.length = 0;

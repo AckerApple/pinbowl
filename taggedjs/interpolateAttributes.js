@@ -90,7 +90,9 @@ function processNameValueAttr(attrName, result, child, ownerTag, howToSet) {
     // Most every variable comes in here since everything is made a ValueSubject
     if (isSubjectInstance(result)) {
         child.removeAttribute(attrName);
-        const callback = (newAttrValue) => processSubjectValue(newAttrValue, child, attrName, isSpecial, howToSet);
+        const callback = (newAttrValue) => {
+            return processAttributeSubjectValue(newAttrValue, child, attrName, isSpecial, howToSet);
+        };
         // 🗞️ Subscribe. Above callback called immediately since its a ValueSubject()
         const sub = result.subscribe(callback);
         // Record subscription for later unsubscribe when element destroyed
@@ -101,7 +103,7 @@ function processNameValueAttr(attrName, result, child, ownerTag, howToSet) {
     // child.setAttribute(attrName, result.value)
     return;
 }
-function processSubjectValue(newAttrValue, child, attrName, isSpecial, howToSet) {
+function processAttributeSubjectValue(newAttrValue, child, attrName, isSpecial, howToSet) {
     if (newAttrValue instanceof Function) {
         ;
         child[attrName] = function (...args) {

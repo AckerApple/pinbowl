@@ -2,32 +2,30 @@ import { interpolateTemplate } from "./interpolateTemplate.js";
 const templateSearch = new RegExp('\\s*<template interpolate end id="__tagvar(\\d{1,4})"([^>]*)></template>(\\s*)');
 /** Returns subscriptions[] that will need to be unsubscribed from when element is destroyed */
 export function interpolateContentTemplates(element, // <div><div></div><template tag-wrap="22">...</template></div>
-variable, tag, options, children) {
+context, tag, options, children) {
     if (!children || element.tagName === 'TEMPLATE') {
         return []; // done
     }
-    const counts = {
-        added: 0,
-        removed: 0,
-    };
+    // counting for animation stagger computing
+    const counts = options.counts;
     const clones = [];
     const childArray = new Array(...children);
     if (element.tagName === 'TEXTAREA') {
         scanTextAreaValue(element);
     }
-    childArray.forEach(child => {
-        const nextClones = interpolateTemplate(child, variable, tag, counts, options);
+    childArray.forEach((child, childIndex) => {
+        const nextClones = interpolateTemplate(child, context, tag, counts, options);
         if (child.tagName === 'TEXTAREA') {
             scanTextAreaValue(child);
         }
         clones.push(...nextClones);
         if (child.children) {
             const nextKids = new Array(...child.children);
-            nextKids.forEach(subChild => {
+            nextKids.forEach((subChild, index) => {
                 if (isRenderEndTemplate(subChild)) {
-                    interpolateTemplate(subChild, variable, tag, counts, options);
+                    interpolateTemplate(subChild, context, tag, counts, options);
                 }
-                const nextClones = interpolateContentTemplates(subChild, variable, tag, options, subChild.children);
+                const nextClones = interpolateContentTemplates(subChild, context, tag, options, subChild.children);
                 clones.push(...nextClones);
             });
         }

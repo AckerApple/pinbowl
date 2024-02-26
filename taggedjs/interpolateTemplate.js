@@ -4,7 +4,7 @@ import { processSubjectValue } from "./processSubjectValue.function.js";
 export function interpolateTemplate(template, // <template end interpolate /> (will be removed)
 context, // variable scope of {`__tagvar${index}`:'x'}
 tag, // Tag class
-counts, // {added:0, removed:0}
+counts, // used for animation stagger computing
 options) {
     const clones = [];
     if (!template.hasAttribute('end')) {
@@ -15,19 +15,17 @@ options) {
         return clones; // ignore, not a tagVar
     }
     const result = context[variableName];
-    // const isSubject = isSubjectInstance(result)
     let isForceElement = options.forceElement;
     const callback = (templateNewValue) => {
-        const { clones } = processSubjectValue(templateNewValue, result, template, tag, { counts, forceElement: isForceElement });
+        const { clones } = processSubjectValue(templateNewValue, result, template, tag, {
+            // counts,
+            counts: { added: counts.added, removed: counts.removed },
+            forceElement: isForceElement,
+        });
         if (isForceElement) {
             isForceElement = false; // only can happen once
         }
         clones.push(...clones);
-        // TODO: See if we can remove
-        setTimeout(() => {
-            counts.added = 0; // reset
-            counts.removed = 0; // reset
-        }, 0);
     };
     const sub = result.subscribe(callback);
     tag.cloneSubs.push(sub);
@@ -45,20 +43,27 @@ export function updateBetweenTemplates(value, lastFirstChild) {
     parent.insertBefore(textNode, lastFirstChild);
     /* remove existing nodes */
     parent.removeChild(lastFirstChild);
-    if (lastFirstChild.nodeName === 'TEMPLATE') {
-        lastFirstChild.setAttribute('removedAt', Date.now().toString());
-    }
     return textNode;
 }
 export function afterElmBuild(elm, options) {
     if (!elm.getAttribute) {
         return;
     }
+    let diff = options.counts.added;
     if (!options.forceElement) {
-        elementInitCheck(elm, options.counts);
+        diff = elementInitCheck(elm, options.counts) - diff;
     }
     if (elm.children) {
-        new Array(...elm.children).forEach(child => afterElmBuild(child, options));
+        const subCounts = {
+            added: options.counts.added, // - diff,
+            removed: options.counts.removed,
+        };
+        new Array(...elm.children).forEach((child, index) => {
+            return afterElmBuild(child, {
+                ...options,
+                counts: options.counts,
+            });
+        });
     }
 }
 //# sourceMappingURL=interpolateTemplate.js.map

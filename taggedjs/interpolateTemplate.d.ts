@@ -7,7 +7,7 @@ export type Template = Element & {
 export declare function interpolateTemplate(template: Template, // <template end interpolate /> (will be removed)
 context: Context, // variable scope of {`__tagvar${index}`:'x'}
 tag: Tag, // Tag class
-counts: Counts, // {added:0, removed:0}
+counts: Counts, // used for animation stagger computing
 options: InterpolateOptions): Clones;
 export declare function updateBetweenTemplates(value: string | undefined | boolean | number, lastFirstChild: Element): Text;
 export type Counts = {

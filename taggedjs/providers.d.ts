@@ -3,6 +3,7 @@ export type Provider = {
     instance: any;
     clone: any;
 };
+type ProviderConstructor<T> = (new (...args: any[]) => T) | (() => T);
 type functionProvider = <T>() => T;
 type classProvider = new <T>(...args: any[]) => T;
 export declare const providers: {
@@ -12,6 +13,6 @@ export declare const providers: {
      * @param {(new (...args: any[]) => T) | () => T} constructor
      * @returns {T}
      */
-    inject: (constructor: any) => any;
+    inject: <T_1>(constructor: ProviderConstructor<T_1>) => T_1;
 };
 export {};

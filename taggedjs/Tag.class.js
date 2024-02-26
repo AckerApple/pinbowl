@@ -48,11 +48,11 @@ export class Tag {
         }
         this.destroySubscriptions();
         const promises = this.children.map((kid) => kid.destroy({ ...options, byParent: true }));
-        if (!options.byParent) {
-            options.stagger = await this.destroyClones(options);
-        }
         if (this.ownerTag) {
             this.ownerTag.children = this.ownerTag.children.filter(child => child !== this);
+        }
+        if (!options.byParent) {
+            options.stagger = await this.destroyClones(options);
         }
         await Promise.all(promises);
         return options.stagger;
@@ -64,23 +64,32 @@ export class Tag {
     async destroyClones({ stagger } = {
         stagger: 0,
     }) {
+        let hasPromise = false;
         const promises = this.clones.reverse().map((clone, index) => {
-            let promise = Promise.resolve();
+            let promise;
             if (clone.ondestroy) {
                 promise = elementDestroyCheck(clone, stagger);
             }
-            promise.then(() => {
+            const next = () => {
                 clone.parentNode?.removeChild(clone);
                 const ownerTag = this.ownerTag;
                 if (ownerTag) {
                     // Sometimes my clones were first registered to my owner, remove them
                     ownerTag.clones = ownerTag.clones.filter(compareClone => compareClone !== clone);
                 }
-            });
+            };
+            if (promise instanceof Promise) {
+                hasPromise = true;
+                promise.then(next);
+            }
+            else {
+                next();
+            }
             return promise;
         });
-        await Promise.all(promises);
-        // this.clones.length = 0
+        if (hasPromise) {
+            await Promise.all(promises);
+        }
         return stagger;
     }
     updateByTag(tag) {
@@ -88,11 +97,6 @@ export class Tag {
         this.tagSupport.templater = tag.tagSupport.templater;
     }
     lastTemplateString = undefined; // used to compare templates for updates
-    /** A method of passing down the same render method */
-    setSupport(tagSupport) {
-        this.tagSupport = tagSupport;
-        this.tagSupport.mutatingRender = tagSupport.mutatingRender;
-    }
     updateConfig(strings, values) {
         this.strings = strings;
         this.updateValues(values);
@@ -128,18 +132,6 @@ export class Tag {
             if (isFunctions) {
                 const stringMatch = value.toString() === compareTo.toString();
                 if (stringMatch) {
-                    return true;
-                }
-                return false;
-            }
-            const tag = value;
-            if (isTagInstance(tag) && isTagInstance(compareTo)) {
-                // TODO: THis "is" is setting data, this is not good
-                console.log('🎃');
-                tag.ownerTag = this; // let children know I own them
-                this.children.push(tag); // record children I created        
-                tag.lastTemplateString || tag.getTemplate().string; // ensure last template string is generated
-                if (tag.isLikeTag(compareTo)) {
                     return true;
                 }
                 return false;
@@ -200,14 +192,16 @@ export class Tag {
         this.insertBefore = insertBefore;
         const context = this.update();
         const template = this.getTemplate();
-        // const ownerTag = this.ownerTag
         const temporary = document.createElement('div');
         temporary.id = 'tag-temp-holder';
         // render content with a first child that we can know is our first element
         temporary.innerHTML = `<template tag-wrap="22">${template.string}</template>`;
         // const clonesBefore = this.clones.map(clone => clone)
         const intClones = interpolateElement(temporary, context, template, this, // this.ownerTag || this,
-        { forceElement: options.forceElement });
+        {
+            forceElement: options.forceElement,
+            counts: options.counts
+        });
         this.clones.length = 0;
         const clones = buildClones(temporary, insertBefore);
         this.clones.push(...clones);

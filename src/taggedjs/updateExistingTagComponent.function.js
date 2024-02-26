@@ -47,7 +47,6 @@ export function updateExistingTagComponent(tag, tempResult, existingSubject, sub
     const redraw = tempResult.redraw();
     existingSubject.value.tag = oldTagSetup.newest = redraw;
     oldTagSetup.latestClonedProps = tempResult.tagSupport.clonedProps;
-    // oldTagSetup.latestClonedProps = tempResult.tagSupport.latestClonedProps
     if (!isSameTag) {
         existingSubject.tag = redraw;
         subjectValue.tagSupport = tempResult.tagSupport;

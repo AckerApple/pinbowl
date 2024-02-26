@@ -32,9 +32,10 @@ options) {
     // Previously was simple value, now its a tag of some sort
     const resultTag = result;
     const clone = resultTag.clone;
-    if (valueType !== ValueTypes.value && clone) {
+    const noLongerSimpleValue = valueType !== ValueTypes.value && clone;
+    if (noLongerSimpleValue) {
         const parent = clone.parentNode;
-        template.removeAttribute('removedAt');
+        // template.removeAttribute('removedAt')
         parent.insertBefore(template, clone);
         parent.removeChild(clone);
         delete resultTag.clone;
@@ -113,16 +114,16 @@ options) {
     // const parentNode = lastFirstChild.parentNode || template.parentNode
     // put the template back down
     lastFirstChild.parentNode.insertBefore(template, lastFirstChild);
+    const clone = updateBetweenTemplates(value, 
+    // template // template, // this will be removed from document inside this function
+    lastFirstChild);
+    result.clone = clone;
     // cleanup old
-    if (result.clone) {
-        result.clone.parentNode.removeChild(result.clone);
-    }
     delete result.tag;
+    /* destroy logic */
     const stagger = options.counts.removed;
     const promise = tag.destroy({ stagger }).then(animated => options.counts.removed = stagger + animated);
-    delete result.tag;
-    const clone = updateBetweenTemplates(value, template);
-    result.clone = clone;
+    /* end: destroy logic */
     return promise;
 }
 //# sourceMappingURL=processSubjectValue.function.js.map

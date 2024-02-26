@@ -5,8 +5,7 @@ import { escapeSearch, variablePrefix } from "./Tag.class.js";
 export function interpolateElement(element, context, // variables used to evaluate
 interpolatedTemplates, tagOwner, options) {
     const clones = [];
-    const result = interpolatedTemplates.interpolation; // interpolateElementChild(element)
-    // const result = interpolateElementChild(element)
+    const result = interpolatedTemplates.interpolation;
     const template = element.children[0];
     const children = template.content.children;
     if (result.keys.length) {
@@ -24,12 +23,6 @@ function processChildrenAttributes(children, context, ownerTag) {
             processChildrenAttributes(child.children, context, ownerTag);
         }
     });
-}
-/** Convert interpolations into template tags */
-function interpolateElementChild(child) {
-    const result = interpolateString(child.innerHTML);
-    child.innerHTML = result.string;
-    return result;
 }
 export function interpolateString(string) {
     const result = interpolateToTemplates(string);

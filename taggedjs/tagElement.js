@@ -1,4 +1,5 @@
 import { runAfterRender, runBeforeRedraw, runBeforeRender } from "./tagRunner.js";
+import { providersChangeCheck } from "./provider.utils.js";
 const appElements = [];
 export function tagElement(app, // (...args: unknown[]) => TemplaterResult,
 element, props) {
@@ -35,14 +36,20 @@ export function applyTagUpdater(wrapper) {
 }
 /** Overwrites arguments.tagSupport.mutatingRender */
 export function addAppTagRender(tagSupport, tag) {
-    let lastTag;
+    let lastTag = tag;
     tagSupport.mutatingRender = () => {
+        const preRenderCount = tagSupport.memory.renderCount;
+        providersChangeCheck(tag);
+        // When the providers were checked, a render to myself occurred and I do not need to re-render again
+        if (preRenderCount !== tagSupport.memory.renderCount) {
+            return lastTag;
+        }
         runBeforeRedraw(tag.tagSupport, tag);
         const templater = tagSupport.templater; // wrapper
         const fromTag = lastTag = templater.wrapper();
         tagSupport.latestProps = fromTag.tagSupport.props;
         tagSupport.latestClonedProps = fromTag.tagSupport.clonedProps;
-        fromTag.setSupport(tagSupport);
+        fromTag.tagSupport = tagSupport;
         runAfterRender(tag.tagSupport, tag);
         tag.updateByTag(fromTag);
         tagSupport.newest = fromTag;

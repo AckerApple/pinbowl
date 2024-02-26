@@ -37,8 +37,6 @@ export const playersLoop = tag(
     }
     
     player.edit = false // auto close edit after name input
-
-    console.log('------ blur about to end', game.players.length)
   }
 
   const playersContent = game.players.map((player, playerIndex) => html`

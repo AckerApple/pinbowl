@@ -9,6 +9,7 @@ export type LastArrayItem = {
 export type TagArraySubject = ValueSubject<Tag[]> & {
     lastArray: LastArrayItem[];
     template: Element;
+    isChildSubject?: boolean;
 };
 export declare function processTagArray(result: TagArraySubject, value: Tag[], // arry of Tag classes
 template: Element, // <template end interpolate />

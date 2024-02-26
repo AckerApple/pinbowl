@@ -11,6 +11,12 @@ export const footerButtons = tag(({
   return html`<!--footerButtons.js-->
     <div style="padding-top:1em;">
       <hr />
+      ${game.gameStarted && html`
+        <div style="opacity:0.8">
+          <small>frames ${game.currentFrame} completed</small>
+        </div>
+      `}
+
       <!-- add player -->
       ${game.currentFrame === 0 && html`
         <button type="button" id="player_add_button"
