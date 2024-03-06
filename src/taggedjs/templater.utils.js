@@ -5,6 +5,7 @@ import { setUse } from "./setUse.function.js";
 export class TemplaterResult {
     tagged;
     wrapper;
+    insertBefore;
     newest;
     oldest;
     tagSupport;
@@ -13,28 +14,15 @@ export class TemplaterResult {
     }
     redraw;
     isTemplater = true;
-    forceRenderTemplate(tagSupport, ownerTag) {
-        const tag = this.wrapper();
-        tag.tagSupport = tagSupport;
-        runAfterRender(tag.tagSupport, tag);
-        this.oldest = tag;
-        tagSupport.oldest = tag;
-        this.oldest = tag;
-        this.newest = tag;
-        tag.ownerTag = ownerTag;
-        return tag;
-    }
     renderWithSupport(tagSupport, existingTag, ownerTag) {
         /* BEFORE RENDER */
         // signify to other operations that a rendering has occurred so they do not need to render again
         ++tagSupport.memory.renderCount;
         const runtimeOwnerTag = existingTag?.ownerTag || ownerTag;
-        if (tagSupport.oldest) {
-            // ensure props are the last ones used
-            tagSupport.props = tagSupport.latestProps;
-            tagSupport.clonedProps = tagSupport.latestClonedProps;
-            // tagSupport.latestClonedProps = tagSupport.latestClonedProps
-            runBeforeRedraw(tagSupport, tagSupport.oldest);
+        // const insertBefore = tagSupport.templater.insertBefore
+        if (existingTag) {
+            tagSupport.propsConfig = { ...existingTag.tagSupport.propsConfig };
+            runBeforeRedraw(tagSupport, existingTag);
         }
         else {
             // first time render
@@ -47,23 +35,27 @@ export class TemplaterResult {
         const templater = this;
         const retag = templater.wrapper();
         /* AFTER */
-        tagSupport.latestProps = retag.tagSupport.props;
-        tagSupport.latestClonedProps = retag.tagSupport.clonedProps;
-        retag.tagSupport = tagSupport;
         runAfterRender(tagSupport, retag);
         templater.newest = retag;
         retag.ownerTag = runtimeOwnerTag;
-        const oldest = tagSupport.oldest = tagSupport.oldest || retag;
         tagSupport.newest = retag;
-        const oldestTagSupport = oldest.tagSupport;
-        oldest.tagSupport = oldestTagSupport || tagSupport;
-        oldest.tagSupport.templater = templater;
-        const isSameTag = existingTag && existingTag.isLikeTag(retag);
+        // ???
+        // const oldest = tagSupport.oldest = tagSupport.oldest || retag
+        // oldest.tagSupport.templater = templater
+        // oldest.tagSupport.memory = retag.tagSupport.memory
+        // TODO: I think this is duplicated work of updateExistingValue?
+        /*
+        const isSameTag = existingTag && existingTag.isLikeTag(retag)
         // If previously was a tag and seems to be same tag, then just update current tag with new values
-        if (isSameTag) {
-            oldest.updateByTag(retag);
-            return { remit: false, retag };
+        if(isSameTag) {
+          existingTag.updateByTag(retag)
+          return {remit: false, retag}
         }
+    
+        // MAYBE destroy existing tag here?
+    
+        return {remit: true, retag}
+        */
         return { remit: true, retag };
     }
 }
@@ -86,16 +78,25 @@ function resetFunctionProps(props, callback) {
     if (typeof (props) !== 'object') {
         return props;
     }
-    const newProps = { ...props };
+    const newProps = props;
+    // BELOW: Do not clone because if first argument is object, the memory ref back is lost
+    // const newProps = {...props} 
     Object.entries(newProps).forEach(([name, value]) => {
         if (value instanceof Function) {
+            const original = newProps[name].original;
+            if (original) {
+                newProps[name] = (...args) => {
+                    return callback(value, args);
+                };
+                newProps[name].original = original;
+                return; // already previously converted
+            }
             newProps[name] = (...args) => {
                 return callback(value, args);
             };
             newProps[name].original = value;
             return;
         }
-        newProps[name] = value;
     });
     return newProps;
 }

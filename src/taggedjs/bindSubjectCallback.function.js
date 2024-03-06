@@ -10,17 +10,20 @@ export function bindSubjectCallback(value, tag) {
     return subjectFunction;
 }
 export function runTagCallback(value, tag, bindTo, args) {
-    const renderCount = tag.tagSupport.memory.renderCount;
+    const tagSupport = tag.tagSupport;
+    const renderCount = tagSupport ? tagSupport.memory.renderCount : 0;
     const method = value.bind(bindTo);
     const callbackResult = method(...args);
-    if (renderCount !== tag.tagSupport.memory.renderCount) {
-        return; // already rendered
+    const sameRenderCount = renderCount === tagSupport.memory.renderCount;
+    // TODO: need to restore this
+    if (tagSupport && !sameRenderCount) {
+        // return // already rendered
     }
-    tag.tagSupport.render();
+    tagSupport.render();
     if (callbackResult instanceof Promise) {
         return callbackResult.then(() => {
-            tag.tagSupport.render();
-            return 'no-data-ever';
+            tagSupport.render();
+            return 'promise-no-data-ever';
         });
     }
     // Caller always expects a Promise

@@ -25,7 +25,7 @@ export function onNextStateOnly(callback) {
 setUse({
     beforeRender: (tagSupport) => initState(tagSupport),
     beforeRedraw: (tagSupport) => initState(tagSupport),
-    afterRender: (tagSupport, tag) => {
+    afterRender: (tagSupport) => {
         const state = tagSupport.memory.state;
         const config = setUse.memory.stateConfig;
         if (config.rearray.length) {
@@ -39,10 +39,7 @@ setUse({
                 throw error;
             }
         }
-        // config.rearray.length = 0 // clean up any previous runs
         config.rearray = []; // clean up any previous runs
-        // state.newest.length = 0
-        // state.newest.push(...config.array) as any
         state.newest = [...config.array];
         // config.array.length = 0
         config.array = [];

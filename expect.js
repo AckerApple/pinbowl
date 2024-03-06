@@ -14,7 +14,7 @@ export function expect(expected) {
         return
       }
 
-      const message = customMessage || `Expected ${JSON.stringify(received)} to be ${JSON.stringify(received)}`
+      const message = customMessage || `Expected ${typeof(expected)} ${JSON.stringify(expected)} to be ${typeof(received)} ${JSON.stringify(received)}`
       console.error(message, {received, expected})
       throw new Error(message)
     }

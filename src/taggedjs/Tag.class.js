@@ -1,12 +1,10 @@
-import { getSubjectFunction, setValueRedraw } from "./Tag.utils.js";
-import { ValueSubject } from "./ValueSubject.js";
 import { runBeforeDestroy } from "./tagRunner.js";
-import { isSubjectInstance, isTagComponent, isTagInstance } from "./isInstance.js";
 import { buildClones } from "./render.js";
 import { interpolateElement, interpolateString } from "./interpolateElement.js";
 import { afterElmBuild } from "./interpolateTemplate.js";
 import { elementDestroyCheck } from "./elementDestroyCheck.function.js";
 import { updateExistingValue } from "./updateExistingValue.function.js";
+import { processNewValue } from "./processNewValue.function.js";
 export const variablePrefix = '__tagvar';
 export const escapeVariable = '--' + variablePrefix + '--';
 const prefixSearch = new RegExp(variablePrefix, 'g');
@@ -18,13 +16,13 @@ export class Tag {
     strings;
     values;
     isTag = true;
-    clones = []; // elements on document
+    clones = []; // elements on document. Needed at destroy process to know what to destroy
     cloneSubs = []; // subscriptions created by clones
     children = []; // tags on me
     tagSupport;
     // only present when a child of a tag
     ownerTag;
-    insertBefore;
+    // insertBefore?: Element
     appElement; // only seen on this.getAppElement().appElement
     // present only when an array. Populated by this.key()
     arrayValue = new ArrayValueNeverSet();
@@ -48,6 +46,7 @@ export class Tag {
         }
         this.destroySubscriptions();
         const promises = this.children.map((kid) => kid.destroy({ ...options, byParent: true }));
+        this.children.length = 0;
         if (this.ownerTag) {
             this.ownerTag.children = this.ownerTag.children.filter(child => child !== this);
         }
@@ -87,6 +86,7 @@ export class Tag {
             }
             return promise;
         });
+        this.clones.length = 0; // tag maybe used for something else
         if (hasPromise) {
             await Promise.all(promises);
         }
@@ -95,6 +95,8 @@ export class Tag {
     updateByTag(tag) {
         this.updateConfig(tag.strings, tag.values);
         this.tagSupport.templater = tag.tagSupport.templater;
+        this.tagSupport.propsConfig = { ...tag.tagSupport.propsConfig };
+        this.tagSupport.newest = tag;
     }
     lastTemplateString = undefined; // used to compare templates for updates
     updateConfig(strings, values) {
@@ -122,6 +124,10 @@ export class Tag {
     }
     isLikeTag(tag) {
         const { string } = tag.getTemplate();
+        // TODO: most likely remove?
+        if (!this.lastTemplateString) {
+            throw new Error('no template here');
+        }
         const stringMatched = string === this.lastTemplateString;
         if (!stringMatched || tag.values.length !== this.values.length) {
             return false;
@@ -151,18 +157,30 @@ export class Tag {
         return this.updateContext(this.tagSupport.memory.context);
     }
     updateContext(context) {
+        // const seenContext: string[] = []
         this.strings.map((_string, index) => {
             const variableName = variablePrefix + index;
             const hasValue = this.values.length > index;
             const value = this.values[index];
             // is something already there?
-            const existing = context[variableName];
+            const existing = variableName in context;
+            // seenContext.push(variableName)
             if (existing) {
+                const existing = context[variableName];
                 return updateExistingValue(existing, value, this);
             }
             // 🆕 First time values below
             processNewValue(hasValue, value, context, variableName, this);
         });
+        /*
+        // Support reduction in context
+        Object.entries(context).forEach(([key, subject]) => {
+          if(seenContext.includes(key)) {
+            return
+          }
+          const destroyed = checkDestroyPrevious(subject, undefined as any)
+        })
+        */
         return context;
     }
     getAppElement() {
@@ -174,7 +192,8 @@ export class Tag {
     }
     /** Used during HMR only where static content itself could have been edited */
     rebuild() {
-        const insertBefore = this.insertBefore;
+        // const insertBefore = this.insertBefore
+        const insertBefore = this.tagSupport.templater.insertBefore;
         if (!insertBefore) {
             const err = new Error('Cannot rebuild. Previous insertBefore element is not defined on tag');
             err.tag = this;
@@ -189,13 +208,14 @@ export class Tag {
         forceElement: false,
         counts: { added: 0, removed: 0 },
     }) {
-        this.insertBefore = insertBefore;
+        // this.insertBefore = insertBefore
+        this.tagSupport.templater.insertBefore = insertBefore;
         const context = this.update();
         const template = this.getTemplate();
         const temporary = document.createElement('div');
         temporary.id = 'tag-temp-holder';
         // render content with a first child that we can know is our first element
-        temporary.innerHTML = `<template tag-wrap="22">${template.string}</template>`;
+        temporary.innerHTML = `<template id="temp-template-tag-wrap">${template.string}</template>`;
         // const clonesBefore = this.clones.map(clone => clone)
         const intClones = interpolateElement(temporary, context, template, this, // this.ownerTag || this,
         {
@@ -211,30 +231,5 @@ export class Tag {
         this.clones.forEach(clone => afterElmBuild(clone, options));
         return this.clones;
     }
-}
-export function processNewValue(hasValue, value, context, variableName, tag) {
-    if (isTagComponent(value)) {
-        const existing = context[variableName] = new ValueSubject(value);
-        setValueRedraw(value, existing, tag);
-        return;
-    }
-    if (value instanceof Function) {
-        context[variableName] = getSubjectFunction(value, tag);
-        return;
-    }
-    if (!hasValue) {
-        return; // more strings than values, stop here
-    }
-    if (isTagInstance(value)) {
-        value.ownerTag = tag;
-        tag.children.push(value);
-        context[variableName] = new ValueSubject(value);
-        return;
-    }
-    if (isSubjectInstance(value)) {
-        context[variableName] = value;
-        return;
-    }
-    context[variableName] = new ValueSubject(value);
 }
 //# sourceMappingURL=Tag.class.js.map

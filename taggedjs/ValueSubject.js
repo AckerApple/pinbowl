@@ -1,9 +1,9 @@
 import { Subject } from './Subject.js';
 export class ValueSubject extends Subject {
     value;
-    constructor(initialValue) {
-        super();
-        this.value = initialValue;
+    constructor(value) {
+        super(value);
+        this.value = value;
     }
     subscribe(callback) {
         const unsubscribe = super.subscribe(callback);

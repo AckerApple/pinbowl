@@ -7,9 +7,10 @@ export interface SubjectLike {
     isSubject?: boolean;
 }
 export declare class Subject<T> implements SubjectLike {
+    value?: T | undefined;
     isSubject: boolean;
     subscribers: Subscriber[];
-    value?: any;
+    constructor(value?: T | undefined);
     subscribe(callback: Subscriber): Subscription;
     set(value: any): void;
     next: (value: any) => void;

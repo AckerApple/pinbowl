@@ -1,8 +1,7 @@
 import { interpolateTemplate } from "./interpolateTemplate.js";
 const templateSearch = new RegExp('\\s*<template interpolate end id="__tagvar(\\d{1,4})"([^>]*)></template>(\\s*)');
 /** Returns subscriptions[] that will need to be unsubscribed from when element is destroyed */
-export function interpolateContentTemplates(element, // <div><div></div><template tag-wrap="22">...</template></div>
-context, tag, options, children) {
+export function interpolateContentTemplates(element, context, tag, options, children) {
     if (!children || element.tagName === 'TEMPLATE') {
         return []; // done
     }
@@ -13,7 +12,7 @@ context, tag, options, children) {
     if (element.tagName === 'TEXTAREA') {
         scanTextAreaValue(element);
     }
-    childArray.forEach((child, childIndex) => {
+    childArray.forEach(child => {
         const nextClones = interpolateTemplate(child, context, tag, counts, options);
         if (child.tagName === 'TEXTAREA') {
             scanTextAreaValue(child);

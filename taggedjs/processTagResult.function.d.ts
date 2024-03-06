@@ -5,8 +5,7 @@ import { TagArraySubject } from "./processTagArray.js";
 import { TagSubject } from "./Tag.utils.js";
 export declare function processTagResult(tag: Tag, result: TagArraySubject | TagSubject | Function, // used for recording past and current value
 insertBefore: Element, // <template end interpolate />
-{ index, counts, forceElement, }: {
-    index?: number;
+{ counts, forceElement, }: {
     counts: Counts;
     forceElement?: boolean;
 }): Clones;

@@ -34,7 +34,6 @@ export declare class Tag {
     children: Tag[];
     tagSupport: TagSupport;
     ownerTag?: Tag;
-    insertBefore?: Element;
     appElement?: Element;
     arrayValue: unknown | ArrayValueNeverSet;
     constructor(strings: string[], values: any[]);
@@ -54,7 +53,7 @@ export declare class Tag {
     getAppElement(): Tag;
     /** Used during HMR only where static content itself could have been edited */
     rebuild(): void;
-    buildBeforeElement(insertBefore: Element, options?: ElementBuildOptions): (ChildNode | Element)[];
+    buildBeforeElement(insertBefore: Element | Text, options?: ElementBuildOptions): (ChildNode | Element)[];
 }
 type DestroyOptions = {
     stagger: number;
@@ -64,5 +63,4 @@ export type ElementBuildOptions = {
     counts: Counts;
     forceElement?: boolean;
 };
-export declare function processNewValue(hasValue: boolean, value: any, context: Context, variableName: string, tag: Tag): void;
 export {};

@@ -1,6 +1,5 @@
 import { ValueSubject } from "./ValueSubject.js";
 import { TagSupport } from "./TagSupport.class.js";
-import { processTagResult } from "./processTagResult.function.js";
 import { ArrayNoKeyError } from "./errors.js";
 export function processTagArray(result, value, // arry of Tag classes
 template, // <template end interpolate />
@@ -33,14 +32,20 @@ ownerTag, options) {
     // const masterBefore = template || (template as any).clone
     const before = template || template.clone;
     value.forEach((subTag, index) => {
-        subTag.tagSupport = new TagSupport({}, new ValueSubject([]));
-        subTag.tagSupport.mutatingRender = () => {
-            ownerTag.tagSupport.render();
-            // subTag.tagSupport.render()
-            return subTag;
-        }; // fake having a render function
+        const previous = result.lastArray[index];
+        const previousSupport = subTag.tagSupport || previous?.tag.tagSupport;
+        subTag.tagSupport = previousSupport || new TagSupport({}, new ValueSubject([]));
+        if (previousSupport) {
+            previousSupport.newest = subTag;
+        }
+        else {
+            subTag.tagSupport.mutatingRender = () => {
+                ownerTag.tagSupport.render(); // call owner for needed updates
+                return subTag;
+            };
+            ownerTag.children.push(subTag);
+        }
         subTag.ownerTag = ownerTag;
-        ownerTag.children.push(subTag);
         // check for html``.key()
         const keyNotSet = subTag.arrayValue;
         if (keyNotSet?.isArrayValueNeverSet) {
@@ -54,31 +59,34 @@ ownerTag, options) {
             const err = new ArrayNoKeyError(message, details);
             throw err;
         }
-        if (result.lastArray.length > index) {
-            const previous = result.lastArray[index];
+        const couldBeSame = result.lastArray.length > index;
+        if (couldBeSame) {
             const isSame = areLikeValues(previous.tag.arrayValue, subTag.arrayValue);
             if (isSame) {
-                previous.tag.updateValues(subTag.values);
-                // previous.tag.updateByTag(subTag)
+                subTag.tagSupport = subTag.tagSupport || previous.tag.tagSupport;
+                previous.tag.updateByTag(subTag);
+                return [];
             }
-            /*
-            previous.tag.destroy()
-            ++removed
-            ++options.counts.removed
-            */
             return [];
         }
-        const nextClones = processTagResult(subTag, result, before, {
-            index,
-            ...options,
-            counts: {
-                added: options.counts.added + index,
-                removed: options.counts.removed,
-            }
-        });
+        const nextClones = processAddTagArrayItem(before, subTag, result, index, options);
         clones.push(...nextClones);
     });
     return clones;
+}
+function processAddTagArrayItem(before, subTag, result, index, options) {
+    // Added to previous array
+    result.lastArray.push({
+        tag: subTag, index
+    });
+    const counts = {
+        added: options.counts.added + index,
+        removed: options.counts.removed,
+    };
+    const lastFirstChild = before; // tag.clones[0] // insertBefore.lastFirstChild    
+    const nextClones = subTag.buildBeforeElement(lastFirstChild, { counts, forceElement: options.forceElement });
+    // subTag.clones.push(...nextClones)
+    return nextClones;
 }
 /** compare two values. If both values are arrays then the items will be compared */
 function areLikeValues(valueA, valueB) {

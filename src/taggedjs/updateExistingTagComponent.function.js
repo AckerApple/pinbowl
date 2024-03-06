@@ -1,8 +1,8 @@
 import { setValueRedraw } from "./Tag.utils.js";
 import { deepClone } from "./deepFunctions.js";
 import { isTagInstance } from "./isInstance.js";
-import { destroyTagMemory } from "./updateExistingValue.function.js";
-import { hasTagSupportChanged } from "./TagSupport.class.js";
+import { hasTagSupportChanged } from "./hasTagSupportChanged.function.js";
+import { destroyTagMemory } from "./checkDestroyPrevious.function.js";
 export function updateExistingTagComponent(tag, tempResult, existingSubject, subjectValue) {
     let existingTag = existingSubject.tag;
     // previously was something else, now a tag component
@@ -20,12 +20,11 @@ export function updateExistingTagComponent(tag, tempResult, existingSubject, sub
         const newFunction = newWrapper.original;
         isSameTag = oldFunction === newFunction;
     }
-    const latestProps = tempResult.tagSupport.props;
+    const latestProps = tempResult.tagSupport.propsConfig.latest;
     const oldTagSetup = existingTag.tagSupport;
-    oldTagSetup.latestProps = latestProps;
+    oldTagSetup.propsConfig.latest = latestProps;
     if (!isSameTag) {
-        // TODO: this may not be in use
-        destroyTagMemory(existingTag, existingSubject, subjectValue);
+        destroyTagMemory(existingTag, existingSubject);
     }
     else {
         const subjectTagSupport = subjectValue?.tagSupport;
@@ -36,21 +35,24 @@ export function updateExistingTagComponent(tag, tempResult, existingSubject, sub
             oldCloneProps = deepClone(subjectTagSupport.props);
         }
         if (existingTag) {
-            const hasChanged = hasTagSupportChanged(oldTagSetup, tempResult.tagSupport);
+            const newTagSupport = tempResult.tagSupport;
+            const hasChanged = hasTagSupportChanged(oldTagSetup, newTagSupport);
             if (!hasChanged) {
-                return;
+                return; // its the same tag component
             }
         }
     }
     setValueRedraw(tempResult, existingSubject, tag);
     oldTagSetup.templater = tempResult;
     const redraw = tempResult.redraw();
-    existingSubject.value.tag = oldTagSetup.newest = redraw;
-    oldTagSetup.latestClonedProps = tempResult.tagSupport.clonedProps;
-    if (!isSameTag) {
+    if (!existingTag.isLikeTag(redraw)) {
+        existingTag.destroy();
+        existingSubject.tagSupport = redraw.tagSupport;
         existingSubject.tag = redraw;
-        subjectValue.tagSupport = tempResult.tagSupport;
+        oldTagSetup.oldest = redraw;
     }
+    oldTagSetup.newest = redraw;
+    oldTagSetup.propsConfig = { ...tempResult.tagSupport.propsConfig };
     return;
 }
 //# sourceMappingURL=updateExistingTagComponent.function.js.map

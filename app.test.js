@@ -19,7 +19,7 @@ export default async function runTest() {
     playerAddButton.click()
     
     let player0inputs = document.querySelectorAll('#player_0_input')
-    expect(player0inputs.length).toBe(1)
+    expect(player0inputs.length).toBe(1, 'Expected player 1 input to be present')
     const player0Input = player0inputs[0]
     player0Input.value = 'Acker'
     player0Input.onkeyup({target:player0Input})
@@ -40,11 +40,13 @@ export default async function runTest() {
     expect(document.querySelectorAll('#player_0_input').length).toBe(0)
     expect(document.querySelectorAll('#player_1_input').length).toBe(1)
 
+    console.info('🔵 clicking start...')
     document.getElementById('start_game_button').onclick()
 
     expect(document.getElementById('score_strike_button')).toBe(null)
 
     
+    console.info('🔵 making first score...')
     // frame 1 - strike
     const firstScore = document.getElementById('player_0_frame_0').onclick()
     
@@ -80,7 +82,7 @@ export default async function runTest() {
     
     const winner = document.getElementById('score_1_button').onclick() // winner
     expect(winner instanceof Promise).toBeDefined()
-    expect(await winner).toBe('no-data-ever')
+    expect(await winner).toBe('promise-no-data-ever')
     
     await document.getElementById('closeAlert').onclick()
         
@@ -111,7 +113,7 @@ export default async function runTest() {
     // await wait(1000)
 
     p1remove = document.getElementById('player_1_remove')
-    expect(p1remove).toBe(null)
+    expect(p1remove).toBe(null, 'Expected player two remove button not to be present')
 
     document.getElementById('player_0_remove').click() // removes player 2 who is now 1
 

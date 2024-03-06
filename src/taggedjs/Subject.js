@@ -1,12 +1,16 @@
 export class Subject {
+    value;
     isSubject = true;
     subscribers = [];
-    value;
     // unsubcount = 0 // 🔬 testing
+    constructor(value) {
+        this.value = value;
+    }
     subscribe(callback) {
         this.subscribers.push(callback);
         SubjectClass.globalSubs.push(callback); // 🔬 testing
-        SubjectClass.globalSubCount$.set(SubjectClass.globalSubCount$.value + 1);
+        const countSubject = SubjectClass.globalSubCount$;
+        SubjectClass.globalSubCount$.set(countSubject.value + 1);
         const unsubscribe = () => {
             unsubscribe.unsubscribe();
         };
@@ -14,7 +18,7 @@ export class Subject {
         unsubscribe.unsubscribe = () => {
             removeSubFromArray(this.subscribers, callback);
             removeSubFromArray(SubjectClass.globalSubs, callback); // 🔬 testing
-            SubjectClass.globalSubCount$.set(SubjectClass.globalSubCount$.value - 1);
+            SubjectClass.globalSubCount$.set(countSubject.value - 1);
             // any double unsubscribes will be ignored
             unsubscribe.unsubscribe = () => undefined;
         };

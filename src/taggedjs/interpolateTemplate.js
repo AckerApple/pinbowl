@@ -8,17 +8,19 @@ counts, // used for animation stagger computing
 options) {
     const clones = [];
     if (!template.hasAttribute('end')) {
-        return clones; // only care about starts
+        return clones; // only care about <template end>
     }
     const variableName = template.getAttribute('id');
     if (variableName?.substring(0, variablePrefix.length) !== variablePrefix) {
         return clones; // ignore, not a tagVar
     }
-    const result = context[variableName];
+    const existingSubject = context[variableName];
     let isForceElement = options.forceElement;
     const callback = (templateNewValue) => {
-        const { clones } = processSubjectValue(templateNewValue, result, template, tag, {
-            // counts,
+        if (existingSubject.clone) {
+            template = existingSubject.clone;
+        }
+        const { clones } = processSubjectValue(templateNewValue, existingSubject, template, tag, {
             counts: { added: counts.added, removed: counts.removed },
             forceElement: isForceElement,
         });
@@ -27,7 +29,7 @@ options) {
         }
         clones.push(...clones);
     };
-    const sub = result.subscribe(callback);
+    const sub = existingSubject.subscribe(callback);
     tag.cloneSubs.push(sub);
     return clones;
 }

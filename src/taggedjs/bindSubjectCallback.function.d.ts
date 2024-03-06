@@ -4,5 +4,5 @@ type Callback = (...args: any[]) => any & {
     isChildOverride?: true;
 };
 export declare function bindSubjectCallback(value: Callback, tag: Tag): Callback;
-export declare function runTagCallback(value: Callback, tag: Tag, bindTo: unknown, args: any[]): "no-data-ever" | Promise<string> | undefined;
+export declare function runTagCallback(value: Callback, tag: Tag, bindTo: unknown, args: any[]): Promise<string> | "no-data-ever";
 export {};

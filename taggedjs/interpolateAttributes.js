@@ -1,5 +1,17 @@
 import { inputAttribute } from "./inputAttribute.js";
 import { isSubjectInstance } from "./isInstance.js";
+function howToSetAttribute(element, name, value) {
+    /*
+    if(name === 'class'){
+      value.split(' ').forEach(className => child.classList.add(className))
+      return
+    }
+    */
+    element.setAttribute(name, value);
+}
+function howToSetInputValue(element, name, value) {
+    element[name] = value;
+}
 export function interpolateAttributes(child, scope, ownerTag) {
     const attrNames = child.getAttributeNames();
     const isTextArea = child.nodeName === 'TEXTAREA';
@@ -7,18 +19,14 @@ export function interpolateAttributes(child, scope, ownerTag) {
         const value = child.getAttribute('textVarValue'); // (child as any).value
         processAttribute('textVarValue', value, child, scope, ownerTag, (_name, value) => child.value = value);
     }
-    const howToSet = (name, value) => {
-        /*
-        if(name === 'class'){
-          value.split(' ').forEach(className => child.classList.add(className))
-          return
-        }
-        */
-        child.setAttribute(name, value);
-    };
+    let howToSet = howToSetAttribute;
     attrNames.forEach(attrName => {
+        if (child.nodeName === 'INPUT' && attrName === 'value') {
+            howToSet = howToSetInputValue;
+        }
         const value = child.getAttribute(attrName);
         processAttribute(attrName, value, child, scope, ownerTag, howToSet);
+        howToSet = howToSetAttribute; // put back
     });
 }
 /** Looking for (class | style) followed by a period */
@@ -99,7 +107,7 @@ function processNameValueAttr(attrName, result, child, ownerTag, howToSet) {
         ownerTag.cloneSubs.push(sub);
         return;
     }
-    howToSet(attrName, result);
+    howToSet(child, attrName, result);
     // child.setAttribute(attrName, result.value)
     return;
 }
@@ -118,8 +126,7 @@ function processAttributeSubjectValue(newAttrValue, child, attrName, isSpecial, 
         return;
     }
     if (newAttrValue) {
-        howToSet(attrName, newAttrValue);
-        // child.setAttribute(attrName, newAttrValue)
+        howToSet(child, attrName, newAttrValue);
         return;
     }
     const isDeadValue = newAttrValue === undefined || newAttrValue === false || newAttrValue === null;
@@ -128,8 +135,7 @@ function processAttributeSubjectValue(newAttrValue, child, attrName, isSpecial, 
         return;
     }
     // value is 0
-    howToSet(attrName, newAttrValue);
-    // child.setAttribute(attrName, newAttrValue)
+    howToSet(child, attrName, newAttrValue);
 }
 function processScopedNameValueAttr(attrName, value, // {__tagVarN}
 child, scope, ownerTag, howToSet) {
