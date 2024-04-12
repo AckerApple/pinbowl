@@ -1,0 +1,1 @@
+{"version":3,"file":"insertAfter.function.js","sourceRoot":"","sources":["../ts/insertAfter.function.ts"],"names":[],"mappings":"AAEA,qDAAqD;AACrD,MAAM,UAAU,WAAW,CACzB,OAAqB,EACrB,aAA2B;IAE3B,MAAM,UAAU,GAAG,aAAa,CAAC,UAAwB,CAAA;IACzD,UAAU,CAAC,YAAY,CAAC,OAAO,EAAE,aAAa,CAAC,WAAW,CAAC,CAAA;AAC7D,CAAC"}
