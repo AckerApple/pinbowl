@@ -1,7 +1,6 @@
 import { isTagArray, isTagComponent, isTagInstance } from './isInstance';
 import { isLikeTags } from './isLikeTags.function';
 import { destroyTagMemory, destroyTagSupportPast } from './destroyTag.function';
-import { isRemoveTemplates } from './Clones.type';
 import { insertAfter } from './insertAfter.function';
 export function checkDestroyPrevious(subject, // existing.value is the old value
 newValue, insertBefore) {
@@ -9,9 +8,9 @@ newValue, insertBefore) {
     const wasArray = arraySubject.lastArray;
     // no longer an array
     if (wasArray && !isTagArray(newValue)) {
-        const placeholderElm = arraySubject.placeholderElm;
+        const placeholderElm = arraySubject.placeholder;
         delete arraySubject.lastArray;
-        delete arraySubject.placeholderElm;
+        delete arraySubject.placeholder;
         insertAfter(insertBefore, placeholderElm);
         wasArray.forEach(({ tag }) => destroyArrayTag(tag, { added: 0, removed: 0 }));
         return 'array';
@@ -27,9 +26,7 @@ newValue, insertBefore) {
             // its a different tag now
             if (!isLikeTags(newTag, existingTag)) {
                 // put template back down
-                if (isRemoveTemplates) {
-                    restoreTagMarker(existingTag, insertBefore);
-                }
+                restoreTagMarker(existingTag, insertBefore);
                 destroyTagMemory(existingTag, tagSubject);
                 return 2;
             }
@@ -40,9 +37,7 @@ newValue, insertBefore) {
             return false; // its still a tag component
         }
         // put template back down
-        if (isRemoveTemplates) {
-            restoreTagMarker(existingTag, insertBefore);
-        }
+        restoreTagMarker(existingTag, insertBefore);
         // destroy old component, value is not a component
         destroyTagMemory(existingTag, tagSubject);
         return 'different-tag';
@@ -75,10 +70,9 @@ subject) {
 }
 export function restoreTagMarker(existingTag, insertBefore) {
     const global = existingTag.tagSupport.templater.global;
-    const placeholderElm = global.placeholderElm;
+    const placeholderElm = global.placeholder;
     if (placeholderElm) {
         insertAfter(insertBefore, placeholderElm);
-        // delete global.placeholderElm
     }
 }
 //# sourceMappingURL=checkDestroyPrevious.function.js.map

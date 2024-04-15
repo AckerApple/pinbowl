@@ -1,8 +1,10 @@
+const staggerBy = 300
+
 export const animateInit = async ({target, stagger}) => {/* animateInit */
   target.style.opacity = 0
   
   if(stagger) {
-    await wait(stagger * 300)
+    await wait(stagger * staggerBy)
   }
 
   target.style.opacity = 1
@@ -15,7 +17,7 @@ export const animateDestroy = async ({target, stagger, capturePosition=true}) =>
   }
 
   if(stagger) {
-    await wait(stagger * 300)
+    await wait(stagger * staggerBy)
   }
 
   target.classList.add('animate__animated','animate__fadeOutUp')
@@ -25,22 +27,25 @@ export const animateDestroy = async ({target, stagger, capturePosition=true}) =>
   target.classList.remove('animate__animated','animate__fadeOutUp')
 }
 
+// absolute
 export function captureElementPosition(element) {
   element.style.zIndex = element.style.zIndex || 1
   const toTop = element.offsetTop + 'px'
   const toLeft = element.offsetLeft + 'px'  
   const toWidth = (element.clientWidth + (element.offsetWidth - element.clientWidth) + 1) + 'px'
   const toHeight = (element.clientHeight + (element.offsetHeight - element.clientHeight) + 1) + 'px'
-  
-  // element.style.position = 'fixed'
-  // allow other elements that are being removed to have a moment to figure out where they currently sit
-  setTimeout(() => {
+
+  const fix = () => {
     element.style.top = toTop
     element.style.left = toLeft  
     element.style.width = toWidth
     element.style.height = toHeight
-    element.style.position = 'fixed'
-  }, 0)
+    element.style.position = 'absolute'
+  }
+
+  // element.style.position = 'fixed'
+  // allow other elements that are being removed to have a moment to figure out where they currently sit
+  setTimeout(fix, 0)
 }
 
 function wait(time) {

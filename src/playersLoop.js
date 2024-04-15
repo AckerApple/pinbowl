@@ -1,6 +1,6 @@
 import { playerFrames } from "./playerFrames.js"
 import { animateDestroy, animateInit } from "./animations.js"
-import { providers, tag, html } from "./taggedjs/index.js"
+import { providers, tag, html } from "./taggedjs/bundle.js"
 import { Game, getPlayerScore, frameScoreDetails } from "./game.js"
 
 export const playersLoop = tag(
@@ -10,6 +10,7 @@ export const playersLoop = tag(
     frameScoreModalDetails
   }
 ) => {
+  /** @type {Game} */
   const game = providers.inject( Game )
 
   // playersLoop.js
@@ -99,8 +100,10 @@ export const playersLoop = tag(
                 ${(!game.gameStarted || (game.gameStarted && player.edit)) && html`
                   <a id=${`player_${playerIndex}_remove`} 
                     onclick=${async () => {
-                      if(game.gameStarted && !await game.confirm(`Confirm remove player ${playerIndex + 1} ${player.name}`)) return
+                      console.log('running remove player', playerIndex)
+                      if(game.gameStarted && !await game.confirm(`Confirm remove player ${playerIndex + 1} ${player.name}`)) return 33
                       game.removePlayer(playerIndex)
+                      return 22
                     }}
                   >🗑️</a>
                 `}

@@ -1,4 +1,4 @@
-import { tag, html, providers } from "./taggedjs/index.js"
+import { tag, html, providers } from "./taggedjs/bundle.js"
 import { animateDestroy, animateInit } from "./animations.js"
 import { showFrameScoreModal } from "./showFrameScoreModal.js"
 import { Game, getPlayerScore } from "./game.js"

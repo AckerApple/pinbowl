@@ -8,41 +8,27 @@ import { processSubjectComponent } from './processSubjectComponent.function';
 import { isLikeTags } from './isLikeTags.function';
 import { bindSubjectCallback } from './bindSubjectCallback.function';
 import { applyFakeTemplater, processTag } from './processTag.function';
-import { insertAfter } from './insertAfter.function';
 export function updateExistingValue(subject, value, ownerTag, insertBefore) {
     const subjectTag = subject;
     const isComponent = isTagComponent(value);
-    // const global = subjectTag.tag?.tagSupport.templater.global
-    // const placeholderElm = global?.placeholderElm || global?.insertBefore || (subject as DisplaySubject).insertBefore
-    // const oldInsertBefore = placeholderElm || (subject as DisplaySubject).clone
-    const destroyType = checkDestroyPrevious(subject, value, insertBefore);
+    checkDestroyPrevious(subject, value, insertBefore);
     // handle already seen tag components
     if (isComponent) {
         const templater = value;
         // When was something before component
         if (!subjectTag.tag) {
-            const tag = processSubjectComponent(templater, subjectTag, insertBefore, // oldInsertBefore as InsertBefore,
+            processSubjectComponent(templater, subjectTag, insertBefore, // oldInsertBefore as InsertBefore,
             ownerTag, {
                 forceElement: true,
                 counts: { added: 0, removed: 0 },
             });
             return subjectTag;
         }
-        // ??? - new put back down template tag before redraw
-        const placeholderElm = subjectTag.tag.tagSupport.templater.global.placeholderElm;
-        if (placeholderElm) {
-            insertAfter(insertBefore, placeholderElm);
-            delete subjectTag.tag.tagSupport.templater.global.placeholderElm;
-        }
         templater.tagSupport = new TagSupport(
         // subjectTag.tag.tagSupport.ownerTagSupport,
         ownerTag.tagSupport, templater, subjectTag);
-        const tag = updateExistingTagComponent(ownerTag, templater, // latest value
+        updateExistingTagComponent(ownerTag, templater, // latest value
         subjectTag, insertBefore);
-        if (insertBefore.parentNode) {
-            tag.tagSupport.templater.global.placeholderElm = insertBefore.previousSibling;
-            insertBefore.parentNode.removeChild(insertBefore);
-        }
         return subjectTag;
     }
     // was component but no longer
@@ -68,7 +54,7 @@ export function updateExistingValue(subject, value, ownerTag, insertBefore) {
         return subject;
     }
     if (isTagInstance(value)) {
-        if (insertBefore.tagName !== 'TEMPLATE') {
+        if (insertBefore.nodeName !== 'TEMPLATE') {
             throw new Error(`expected template - ${insertBefore.nodeName}`);
         }
         processTag(value, subjectTag, insertBefore, ownerTag);
@@ -100,7 +86,6 @@ function handleStillTag(existingTag, subject, value, ownerTag) {
     if (isSameTag || isSameTag2) {
         const subjectTag = subject;
         const global = existingTag.tagSupport.templater.global;
-        delete global.placeholderElm;
         const insertBefore = global.insertBefore;
         return processTag(value, subjectTag, insertBefore, ownerTag);
     }

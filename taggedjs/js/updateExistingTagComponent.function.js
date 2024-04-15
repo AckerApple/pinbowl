@@ -16,16 +16,12 @@ export function updateExistingTagComponent(ownerTag, templater, subject, insertB
     const oldTagSupport = existingTag.tagSupport;
     const oldGlobal = oldTagSupport.templater.global;
     const globalInsert = oldGlobal.insertBefore;
-    const oldInsertBefore = globalInsert?.parentNode ? globalInsert : insertBefore;
     // const placeholderElm = ownerTag.tagSupport.templater.global.placeholderElm
-    const placeholderElm = oldGlobal.placeholderElm;
+    const placeholderElm = oldGlobal.placeholder;
     if (placeholderElm) {
         if (!placeholderElm.parentNode) {
             throw new Error('stop here no subject parent node update existing tag');
         }
-    }
-    else if (!oldInsertBefore.parentNode) {
-        //throw new Error('stop here no parent node update existing tag')
     }
     if (!isSameTag) {
         destroyTagMemory(oldTagSupport.templater.global.oldest, subject);

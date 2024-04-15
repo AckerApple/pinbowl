@@ -1,4 +1,4 @@
-import { Subject } from "./taggedjs/index.js"
+import { Subject } from "./taggedjs/bundle.js"
 
 /**
  * @typedef {Object} Player
@@ -48,6 +48,7 @@ export class Game {
    * @returns {Player | undefined}
    */
   runGameOver() {
+    console.log('Running game over')
     const leadersMeta = this.players.reduce((all,player, playerIndex) => {
       const score = getPlayerScore(player)
 	    if(score > all[0]) {
@@ -78,11 +79,12 @@ export class Game {
       return
     }
 
+    console.log('Setting winner')
     leaders[0].player.won = true
     this.playerTurn = -1
     this.currentFrame = -1
-
     this.winner.set(leaders[0])
+    console.log('winner set')
 
     return leaders[0]
   }
@@ -99,7 +101,9 @@ export class Game {
         return this.runGameOver()
       }
     } else {
-      console.info('⤵️ Next players turn')
+      console.info('⤵️ Next players turn', {
+        currentFrame: this.currentFrame,
+      })
     }
 
     if(this.players[this.playerTurn].gameover) {
@@ -196,7 +200,6 @@ export class Game {
       document.getElementById('closeAlert').focus()
     })
   }
-
 }
 
 export function getPlayerScore (player) {

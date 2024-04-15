@@ -2,7 +2,7 @@ export function processTagResult(tag, subject, // used for recording past and cu
 insertBefore, // <template end interpolate />
 { counts, forceElement, }) {
     if (!insertBefore.parentNode) {
-        throw new Error('before here processTagResult');
+        throw new Error(`before here processTagResult ${insertBefore.nodeName}`);
     }
     // *if appears we already have seen
     const subjectTag = subject;
@@ -20,9 +20,11 @@ insertBefore, // <template end interpolate />
         */
         return processTagResultUpdate(tag, subjectTag, previousTag);
     }
-    if (insertBefore.nodeName !== 'TEMPLATE') {
-        throw new Error(';;;;');
+    /*
+    if(insertBefore.nodeName !== 'TEMPLATE') {
+      throw new Error(`processTagResult.function.ts insertBefore is not template ${insertBefore.nodeName}`)
     }
+    */
     tag.buildBeforeElement(insertBefore, {
         counts,
         forceElement,

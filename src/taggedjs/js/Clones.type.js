@@ -1,2 +1,2 @@
-export const isRemoveTemplates = true;
+export {};
 //# sourceMappingURL=Clones.type.js.map

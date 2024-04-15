@@ -11,28 +11,29 @@ import { InsertBefore } from './Clones.type';
 export type Wrapper = ((tagSupport: BaseTagSupport, subject: TagSubject) => Tag) & {
     original: () => Tag;
 };
+export type TagGlobal = {
+    newestTemplater: TemplaterResult;
+    oldest?: Tag;
+    newest?: Tag;
+    context: Context;
+    providers: Provider[];
+    /** Indicator of re-rending. Saves from double rending something already rendered */
+    renderCount: number;
+    deleted: boolean;
+    isApp?: boolean;
+    insertBefore?: InsertBefore;
+    placeholder?: Text;
+    subscriptions: Subscription[];
+    destroyCallback?: OnDestroyCallback;
+    init?: OnInitCallback;
+};
 export declare class TemplaterResult {
     props: Props;
     children: TagChildren;
     isTag: boolean;
     tagged: boolean;
     wrapper: Wrapper;
-    global: {
-        newestTemplater: TemplaterResult;
-        oldest?: Tag;
-        newest?: Tag;
-        context: Context;
-        providers: Provider[];
-        /** Indicator of re-rending. Saves from double rending something already rendered */
-        renderCount: number;
-        deleted: boolean;
-        isApp?: boolean;
-        insertBefore?: InsertBefore;
-        placeholderElm?: InsertBefore;
-        subscriptions: Subscription[];
-        destroyCallback?: OnDestroyCallback;
-        init?: OnInitCallback;
-    };
+    global: TagGlobal;
     tagSupport: BaseTagSupport;
     constructor(props: Props, children: TagChildren);
     isTemplater: boolean;

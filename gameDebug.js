@@ -1,4 +1,4 @@
-import { html, setLet, tag } from "./taggedjs/index.js"
+import { html, setLet, tag } from "./taggedjs/bundle.js"
 import runTest from "./app.test.js"
 
 export const gameDebug = tag(game => {

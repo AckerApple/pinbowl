@@ -1,6 +1,6 @@
 import { tagDebug } from "./tagJsDebug.js"
 import { gameDebug } from "./gameDebug.js"
-import { html, tag, setLet } from "./taggedjs/index.js"
+import { html, tag, setLet } from "./taggedjs/bundle.js"
 import { animateDestroy, animateInit } from "./animations.js"
 
 export const debugApp = tag((game) => {  

@@ -1,5 +1,6 @@
+import { byId, lastById } from "./elmSelectors.js"
 import { expect } from "./expect.js"
-import { Subject } from "./taggedjs/index.js"
+import { Subject } from "./taggedjs/bundle.js"
 import { wait } from "./wait.function.js"
 
 export default async function runTest() {
@@ -11,7 +12,7 @@ export default async function runTest() {
   
   try {
     const startCount = Subject.globalSubCount
-    let playerAddButton = document.getElementById('player_add_button')
+    let playerAddButton = byId('player_add_button')
     
     expect(document.querySelectorAll('#player_0_input').length).toBe(0)
     expect(document.querySelectorAll('#player_1_input').length).toBe(0)
@@ -25,7 +26,7 @@ export default async function runTest() {
     player0Input.onkeyup({target:player0Input})
     expect(document.querySelectorAll('#player_1_input').length).toBe(0)
     
-    playerAddButton = document.getElementById('player_add_button')
+    playerAddButton = byId('player_add_button')
     playerAddButton.click()
 
     // player 1 input should now be gone
@@ -33,7 +34,7 @@ export default async function runTest() {
     expect(player0inputs.length).toBe(0, `expected 1 player input but got ${player0inputs.length}`)
     expect(document.querySelectorAll('#player_1_input').length).toBe(1, 'expected 2 player input')
 
-    const player1Input = document.getElementById('player_1_input')
+    const player1Input = byId('player_1_input')
     player1Input.value = 'Mark'
     player1Input.onkeyup({target:player1Input})
     player0inputs = document.querySelectorAll('#player_0_input')
@@ -41,87 +42,86 @@ export default async function runTest() {
     expect(document.querySelectorAll('#player_1_input').length).toBe(1)
 
     console.info('🔵 clicking start...')
-    document.getElementById('start_game_button').onclick()
+    byId('start_game_button').onclick()
 
-    expect(document.getElementById('score_strike_button')).toBe(null)
+    expect(byId('score_strike_button')).toBe(null)
 
     
     console.info('🔵 making first score...')
     // frame 1 - strike
-    const firstScore = document.getElementById('player_0_frame_0').onclick()
+    const firstScore = byId('player_0_frame_0').onclick()
     
-    expect(document.getElementById('score_strike_button')).toBeDefined()
-    await document.getElementById('score_strike_button').onclick()    
-    expect(document.getElementById('score_strike_button')).toBe(null)
+    expect(byId('score_strike_button')).toBeDefined()
+    await byId('score_strike_button').onclick()    
+    expect(byId('score_strike_button')).toBe(null)
     
-    document.getElementById('player_1_frame_0').onclick()
-    document.getElementById('score_strike_button').onclick()
+    byId('player_1_frame_0').onclick()
+    byId('score_strike_button').onclick()
 
     // frame 2 - spare
-    document.getElementById('player_0_frame_1').onclick()
-    document.getElementById('score_spare_button').onclick()
-    document.getElementById('player_1_frame_1').onclick()
-    document.getElementById('score_spare_button').onclick()
+    byId('player_0_frame_1').onclick()
+    byId('score_spare_button').onclick()
+    byId('player_1_frame_1').onclick()
+    byId('score_spare_button').onclick()
 
     // frame 3 - 1
-    document.getElementById('player_0_frame_2').onclick()
-    document.getElementById('score_1_button').onclick()
-    document.getElementById('player_1_frame_2').onclick()
-    document.getElementById('score_1_button').onclick()
+    byId('player_0_frame_2').onclick()
+    byId('score_1_button').onclick()
+    byId('player_1_frame_2').onclick()
+    byId('score_1_button').onclick()
 
     // frame 4 - 0
-    document.getElementById('player_0_frame_3').onclick()
-    document.getElementById('score_0_button').onclick()
-    document.getElementById('player_1_frame_3').onclick()
-    document.getElementById('score_0_button').onclick()
+    byId('player_0_frame_3').onclick()
+    byId('score_0_button').onclick()
+    byId('player_1_frame_3').onclick()
+    byId('score_0_button').onclick()
 
     // frame 5 - 0
-    document.getElementById('player_0_frame_4').onclick()
-    document.getElementById('score_0_button').onclick()
-    document.getElementById('player_1_frame_4').onclick()
+    byId('player_0_frame_4').onclick()
+    byId('score_0_button').onclick()
+    byId('player_1_frame_4').onclick()
     
-    const winner = document.getElementById('score_1_button').onclick() // winner
+    const winner = byId('score_1_button').onclick() // winner
     expect(winner instanceof Promise).toBeDefined()
     expect(await winner).toBe('promise-no-data-ever')
     
-    await document.getElementById('closeAlert').onclick()
+    await byId('closeAlert').onclick()
         
     let addPlayerButtons = document.querySelectorAll('#player_add_button')
     expect(addPlayerButtons.length).toBe(0, `Expected player add button count to be 0 but its ${addPlayerButtons.length}`)
 
-    const endPromise = document.getElementById('end_game_button').onclick()
+    const endPromise = byId('end_game_button').onclick()
 
     addPlayerButtons = document.querySelectorAll('#player_add_button')
     expect(addPlayerButtons.length).toBe(0)
 
-    const endConfirmPromise = document.getElementById('confirmAlert').onclick()
+    const endConfirmPromise = byId('confirmAlert').onclick()
     await endConfirmPromise
     await endPromise
 
     addPlayerButtons = document.querySelectorAll('#player_add_button')
     expect(addPlayerButtons.length).toBe(1)
 
-    let p1remove = document.getElementById('player_1_remove')
+    let p1remove = byId('player_1_remove')
     expect(p1remove).toBeDefined()
 
-    let p0remove = document.getElementById('player_0_remove')
+    let p0remove = byId('player_0_remove')
     expect(p0remove).toBeDefined()
 
-    p0remove = document.getElementById('player_0_remove')
-    p0remove.click()
-
-    // await wait(1000)
-
-    p1remove = document.getElementById('player_1_remove')
+    p0remove = byId('player_0_remove')
+    p0remove.click() // remove player 1 index 0
+    
+    p1remove = byId('player_1_remove')
     expect(p1remove).toBe(null, 'Expected player two remove button not to be present')
 
-    document.getElementById('player_0_remove').click() // removes player 2 who is now 1
-
+    lastById('player_0_remove').onclick() // removes player 2 who is now 1
+    
     await wait(1000)
-    p0remove = document.getElementById('player_0_remove')
+    
+    p0remove = byId('player_0_remove')
     expect(p0remove).toBe(null, 'Expected no player 1 remove button')
     
-    let removeAllPlayers = p0remove = document.getElementById('remove_all_players')
+    let removeAllPlayers = p0remove = byId('remove_all_players')
     expect(removeAllPlayers).toBe(null)
     
     if(Subject.globalSubCount != startCount ) {

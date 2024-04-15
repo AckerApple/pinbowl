@@ -2,23 +2,15 @@ import { ValueSubject } from './subject/ValueSubject';
 import { ArrayNoKeyError } from './errors';
 import { destroyArrayTag } from './checkDestroyPrevious.function';
 import { applyFakeTemplater } from './processTag.function';
-import { insertAfter } from './insertAfter.function';
 export function processTagArray(subject, value, // arry of Tag classes
 insertBefore, // <template end interpolate />
 ownerTag, options) {
     const clones = ownerTag.clones; // []
     let lastArray = subject.lastArray = subject.lastArray || [];
-    if (subject.placeholderElm) {
-        const parentPlaceholder = subject.parentAsPlaceholder;
-        if (parentPlaceholder) {
-            parentPlaceholder.appendChild(insertBefore);
-            delete subject.placeholderElm;
-        }
-        else {
-            insertAfter(insertBefore, subject.placeholderElm);
-        }
-        delete subject.placeholderElm;
+    if (!subject.placeholder) {
+        setPlaceholderElm(insertBefore, subject);
     }
+    const runtimeInsertBefore = subject.placeholder; // || insertBefore
     let removed = 0;
     /** 🗑️ remove previous items first */
     lastArray = subject.lastArray = subject.lastArray.filter((item, index) => {
@@ -40,8 +32,6 @@ ownerTag, options) {
         }
         return true;
     });
-    // const masterBefore = template || (template as any).clone
-    const before = insertBefore; // || (subject.value as any).insertBefore || (insertBefore as any).clone
     value.forEach((subTag, index) => {
         const previous = lastArray[index];
         const previousSupport = previous?.tag.tagSupport;
@@ -76,33 +66,23 @@ ownerTag, options) {
                 return [];
             }
             // TODO: should not get here?
-            processAddTagArrayItem(before, subTag, index, options, lastArray);
+            processAddTagArrayItem(runtimeInsertBefore, subTag, index, options, lastArray);
             throw new Error('item should be back');
             // return [] // removed: item should have been previously deleted and will be added back
         }
-        processAddTagArrayItem(before, subTag, index, options, lastArray);
+        processAddTagArrayItem(runtimeInsertBefore, subTag, index, options, lastArray);
         ownerTag.childTags.push(subTag);
     });
-    if (value.length) {
-        const lastClone = insertBefore.previousSibling;
-        setPlaceholderElm(lastClone, insertBefore, subject);
-    }
-    else {
-        const placeholderElm = insertBefore.previousSibling;
-        if (placeholderElm) {
-            setPlaceholderElm(placeholderElm, insertBefore, subject);
-        }
-        else {
-            const parentNode = insertBefore.parentNode;
-            setPlaceholderElm(parentNode, insertBefore, subject);
-            subject.parentAsPlaceholder = parentNode;
-        }
-    }
     return clones;
 }
-function setPlaceholderElm(lastClone, insertBefore, subject) {
-    subject.placeholderElm = lastClone;
+function setPlaceholderElm(insertBefore, subject) {
+    if (insertBefore.nodeName !== 'TEMPLATE') {
+        subject.placeholder = insertBefore;
+        return;
+    }
+    const placeholder = subject.placeholder = document.createTextNode('');
     const parentNode = insertBefore.parentNode;
+    parentNode.insertBefore(placeholder, insertBefore);
     parentNode.removeChild(insertBefore);
 }
 function processAddTagArrayItem(before, subTag, index, options, lastArray) {

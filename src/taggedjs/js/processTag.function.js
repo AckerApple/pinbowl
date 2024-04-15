@@ -17,7 +17,7 @@ insertBefore, ownerTag) {
     }
     tag.ownerTag = ownerTag;
     if (insertBefore.tagName !== 'TEMPLATE') {
-        throw new Error(`;;;; - ${insertBefore.nodeName}`);
+        throw new Error(`processTag.function.ts - insertBefore is not TEMPLATE ${insertBefore.tagName}`);
     }
     tag.buildBeforeElement(insertBefore, {
         counts: { added: 0, removed: 0 },

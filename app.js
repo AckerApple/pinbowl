@@ -1,4 +1,4 @@
-import { providers, html, tag, tagElement, onInit, getCallback, set, setLet } from "./taggedjs/index.js"
+import { providers, html, tag, tagElement, onInit, getCallback, set, setLet } from "./taggedjs/bundle.js"
 import { playersLoop } from "./playersLoop.js"
 import { footerButtons } from "./footerButtons.js"
 import { debugApp } from "./debugApp.js"
@@ -21,9 +21,11 @@ export const SmallBowlApp = tag(() => {// app.js - SmallBowlApp
         game.alert(`🎉 Winner is Player ${leader.playerIndex + 1}, ${leader.player.name}`)
       })(leader)
     })
+
     game.lastFrameStrike.subscribe(callback(() =>
       game.alert('💥 Strike on the last frame! Another frame added.\n\nFor now, it\'s the next players turn.')
     ))
+    
     game.changePlayerTurn.subscribe(() => {
       setTimeout(() => {
         const elm = document.getElementById('player_' + game.playerTurn)

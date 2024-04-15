@@ -6,9 +6,7 @@ import { elementDestroyCheck } from './elementDestroyCheck.function';
 import { processNewValue } from './processNewValue.function';
 import { isSubjectInstance, isTagComponent } from './isInstance';
 import { isLikeTags } from './isLikeTags.function';
-import { isRemoveTemplates } from './Clones.type';
 import { restoreTagMarker } from './checkDestroyPrevious.function';
-import { insertAfter } from './insertAfter.function';
 export const variablePrefix = '__tagvar';
 export const escapeVariable = '--' + variablePrefix + '--';
 const prefixSearch = new RegExp(variablePrefix, 'g');
@@ -52,15 +50,15 @@ export class Tag {
         const subject = tagSupport.subject;
         // put back down the template tag
         const insertBefore = global.insertBefore;
-        if (isRemoveTemplates) {
-            const placeholder = global.placeholderElm;
+        if (insertBefore.nodeName === 'TEMPLATE') {
+            const placeholder = global.placeholder;
             if (placeholder && !('arrayValue' in this.memory)) {
                 if (!options.byParent) {
                     restoreTagMarker(this, insertBefore);
                 }
             }
         }
-        delete global.placeholderElm;
+        delete global.placeholder;
         // the isComponent check maybe able to be removed
         const isComponent = tagSupport ? true : false;
         if (isComponent) {
@@ -236,17 +234,20 @@ export class Tag {
         const subject = this.tagSupport.subject;
         const thisTemplater = this.tagSupport.templater;
         const global = thisTemplater.global;
-        if (isRemoveTemplates) {
-            const placeholderElm = global.placeholderElm;
-            if (placeholderElm) {
-                const parentNode = placeholderElm.parentNode;
-                parentNode.insertBefore(insertBefore, placeholderElm);
-                // ??? - removed as we don't steal clones anymore
-                // this.clones.push( placeholderElm ) // put back on chopping block
-                delete global.placeholderElm;
+        global.insertBefore = insertBefore;
+        if (!global.placeholder) {
+            if (insertBefore.nodeName !== 'TEMPLATE') {
+                throw new Error(' no template at insertBefore');
+                global.placeholder = insertBefore;
+            }
+            else {
+                setTagPlaceholder(global);
             }
         }
-        const trueInsertBefore = insertBefore;
+        if (!global.placeholder?.parentNode) {
+            throw new Error('????');
+        }
+        const placeholderElm = global.placeholder;
         global.oldest = this;
         global.newest = this;
         subject.tag = this;
@@ -259,7 +260,7 @@ export class Tag {
         // const context = this.tagSupport.memory.context // this.update()
         const context = this.update();
         const template = this.getTemplate();
-        if (!trueInsertBefore.parentNode) {
+        if (!placeholderElm.parentNode) {
             throw new Error('no parent before building tag');
         }
         const elementContainer = document.createElement('div');
@@ -272,59 +273,44 @@ export class Tag {
             forceElement: options.forceElement,
             counts: options.counts
         });
-        if (!trueInsertBefore.parentNode) {
-            throw new Error('no parent building tag');
+        if (!placeholderElm.parentNode) {
+            throw new Error('no parent after building tag');
         }
-        afterInterpolateElement(elementContainer, trueInsertBefore, // insertBefore (will be removed)
-        this, // ownerTag
+        afterInterpolateElement(elementContainer, placeholderElm, this, // ownerTag
         context, options);
+        if (!global.placeholder?.parentNode) {
+            throw new Error('???? - 2');
+        }
         // Any tag components that were found should be processed AFTER the owner processes its elements. Avoid double processing of elements attributes like (oninit)=${}
         let isForceElement = options.forceElement;
         tagComponents.forEach(tagComponent => {
             const tagSupport = tagComponent.ownerTag.tagSupport;
             const tagGlobal = tagSupport.templater.global;
-            const placeholderElm = tagGlobal.placeholderElm; // global.placeholderElm
+            const placeholderElm = tagGlobal.placeholder; // global.placeholderElm
             if (!placeholderElm && !insertBefore.parentNode) {
                 throw new Error('no parent building tag components');
             }
-            const before = tagComponent.insertBefore; // insertBefore  (will be removed)
-            subscribeToTemplate(before, // tagComponent.insertBefore,
-            tagComponent.subject, tagComponent.ownerTag, options.counts, { isForceElement });
-            const clones = afterInterpolateElement(elementContainer, before, // (will be removed)
-            tagComponent.ownerTag, // this, // ownerTag
-            context, options);
-            if (placeholderElm && !placeholderElm?.parentNode) {
-                const clone = clones[this.clones.length - 1];
-                if (clone) {
-                    restoreTagMarker(tagComponent.ownerTag, clone);
-                }
+            if (!global.placeholder?.parentNode) {
+                throw new Error('???? - 3');
             }
-            if (placeholderElm) {
-                if (placeholderElm.parentNode) {
-                    if (!global.placeholderElm) {
-                        global.placeholderElm = placeholderElm;
-                    }
-                }
-                if (this.clones.length) {
-                    if (insertBefore.parentNode) {
-                        global.placeholderElm = insertBefore.previousSibling;
-                        const parentNode = insertBefore.parentNode;
-                        parentNode.removeChild(insertBefore);
-                    }
-                }
+            subscribeToTemplate(tagComponent.insertBefore, tagComponent.subject, tagComponent.ownerTag, options.counts, { isForceElement });
+            if (!global.placeholder?.parentNode) {
+                throw new Error('???? - 4');
+            }
+            afterInterpolateElement(elementContainer, tagComponent.insertBefore, tagComponent.ownerTag, // this, // ownerTag
+            context, options);
+            if (!global.placeholder?.parentNode) {
+                throw new Error('???? - 5');
             }
         });
-        if (!global.placeholderElm) {
-            // const clone = getLastCloneFromTags(this)
-            // const clone = (insertBefore as Element).previousElementSibling as Element
-            const clone = insertBefore.previousSibling;
-            if (clone) {
-                const parentNode = insertBefore.parentNode;
-                global.placeholderElm = clone;
-                parentNode.removeChild(insertBefore);
-            }
-        }
     }
+}
+function setTagPlaceholder(global) {
+    const insertBefore = global.insertBefore;
+    const placeholder = global.placeholder = document.createTextNode('');
+    const parentNode = insertBefore.parentNode;
+    parentNode.insertBefore(placeholder, insertBefore);
+    parentNode.removeChild(insertBefore);
 }
 function afterInterpolateElement(container, insertBefore, tag, 
 // preClones: Clones,
@@ -333,37 +319,8 @@ context, options) {
     if (!clones.length) {
         return clones;
     }
-    const ownerSupport = tag.tagSupport;
-    const ownerGlobal = ownerSupport.templater.global;
-    const hadBefore = isRemoveTemplates && ownerGlobal.placeholderElm;
-    const parentNode = hadBefore ? ownerGlobal.placeholderElm?.parentNode : insertBefore.parentNode;
-    // we could now be processing same tag but more after components being rendered
-    if (hadBefore) {
-        // 0 put the template back down
-        insertAfter(insertBefore, hadBefore);
-        // ??? - removed as need for arrays
-        delete ownerGlobal.placeholderElm;
-    }
     clones.forEach(clone => afterElmBuild(clone, options, context, tag));
-    let hasPopClone;
-    if (isRemoveTemplates) {
-        const clone = insertBefore.previousSibling; // clones[clones.length - 1]
-        if (clone) {
-            const isTemplate = clone.tagName === 'TEMPLATE' && clone.hasAttribute('interpolate');
-            if (!isTemplate) {
-                hasPopClone = ownerGlobal.placeholderElm = clone; // insertBefore
-            }
-        }
-    }
-    if (clones.find(x => x === insertBefore)) {
-        throw new Error('adding marker to owner in tag class');
-    }
     tag.clones.push(...clones);
-    if (isRemoveTemplates) {
-        if (hasPopClone) { //  || hadBefore
-            parentNode.removeChild(insertBefore); // belongs to another tag
-        }
-    }
     return clones;
 }
 function getChildTagsToDestroy(childTags, allTags = []) {
@@ -384,15 +341,9 @@ function updateContextItem(context, variableName, value) {
     const tag = subject.tag;
     if (tag) {
         const oldTemp = tag.tagSupport.templater;
-        const oldWrap = oldTemp.wrapper; // tag versus component
-        if (value.global !== oldTemp.global) {
-            if (oldWrap && isTagComponent(value)) {
-                const oldValueFn = oldWrap.original;
-                const newValueFn = value.wrapper?.original;
-                const fnMatched = oldValueFn === newValueFn;
-                if (fnMatched) {
-                    value.global = oldTemp.global;
-                }
+        if (value && value.global !== oldTemp.global) {
+            if (isTagComponent(value)) {
+                shareTemplaterGlobal(oldTemp, value);
             }
         }
     }
@@ -402,5 +353,14 @@ function updateContextItem(context, variableName, value) {
     }
     subject.set(value); // listeners will evaluate updated values to possibly update display(s)
     return;
+}
+function shareTemplaterGlobal(oldTemp, value) {
+    const oldWrap = oldTemp.wrapper; // tag versus component
+    const oldValueFn = oldWrap.original;
+    const newValueFn = value.wrapper?.original;
+    const fnMatched = oldValueFn === newValueFn;
+    if (fnMatched) {
+        value.global = oldTemp.global;
+    }
 }
 //# sourceMappingURL=Tag.class.js.map

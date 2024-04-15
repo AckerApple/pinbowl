@@ -1,4 +1,4 @@
-import { providers, html, tag } from "./taggedjs/index.js"
+import { providers, html, tag } from "./taggedjs/bundle.js"
 import { animateDestroy, animateInit } from "./animations.js"
 import { Game } from "./game.js"
 

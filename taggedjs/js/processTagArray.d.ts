@@ -9,8 +9,7 @@ export type LastArrayItem = {
 };
 export type TagArraySubject = ValueSubject<Tag[]> & {
     insertBefore: InsertBefore;
-    placeholderElm?: InsertBefore;
-    parentAsPlaceholder?: ParentNode;
+    placeholder?: Text;
     lastArray?: LastArrayItem[];
     isChildSubject?: boolean;
 };

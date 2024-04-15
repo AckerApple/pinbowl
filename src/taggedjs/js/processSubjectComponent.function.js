@@ -17,6 +17,9 @@ export function processSubjectComponent(templater, subject, insertBefore, ownerT
     }
     templater.tagSupport = new TagSupport(ownerTag.tagSupport, templater, subject);
     // templater.oldest = subject.tag?.tagSupport.oldest || templater.oldest
+    if (insertBefore.nodeName != 'TEMPLATE') {
+        throw new Error('9');
+    }
     templater.global.insertBefore = insertBefore;
     let retag = subject.tag;
     const providers = setUse.memory.providerConfig;

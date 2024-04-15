@@ -1,5 +1,5 @@
 import { animateDestroy, animateInit } from "./animations.js"
-import { setLet, html, tag, providers, Subject, onInit } from "./taggedjs/index.js"
+import { setLet, html, tag, providers, Subject, onInit } from "./taggedjs/bundle.js"
 
 function tagDebugProvider() {
   const upper = {

@@ -1,20 +1,5 @@
 /******/ var __webpack_modules__ = ({
 
-/***/ "./ts/Clones.type.ts":
-/*!***************************!*\
-  !*** ./ts/Clones.type.ts ***!
-  \***************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   isRemoveTemplates: () => (/* binding */ isRemoveTemplates)
-/* harmony export */ });
-const isRemoveTemplates = true;
-
-
-/***/ }),
-
 /***/ "./ts/ElementTargetEvent.interface.ts":
 /*!********************************************!*\
   !*** ./ts/ElementTargetEvent.interface.ts ***!
@@ -48,11 +33,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _processNewValue_function__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./processNewValue.function */ "./ts/processNewValue.function.ts");
 /* harmony import */ var _isInstance__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./isInstance */ "./ts/isInstance.ts");
 /* harmony import */ var _isLikeTags_function__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./isLikeTags.function */ "./ts/isLikeTags.function.ts");
-/* harmony import */ var _Clones_type__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./Clones.type */ "./ts/Clones.type.ts");
-/* harmony import */ var _checkDestroyPrevious_function__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./checkDestroyPrevious.function */ "./ts/checkDestroyPrevious.function.ts");
-/* harmony import */ var _insertAfter_function__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./insertAfter.function */ "./ts/insertAfter.function.ts");
-
-
+/* harmony import */ var _checkDestroyPrevious_function__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./checkDestroyPrevious.function */ "./ts/checkDestroyPrevious.function.ts");
 
 
 
@@ -105,15 +86,15 @@ class Tag {
         const subject = tagSupport.subject;
         // put back down the template tag
         const insertBefore = global.insertBefore;
-        if (_Clones_type__WEBPACK_IMPORTED_MODULE_8__.isRemoveTemplates) {
-            const placeholder = global.placeholderElm;
+        if (insertBefore.nodeName === 'TEMPLATE') {
+            const placeholder = global.placeholder;
             if (placeholder && !('arrayValue' in this.memory)) {
                 if (!options.byParent) {
-                    (0,_checkDestroyPrevious_function__WEBPACK_IMPORTED_MODULE_9__.restoreTagMarker)(this, insertBefore);
+                    (0,_checkDestroyPrevious_function__WEBPACK_IMPORTED_MODULE_8__.restoreTagMarker)(this, insertBefore);
                 }
             }
         }
-        delete global.placeholderElm;
+        delete global.placeholder;
         // the isComponent check maybe able to be removed
         const isComponent = tagSupport ? true : false;
         if (isComponent) {
@@ -289,17 +270,20 @@ class Tag {
         const subject = this.tagSupport.subject;
         const thisTemplater = this.tagSupport.templater;
         const global = thisTemplater.global;
-        if (_Clones_type__WEBPACK_IMPORTED_MODULE_8__.isRemoveTemplates) {
-            const placeholderElm = global.placeholderElm;
-            if (placeholderElm) {
-                const parentNode = placeholderElm.parentNode;
-                parentNode.insertBefore(insertBefore, placeholderElm);
-                // ??? - removed as we don't steal clones anymore
-                // this.clones.push( placeholderElm ) // put back on chopping block
-                delete global.placeholderElm;
+        global.insertBefore = insertBefore;
+        if (!global.placeholder) {
+            if (insertBefore.nodeName !== 'TEMPLATE') {
+                throw new Error(' no template at insertBefore');
+                global.placeholder = insertBefore;
+            }
+            else {
+                setTagPlaceholder(global);
             }
         }
-        const trueInsertBefore = insertBefore;
+        if (!global.placeholder?.parentNode) {
+            throw new Error('????');
+        }
+        const placeholderElm = global.placeholder;
         global.oldest = this;
         global.newest = this;
         subject.tag = this;
@@ -312,7 +296,7 @@ class Tag {
         // const context = this.tagSupport.memory.context // this.update()
         const context = this.update();
         const template = this.getTemplate();
-        if (!trueInsertBefore.parentNode) {
+        if (!placeholderElm.parentNode) {
             throw new Error('no parent before building tag');
         }
         const elementContainer = document.createElement('div');
@@ -325,59 +309,44 @@ class Tag {
             forceElement: options.forceElement,
             counts: options.counts
         });
-        if (!trueInsertBefore.parentNode) {
-            throw new Error('no parent building tag');
+        if (!placeholderElm.parentNode) {
+            throw new Error('no parent after building tag');
         }
-        afterInterpolateElement(elementContainer, trueInsertBefore, // insertBefore (will be removed)
-        this, // ownerTag
+        afterInterpolateElement(elementContainer, placeholderElm, this, // ownerTag
         context, options);
+        if (!global.placeholder?.parentNode) {
+            throw new Error('???? - 2');
+        }
         // Any tag components that were found should be processed AFTER the owner processes its elements. Avoid double processing of elements attributes like (oninit)=${}
         let isForceElement = options.forceElement;
         tagComponents.forEach(tagComponent => {
             const tagSupport = tagComponent.ownerTag.tagSupport;
             const tagGlobal = tagSupport.templater.global;
-            const placeholderElm = tagGlobal.placeholderElm; // global.placeholderElm
+            const placeholderElm = tagGlobal.placeholder; // global.placeholderElm
             if (!placeholderElm && !insertBefore.parentNode) {
                 throw new Error('no parent building tag components');
             }
-            const before = tagComponent.insertBefore; // insertBefore  (will be removed)
-            (0,_interpolateTemplate__WEBPACK_IMPORTED_MODULE_3__.subscribeToTemplate)(before, // tagComponent.insertBefore,
-            tagComponent.subject, tagComponent.ownerTag, options.counts, { isForceElement });
-            const clones = afterInterpolateElement(elementContainer, before, // (will be removed)
-            tagComponent.ownerTag, // this, // ownerTag
-            context, options);
-            if (placeholderElm && !placeholderElm?.parentNode) {
-                const clone = clones[this.clones.length - 1];
-                if (clone) {
-                    (0,_checkDestroyPrevious_function__WEBPACK_IMPORTED_MODULE_9__.restoreTagMarker)(tagComponent.ownerTag, clone);
-                }
+            if (!global.placeholder?.parentNode) {
+                throw new Error('???? - 3');
             }
-            if (placeholderElm) {
-                if (placeholderElm.parentNode) {
-                    if (!global.placeholderElm) {
-                        global.placeholderElm = placeholderElm;
-                    }
-                }
-                if (this.clones.length) {
-                    if (insertBefore.parentNode) {
-                        global.placeholderElm = insertBefore.previousSibling;
-                        const parentNode = insertBefore.parentNode;
-                        parentNode.removeChild(insertBefore);
-                    }
-                }
+            (0,_interpolateTemplate__WEBPACK_IMPORTED_MODULE_3__.subscribeToTemplate)(tagComponent.insertBefore, tagComponent.subject, tagComponent.ownerTag, options.counts, { isForceElement });
+            if (!global.placeholder?.parentNode) {
+                throw new Error('???? - 4');
+            }
+            afterInterpolateElement(elementContainer, tagComponent.insertBefore, tagComponent.ownerTag, // this, // ownerTag
+            context, options);
+            if (!global.placeholder?.parentNode) {
+                throw new Error('???? - 5');
             }
         });
-        if (!global.placeholderElm) {
-            // const clone = getLastCloneFromTags(this)
-            // const clone = (insertBefore as Element).previousElementSibling as Element
-            const clone = insertBefore.previousSibling;
-            if (clone) {
-                const parentNode = insertBefore.parentNode;
-                global.placeholderElm = clone;
-                parentNode.removeChild(insertBefore);
-            }
-        }
     }
+}
+function setTagPlaceholder(global) {
+    const insertBefore = global.insertBefore;
+    const placeholder = global.placeholder = document.createTextNode('');
+    const parentNode = insertBefore.parentNode;
+    parentNode.insertBefore(placeholder, insertBefore);
+    parentNode.removeChild(insertBefore);
 }
 function afterInterpolateElement(container, insertBefore, tag, 
 // preClones: Clones,
@@ -386,37 +355,8 @@ context, options) {
     if (!clones.length) {
         return clones;
     }
-    const ownerSupport = tag.tagSupport;
-    const ownerGlobal = ownerSupport.templater.global;
-    const hadBefore = _Clones_type__WEBPACK_IMPORTED_MODULE_8__.isRemoveTemplates && ownerGlobal.placeholderElm;
-    const parentNode = hadBefore ? ownerGlobal.placeholderElm?.parentNode : insertBefore.parentNode;
-    // we could now be processing same tag but more after components being rendered
-    if (hadBefore) {
-        // 0 put the template back down
-        (0,_insertAfter_function__WEBPACK_IMPORTED_MODULE_10__.insertAfter)(insertBefore, hadBefore);
-        // ??? - removed as need for arrays
-        delete ownerGlobal.placeholderElm;
-    }
     clones.forEach(clone => (0,_interpolateTemplate__WEBPACK_IMPORTED_MODULE_3__.afterElmBuild)(clone, options, context, tag));
-    let hasPopClone;
-    if (_Clones_type__WEBPACK_IMPORTED_MODULE_8__.isRemoveTemplates) {
-        const clone = insertBefore.previousSibling; // clones[clones.length - 1]
-        if (clone) {
-            const isTemplate = clone.tagName === 'TEMPLATE' && clone.hasAttribute('interpolate');
-            if (!isTemplate) {
-                hasPopClone = ownerGlobal.placeholderElm = clone; // insertBefore
-            }
-        }
-    }
-    if (clones.find(x => x === insertBefore)) {
-        throw new Error('adding marker to owner in tag class');
-    }
     tag.clones.push(...clones);
-    if (_Clones_type__WEBPACK_IMPORTED_MODULE_8__.isRemoveTemplates) {
-        if (hasPopClone) { //  || hadBefore
-            parentNode.removeChild(insertBefore); // belongs to another tag
-        }
-    }
     return clones;
 }
 function getChildTagsToDestroy(childTags, allTags = []) {
@@ -437,15 +377,9 @@ function updateContextItem(context, variableName, value) {
     const tag = subject.tag;
     if (tag) {
         const oldTemp = tag.tagSupport.templater;
-        const oldWrap = oldTemp.wrapper; // tag versus component
-        if (value.global !== oldTemp.global) {
-            if (oldWrap && (0,_isInstance__WEBPACK_IMPORTED_MODULE_6__.isTagComponent)(value)) {
-                const oldValueFn = oldWrap.original;
-                const newValueFn = value.wrapper?.original;
-                const fnMatched = oldValueFn === newValueFn;
-                if (fnMatched) {
-                    value.global = oldTemp.global;
-                }
+        if (value && value.global !== oldTemp.global) {
+            if ((0,_isInstance__WEBPACK_IMPORTED_MODULE_6__.isTagComponent)(value)) {
+                shareTemplaterGlobal(oldTemp, value);
             }
         }
     }
@@ -455,6 +389,15 @@ function updateContextItem(context, variableName, value) {
     }
     subject.set(value); // listeners will evaluate updated values to possibly update display(s)
     return;
+}
+function shareTemplaterGlobal(oldTemp, value) {
+    const oldWrap = oldTemp.wrapper; // tag versus component
+    const oldValueFn = oldWrap.original;
+    const newValueFn = value.wrapper?.original;
+    const fnMatched = oldValueFn === newValueFn;
+    if (fnMatched) {
+        value.global = oldTemp.global;
+    }
 }
 
 
@@ -779,9 +722,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _isInstance__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./isInstance */ "./ts/isInstance.ts");
 /* harmony import */ var _isLikeTags_function__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./isLikeTags.function */ "./ts/isLikeTags.function.ts");
 /* harmony import */ var _destroyTag_function__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./destroyTag.function */ "./ts/destroyTag.function.ts");
-/* harmony import */ var _Clones_type__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./Clones.type */ "./ts/Clones.type.ts");
-/* harmony import */ var _insertAfter_function__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./insertAfter.function */ "./ts/insertAfter.function.ts");
-
+/* harmony import */ var _insertAfter_function__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./insertAfter.function */ "./ts/insertAfter.function.ts");
 
 
 
@@ -792,10 +733,10 @@ newValue, insertBefore) {
     const wasArray = arraySubject.lastArray;
     // no longer an array
     if (wasArray && !(0,_isInstance__WEBPACK_IMPORTED_MODULE_0__.isTagArray)(newValue)) {
-        const placeholderElm = arraySubject.placeholderElm;
+        const placeholderElm = arraySubject.placeholder;
         delete arraySubject.lastArray;
-        delete arraySubject.placeholderElm;
-        (0,_insertAfter_function__WEBPACK_IMPORTED_MODULE_4__.insertAfter)(insertBefore, placeholderElm);
+        delete arraySubject.placeholder;
+        (0,_insertAfter_function__WEBPACK_IMPORTED_MODULE_3__.insertAfter)(insertBefore, placeholderElm);
         wasArray.forEach(({ tag }) => destroyArrayTag(tag, { added: 0, removed: 0 }));
         return 'array';
     }
@@ -810,9 +751,7 @@ newValue, insertBefore) {
             // its a different tag now
             if (!(0,_isLikeTags_function__WEBPACK_IMPORTED_MODULE_1__.isLikeTags)(newTag, existingTag)) {
                 // put template back down
-                if (_Clones_type__WEBPACK_IMPORTED_MODULE_3__.isRemoveTemplates) {
-                    restoreTagMarker(existingTag, insertBefore);
-                }
+                restoreTagMarker(existingTag, insertBefore);
                 (0,_destroyTag_function__WEBPACK_IMPORTED_MODULE_2__.destroyTagMemory)(existingTag, tagSubject);
                 return 2;
             }
@@ -823,9 +762,7 @@ newValue, insertBefore) {
             return false; // its still a tag component
         }
         // put template back down
-        if (_Clones_type__WEBPACK_IMPORTED_MODULE_3__.isRemoveTemplates) {
-            restoreTagMarker(existingTag, insertBefore);
-        }
+        restoreTagMarker(existingTag, insertBefore);
         // destroy old component, value is not a component
         (0,_destroyTag_function__WEBPACK_IMPORTED_MODULE_2__.destroyTagMemory)(existingTag, tagSubject);
         return 'different-tag';
@@ -858,10 +795,9 @@ subject) {
 }
 function restoreTagMarker(existingTag, insertBefore) {
     const global = existingTag.tagSupport.templater.global;
-    const placeholderElm = global.placeholderElm;
+    const placeholderElm = global.placeholder;
     if (placeholderElm) {
-        (0,_insertAfter_function__WEBPACK_IMPORTED_MODULE_4__.insertAfter)(insertBefore, placeholderElm);
-        // delete global.placeholderElm
+        (0,_insertAfter_function__WEBPACK_IMPORTED_MODULE_3__.insertAfter)(insertBefore, placeholderElm);
     }
 }
 
@@ -1556,6 +1492,11 @@ function subscribeToTemplate(insertBefore, subject, ownerTag, counts, // used fo
             (0,_updateExistingValue_function__WEBPACK_IMPORTED_MODULE_5__.updateExistingValue)(subject, value, ownerTag, insertBefore);
             return;
         }
+        if (!insertBefore.parentNode) {
+            throw new Error('no insert before parent node - 3');
+        }
+        const global = ownerTag.tagSupport.templater.global;
+        const pre = global.placeholder?.parentNode;
         (0,_processSubjectValue_function__WEBPACK_IMPORTED_MODULE_2__.processSubjectValue)(value, subject, insertBefore, ownerTag, {
             counts: { ...counts },
             forceElement: isForceElement,
@@ -2004,6 +1945,9 @@ function processSubjectComponent(templater, subject, insertBefore, ownerTag, opt
     }
     templater.tagSupport = new _TagSupport_class__WEBPACK_IMPORTED_MODULE_3__.TagSupport(ownerTag.tagSupport, templater, subject);
     // templater.oldest = subject.tag?.tagSupport.oldest || templater.oldest
+    if (insertBefore.nodeName != 'TEMPLATE') {
+        throw new Error('9');
+    }
     templater.global.insertBefore = insertBefore;
     let retag = subject.tag;
     const providers = _setUse_function__WEBPACK_IMPORTED_MODULE_1__.setUse.memory.providerConfig;
@@ -2135,7 +2079,7 @@ insertBefore, ownerTag) {
     }
     tag.ownerTag = ownerTag;
     if (insertBefore.tagName !== 'TEMPLATE') {
-        throw new Error(`;;;; - ${insertBefore.nodeName}`);
+        throw new Error(`processTag.function.ts - insertBefore is not TEMPLATE ${insertBefore.tagName}`);
     }
     tag.buildBeforeElement(insertBefore, {
         counts: { added: 0, removed: 0 },
@@ -2192,8 +2136,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _errors__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./errors */ "./ts/errors.ts");
 /* harmony import */ var _checkDestroyPrevious_function__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./checkDestroyPrevious.function */ "./ts/checkDestroyPrevious.function.ts");
 /* harmony import */ var _processTag_function__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./processTag.function */ "./ts/processTag.function.ts");
-/* harmony import */ var _insertAfter_function__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./insertAfter.function */ "./ts/insertAfter.function.ts");
-
 
 
 
@@ -2203,17 +2145,10 @@ insertBefore, // <template end interpolate />
 ownerTag, options) {
     const clones = ownerTag.clones; // []
     let lastArray = subject.lastArray = subject.lastArray || [];
-    if (subject.placeholderElm) {
-        const parentPlaceholder = subject.parentAsPlaceholder;
-        if (parentPlaceholder) {
-            parentPlaceholder.appendChild(insertBefore);
-            delete subject.placeholderElm;
-        }
-        else {
-            (0,_insertAfter_function__WEBPACK_IMPORTED_MODULE_4__.insertAfter)(insertBefore, subject.placeholderElm);
-        }
-        delete subject.placeholderElm;
+    if (!subject.placeholder) {
+        setPlaceholderElm(insertBefore, subject);
     }
+    const runtimeInsertBefore = subject.placeholder; // || insertBefore
     let removed = 0;
     /** 🗑️ remove previous items first */
     lastArray = subject.lastArray = subject.lastArray.filter((item, index) => {
@@ -2235,8 +2170,6 @@ ownerTag, options) {
         }
         return true;
     });
-    // const masterBefore = template || (template as any).clone
-    const before = insertBefore; // || (subject.value as any).insertBefore || (insertBefore as any).clone
     value.forEach((subTag, index) => {
         const previous = lastArray[index];
         const previousSupport = previous?.tag.tagSupport;
@@ -2271,33 +2204,23 @@ ownerTag, options) {
                 return [];
             }
             // TODO: should not get here?
-            processAddTagArrayItem(before, subTag, index, options, lastArray);
+            processAddTagArrayItem(runtimeInsertBefore, subTag, index, options, lastArray);
             throw new Error('item should be back');
             // return [] // removed: item should have been previously deleted and will be added back
         }
-        processAddTagArrayItem(before, subTag, index, options, lastArray);
+        processAddTagArrayItem(runtimeInsertBefore, subTag, index, options, lastArray);
         ownerTag.childTags.push(subTag);
     });
-    if (value.length) {
-        const lastClone = insertBefore.previousSibling;
-        setPlaceholderElm(lastClone, insertBefore, subject);
-    }
-    else {
-        const placeholderElm = insertBefore.previousSibling;
-        if (placeholderElm) {
-            setPlaceholderElm(placeholderElm, insertBefore, subject);
-        }
-        else {
-            const parentNode = insertBefore.parentNode;
-            setPlaceholderElm(parentNode, insertBefore, subject);
-            subject.parentAsPlaceholder = parentNode;
-        }
-    }
     return clones;
 }
-function setPlaceholderElm(lastClone, insertBefore, subject) {
-    subject.placeholderElm = lastClone;
+function setPlaceholderElm(insertBefore, subject) {
+    if (insertBefore.nodeName !== 'TEMPLATE') {
+        subject.placeholder = insertBefore;
+        return;
+    }
+    const placeholder = subject.placeholder = document.createTextNode('');
     const parentNode = insertBefore.parentNode;
+    parentNode.insertBefore(placeholder, insertBefore);
     parentNode.removeChild(insertBefore);
 }
 function processAddTagArrayItem(before, subTag, index, options, lastArray) {
@@ -2348,7 +2271,7 @@ function processTagResult(tag, subject, // used for recording past and current v
 insertBefore, // <template end interpolate />
 { counts, forceElement, }) {
     if (!insertBefore.parentNode) {
-        throw new Error('before here processTagResult');
+        throw new Error(`before here processTagResult ${insertBefore.nodeName}`);
     }
     // *if appears we already have seen
     const subjectTag = subject;
@@ -2366,9 +2289,11 @@ insertBefore, // <template end interpolate />
         */
         return processTagResultUpdate(tag, subjectTag, previousTag);
     }
-    if (insertBefore.nodeName !== 'TEMPLATE') {
-        throw new Error(';;;;');
+    /*
+    if(insertBefore.nodeName !== 'TEMPLATE') {
+      throw new Error(`processTagResult.function.ts insertBefore is not template ${insertBefore.nodeName}`)
     }
+    */
     tag.buildBeforeElement(insertBefore, {
         counts,
         forceElement,
@@ -3555,16 +3480,12 @@ function updateExistingTagComponent(ownerTag, templater, subject, insertBefore) 
     const oldTagSupport = existingTag.tagSupport;
     const oldGlobal = oldTagSupport.templater.global;
     const globalInsert = oldGlobal.insertBefore;
-    const oldInsertBefore = globalInsert?.parentNode ? globalInsert : insertBefore;
     // const placeholderElm = ownerTag.tagSupport.templater.global.placeholderElm
-    const placeholderElm = oldGlobal.placeholderElm;
+    const placeholderElm = oldGlobal.placeholder;
     if (placeholderElm) {
         if (!placeholderElm.parentNode) {
             throw new Error('stop here no subject parent node update existing tag');
         }
-    }
-    else if (!oldInsertBefore.parentNode) {
-        //throw new Error('stop here no parent node update existing tag')
     }
     if (!isSameTag) {
         (0,_destroyTag_function__WEBPACK_IMPORTED_MODULE_2__.destroyTagMemory)(oldTagSupport.templater.global.oldest, subject);
@@ -3713,8 +3634,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _isLikeTags_function__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./isLikeTags.function */ "./ts/isLikeTags.function.ts");
 /* harmony import */ var _bindSubjectCallback_function__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./bindSubjectCallback.function */ "./ts/bindSubjectCallback.function.ts");
 /* harmony import */ var _processTag_function__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./processTag.function */ "./ts/processTag.function.ts");
-/* harmony import */ var _insertAfter_function__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./insertAfter.function */ "./ts/insertAfter.function.ts");
-
 
 
 
@@ -3728,37 +3647,24 @@ __webpack_require__.r(__webpack_exports__);
 function updateExistingValue(subject, value, ownerTag, insertBefore) {
     const subjectTag = subject;
     const isComponent = (0,_isInstance__WEBPACK_IMPORTED_MODULE_1__.isTagComponent)(value);
-    // const global = subjectTag.tag?.tagSupport.templater.global
-    // const placeholderElm = global?.placeholderElm || global?.insertBefore || (subject as DisplaySubject).insertBefore
-    // const oldInsertBefore = placeholderElm || (subject as DisplaySubject).clone
-    const destroyType = (0,_checkDestroyPrevious_function__WEBPACK_IMPORTED_MODULE_5__.checkDestroyPrevious)(subject, value, insertBefore);
+    (0,_checkDestroyPrevious_function__WEBPACK_IMPORTED_MODULE_5__.checkDestroyPrevious)(subject, value, insertBefore);
     // handle already seen tag components
     if (isComponent) {
         const templater = value;
         // When was something before component
         if (!subjectTag.tag) {
-            const tag = (0,_processSubjectComponent_function__WEBPACK_IMPORTED_MODULE_6__.processSubjectComponent)(templater, subjectTag, insertBefore, // oldInsertBefore as InsertBefore,
+            (0,_processSubjectComponent_function__WEBPACK_IMPORTED_MODULE_6__.processSubjectComponent)(templater, subjectTag, insertBefore, // oldInsertBefore as InsertBefore,
             ownerTag, {
                 forceElement: true,
                 counts: { added: 0, removed: 0 },
             });
             return subjectTag;
         }
-        // ??? - new put back down template tag before redraw
-        const placeholderElm = subjectTag.tag.tagSupport.templater.global.placeholderElm;
-        if (placeholderElm) {
-            (0,_insertAfter_function__WEBPACK_IMPORTED_MODULE_10__.insertAfter)(insertBefore, placeholderElm);
-            delete subjectTag.tag.tagSupport.templater.global.placeholderElm;
-        }
         templater.tagSupport = new _TagSupport_class__WEBPACK_IMPORTED_MODULE_0__.TagSupport(
         // subjectTag.tag.tagSupport.ownerTagSupport,
         ownerTag.tagSupport, templater, subjectTag);
-        const tag = (0,_updateExistingTagComponent_function__WEBPACK_IMPORTED_MODULE_3__.updateExistingTagComponent)(ownerTag, templater, // latest value
+        (0,_updateExistingTagComponent_function__WEBPACK_IMPORTED_MODULE_3__.updateExistingTagComponent)(ownerTag, templater, // latest value
         subjectTag, insertBefore);
-        if (insertBefore.parentNode) {
-            tag.tagSupport.templater.global.placeholderElm = insertBefore.previousSibling;
-            insertBefore.parentNode.removeChild(insertBefore);
-        }
         return subjectTag;
     }
     // was component but no longer
@@ -3784,7 +3690,7 @@ function updateExistingValue(subject, value, ownerTag, insertBefore) {
         return subject;
     }
     if ((0,_isInstance__WEBPACK_IMPORTED_MODULE_1__.isTagInstance)(value)) {
-        if (insertBefore.tagName !== 'TEMPLATE') {
+        if (insertBefore.nodeName !== 'TEMPLATE') {
             throw new Error(`expected template - ${insertBefore.nodeName}`);
         }
         (0,_processTag_function__WEBPACK_IMPORTED_MODULE_9__.processTag)(value, subjectTag, insertBefore, ownerTag);
@@ -3816,7 +3722,6 @@ function handleStillTag(existingTag, subject, value, ownerTag) {
     if (isSameTag || isSameTag2) {
         const subjectTag = subject;
         const global = existingTag.tagSupport.templater.global;
-        delete global.placeholderElm;
         const insertBefore = global.insertBefore;
         return (0,_processTag_function__WEBPACK_IMPORTED_MODULE_9__.processTag)(value, subjectTag, insertBefore, ownerTag);
     }
