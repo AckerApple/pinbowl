@@ -1,8 +1,8 @@
-import { html, setLet, tag } from "./taggedjs/bundle.js"
+import { html, letState, tag } from "./taggedjs/bundle.js"
 import runTest from "./app.test.js"
 
 export const gameDebug = tag(game => {
-  let showDump = setLet(false)(x => [showDump, showDump=x])
+  let showDump = letState(false)(x => [showDump, showDump=x])
   // let showDump = state0(false, x => [showDump, showDump=x])
 
   function testAlert() {

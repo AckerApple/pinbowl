@@ -1,6 +1,6 @@
 import { TagSupport } from './TagSupport.class';
 import { Counts } from './interpolateTemplate';
-import { State } from './set.function';
+import { State } from './state';
 import { InterpolatedTemplates } from './interpolations';
 import { InterpolateSubject } from './processSubjectValue.function';
 import { InsertBefore } from './Clones.type';

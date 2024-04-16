@@ -1,5 +1,5 @@
 import { runAfterRender, runBeforeRedraw, runBeforeRender } from './tagRunner';
-import { setUse } from './setUse.function';
+import { setUse } from './state';
 import { isLikeTags } from './isLikeTags.function';
 import { destroyTagMemory } from './destroyTag.function';
 export class TemplaterResult {

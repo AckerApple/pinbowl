@@ -1,5 +1,5 @@
 import { animateDestroy, animateInit } from "./animations.js"
-import { setLet, html, tag, providers, Subject, onInit } from "./taggedjs/bundle.js"
+import { letState, html, tag, providers, Subject, onInit } from "./taggedjs/bundle.js"
 
 function tagDebugProvider() {
   const upper = {
@@ -13,9 +13,9 @@ function tagDebugProvider() {
 }
 
 export const tagDebug = tag(() => {// tagDebug.js
-  let renderCount = setLet(0)(x => [renderCount, renderCount = x])
-  let counter = setLet(0)(x => [counter, counter = x])
-  let initCounter = setLet(0)(x => [initCounter, initCounter = x])
+  let renderCount = letState(0)(x => [renderCount, renderCount = x])
+  let counter = letState(0)(x => [counter, counter = x])
+  let initCounter = letState(0)(x => [initCounter, initCounter = x])
 
   const provider = providers.create( tagDebugProvider )
   
@@ -74,7 +74,7 @@ const providerDebug = tag(() => {
   const provider = providers.inject( tagDebugProvider )
   const upperProvider = provider.upper // providers.inject( upperTagDebugProvider )
   
-  let renderCount = setLet(0)(x => [renderCount, renderCount = x])
+  let renderCount = letState(0)(x => [renderCount, renderCount = x])
 
   ++renderCount
 

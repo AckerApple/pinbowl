@@ -54,8 +54,6 @@ export function subscribeToTemplate(insertBefore, subject, ownerTag, counts, // 
         if (!insertBefore.parentNode) {
             throw new Error('no insert before parent node - 3');
         }
-        const global = ownerTag.tagSupport.templater.global;
-        const pre = global.placeholder?.parentNode;
         processSubjectValue(value, subject, insertBefore, ownerTag, {
             counts: { ...counts },
             forceElement: isForceElement,

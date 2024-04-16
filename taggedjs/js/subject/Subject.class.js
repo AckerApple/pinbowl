@@ -15,8 +15,8 @@ export class Subject {
             // are we in a pipe?
             if (this.methods.length) {
                 const orgCallback = callback;
-                callback = (value, subscription) => {
-                    runPipedMethods(value, subscription, this.methods, lastValue => orgCallback(lastValue, subscription));
+                callback = (value) => {
+                    runPipedMethods(value, this.methods, lastValue => orgCallback(lastValue));
                 };
             }
             return subscribeWith(callback);
@@ -84,12 +84,12 @@ function getSubscription(subject, callback) {
     };
     return subscription;
 }
-function runPipedMethods(value, subscription, methods, onComplete) {
+function runPipedMethods(value, methods, onComplete) {
     const cloneMethods = [...methods];
     const firstMethod = cloneMethods.shift();
     const next = (newValue) => {
         if (cloneMethods.length) {
-            return runPipedMethods(newValue, subscription, cloneMethods, onComplete);
+            return runPipedMethods(newValue, cloneMethods, onComplete);
         }
         onComplete(newValue);
         // return newValue = next

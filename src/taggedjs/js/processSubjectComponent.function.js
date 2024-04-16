@@ -1,5 +1,5 @@
 import { renderWithSupport } from './TemplaterResult.class';
-import { setUse } from './setUse.function';
+import { setUse } from './state';
 import { processTagResult } from './processTagResult.function';
 import { TagSupport } from './TagSupport.class';
 export function processSubjectComponent(templater, subject, insertBefore, ownerTag, options) {

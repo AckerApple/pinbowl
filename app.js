@@ -1,4 +1,4 @@
-import { providers, html, tag, tagElement, onInit, getCallback, set, setLet } from "./taggedjs/bundle.js"
+import { providers, html, tag, tagElement, onInit, callbackMaker, state, letState } from "./taggedjs/bundle.js"
 import { playersLoop } from "./playersLoop.js"
 import { footerButtons } from "./footerButtons.js"
 import { debugApp } from "./debugApp.js"
@@ -6,9 +6,9 @@ import { Game, frameScoreDetails } from "./game.js"
 import { animateDestroy } from "./animations.js"
 
 export const SmallBowlApp = tag(() => {// app.js - SmallBowlApp
-  const frameScoreModalDetails = set(frameScoreDetails)
-  let debug = setLet(false)(x => [debug, debug = x])
-  const callback = getCallback()
+  const frameScoreModalDetails = state(frameScoreDetails)
+  let debug = letState(false)(x => [debug, debug = x])
+  const callback = callbackMaker()
 
   /** @type {Game} */
   const game = providers.create(Game)

@@ -1,5 +1,5 @@
 // TODO: This should be more like `new TaggedJs().use({})`
-import { setUse } from './setUse.function';
+import { setUse } from './state';
 // Life cycle 1
 export function runBeforeRender(tagSupport, tagOwner) {
     setUse.tagUse.forEach(tagUse => tagUse.beforeRender(tagSupport, tagOwner));

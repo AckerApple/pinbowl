@@ -12,3 +12,6 @@ export declare class ArrayNoKeyError extends TagError {
 export declare class StateMismatchError extends TagError {
     constructor(message: string, details?: TagErrorDetails);
 }
+export declare class SyncCallbackError extends TagError {
+    constructor(message: string, details?: TagErrorDetails);
+}

@@ -1,4 +1,4 @@
-import { providersChangeCheck } from './provider.utils';
+import { providersChangeCheck } from './state/provider.utils';
 import { renderWithSupport } from './TemplaterResult.class';
 import { isLikeTags } from './isLikeTags.function';
 /** Returns true when rendering owner is not needed. Returns false when rendering owner should occur */

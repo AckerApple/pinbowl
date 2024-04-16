@@ -2,10 +2,10 @@ import { Context, Tag } from './Tag.class';
 import { BaseTagSupport } from './TagSupport.class';
 import { Props } from './Props';
 import { TagChildren } from './tag';
-import { Provider } from './providers';
-import { OnDestroyCallback } from './onDestroy';
+import { Provider } from './state/providers';
+import { OnDestroyCallback } from './state/onDestroy';
 import { TagSubject } from './Tag.utils';
-import { OnInitCallback } from './onInit';
+import { OnInitCallback } from './state/onInit';
 import { Subscription } from './subject/Subject.utils';
 import { InsertBefore } from './Clones.type';
 export type Wrapper = ((tagSupport: BaseTagSupport, subject: TagSubject) => Tag) & {

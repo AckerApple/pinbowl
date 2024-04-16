@@ -18,4 +18,10 @@ export class StateMismatchError extends TagError {
         this.name = StateMismatchError.name;
     }
 }
+export class SyncCallbackError extends TagError {
+    constructor(message, details) {
+        super(message, 'sync-callback-error', details);
+        this.name = SyncCallbackError.name;
+    }
+}
 //# sourceMappingURL=errors.js.map

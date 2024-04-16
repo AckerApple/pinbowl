@@ -15,7 +15,6 @@ export function updateExistingTagComponent(ownerTag, templater, subject, insertB
     }
     const oldTagSupport = existingTag.tagSupport;
     const oldGlobal = oldTagSupport.templater.global;
-    const globalInsert = oldGlobal.insertBefore;
     // const placeholderElm = ownerTag.tagSupport.templater.global.placeholderElm
     const placeholderElm = oldGlobal.placeholder;
     if (placeholderElm) {
