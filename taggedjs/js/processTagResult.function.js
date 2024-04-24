@@ -1,46 +1,30 @@
-export function processTagResult(tag, subject, // used for recording past and current value
+export function processTagResult(tagSupport, subject, // used for recording past and current value
 insertBefore, // <template end interpolate />
 { counts, forceElement, }) {
-    if (!insertBefore.parentNode) {
-        throw new Error(`before here processTagResult ${insertBefore.nodeName}`);
-    }
     // *if appears we already have seen
     const subjectTag = subject;
-    const existingTag = subjectTag.tag;
-    const previousTag = existingTag?.tagSupport.templater.global.oldest || undefined; // || tag.tagSupport.oldest // subjectTag.tag
-    const justUpdate = previousTag; // && !forceElement
-    if (previousTag && justUpdate) {
-        /*
-        const areLike = previousTag.isLikeTag(tag)
-    
-        // are we just updating an if we already had?
-        if(areLike) {
-          return processTagResultUpdate(tag, subjectTag, previousTag)
-        }
-        */
-        return processTagResultUpdate(tag, subjectTag, previousTag);
+    const lastSupport = subjectTag.tagSupport;
+    const prevSupport = lastSupport?.global.oldest || undefined; // || tag.tagSupport.oldest // subjectTag.tag
+    const justUpdate = prevSupport; // && !forceElement
+    if (prevSupport && justUpdate) {
+        return processTagResultUpdate(tagSupport, subjectTag, prevSupport);
     }
-    /*
-    if(insertBefore.nodeName !== 'TEMPLATE') {
-      throw new Error(`processTagResult.function.ts insertBefore is not template ${insertBefore.nodeName}`)
-    }
-    */
-    tag.buildBeforeElement(insertBefore, {
+    tagSupport.buildBeforeElement(insertBefore, {
         counts,
         forceElement,
     });
 }
-function processTagResultUpdate(tag, subject, // used for recording past and current value
-previousTag) {
+function processTagResultUpdate(tagSupport, subject, // used for recording past and current value
+prevSupport) {
     // components
     if (subject instanceof Function) {
-        const newTag = subject(previousTag.tagSupport);
-        previousTag.updateByTag(newTag);
-        subject.tag = newTag;
+        const newSupport = subject(prevSupport);
+        prevSupport.updateBy(newSupport);
+        subject.tagSupport = newSupport;
         return;
     }
-    previousTag.updateByTag(tag);
-    subject.tag = tag;
+    prevSupport.updateBy(tagSupport);
+    subject.tagSupport = tagSupport;
     return;
 }
 //# sourceMappingURL=processTagResult.function.js.map

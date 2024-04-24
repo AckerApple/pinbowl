@@ -1,12 +1,11 @@
 import { setUse } from "./setUse.function";
 function setCurrentTagSupport(support) {
-    setUse.memory.initCurrentTemplater = support.templater;
+    setUse.memory.initCurrentSupport = support;
 }
 export function onInit(callback) {
-    const templater = setUse.memory.initCurrentTemplater;
-    if (!templater.global.init) {
-        ;
-        templater.global.init = callback;
+    const tagSupport = setUse.memory.initCurrentSupport;
+    if (!tagSupport.global.init) {
+        tagSupport.global.init = callback;
         callback(); // fire init
     }
 }

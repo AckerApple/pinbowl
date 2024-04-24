@@ -6,7 +6,7 @@ export function tagElement(app, // (...args: unknown[]) => TemplaterResult,
 element, props) {
     const appElmIndex = appElements.findIndex(appElm => appElm.element === element);
     if (appElmIndex >= 0) {
-        appElements[appElmIndex].tag.destroy();
+        appElements[appElmIndex].tagSupport.destroy();
         appElements.splice(appElmIndex, 1);
         // an element already had an app on it
         console.warn('Found and destroyed app element already rendered to element', { element });
@@ -14,36 +14,36 @@ element, props) {
     // Create the app which returns [props, runOneTimeFunction]
     const wrapper = app(props);
     // have a function setup and call the tagWrapper with (props, {update, async, on})
-    const result = applyTagUpdater(wrapper);
-    const { tag } = result;
+    const tagSupport = runWrapper(wrapper);
     // TODO: is the below needed?
-    tag.appElement = element;
-    tag.tagSupport.templater.global.isApp = true;
+    tagSupport.appElement = element;
+    tagSupport.isApp = true;
+    tagSupport.global.isApp = true;
     const templateElm = document.createElement('template');
     templateElm.setAttribute('id', 'app-tag-' + appElements.length);
     templateElm.setAttribute('app-tag-detail', appElements.length.toString());
     element.appendChild(templateElm);
-    tag.buildBeforeElement(templateElm);
-    wrapper.global.oldest = tag;
-    wrapper.global.newest = tag;
-    if (!tag.hasLiveElements) {
-        throw new Error('x');
-    }
-    ;
+    tagSupport.buildBeforeElement(templateElm);
+    tagSupport.global.oldest = tagSupport;
+    tagSupport.global.newest = tagSupport;
     element.setUse = app.original.setUse;
-    appElements.push({ element, tag });
-    return { tag, tags: app.original.tags };
+    appElements.push({ element, tagSupport });
+    return {
+        tagSupport,
+        tags: app.original.tags,
+    };
 }
-export function applyTagUpdater(wrapper) {
-    const subject = new ValueSubject({});
-    const tagSupport = new BaseTagSupport(wrapper, subject);
-    wrapper.tagSupport = tagSupport;
-    runBeforeRender(tagSupport, undefined);
+export function runWrapper(templater) {
+    let newSupport = {};
+    const subject = new ValueSubject(newSupport);
+    newSupport = new BaseTagSupport(templater, subject);
+    subject.set(templater);
+    subject.tagSupport = newSupport;
+    runBeforeRender(newSupport, undefined);
     // Call the apps function for our tag templater
-    const tag = wrapper.wrapper(tagSupport, subject);
-    // wrapper.global.oldest = tag
-    // wrapper.global.newest = tag
-    runAfterRender(tagSupport, tag);
-    return { tag, tagSupport };
+    const wrapper = templater.wrapper;
+    const tagSupport = wrapper(newSupport, subject);
+    runAfterRender(newSupport, tagSupport);
+    return tagSupport;
 }
 //# sourceMappingURL=tagElement.js.map

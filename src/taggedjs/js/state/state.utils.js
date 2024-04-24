@@ -5,20 +5,23 @@ setUse.memory.stateConfig = {
     array: [], // state memory on the first render
     // rearray: [] as StateConfigArray, // state memory to be used before the next render
 };
+const beforeRender = (tagSupport) => initState(tagSupport);
 setUse({
-    beforeRender: (tagSupport) => initState(tagSupport),
-    beforeRedraw: (tagSupport) => initState(tagSupport),
+    beforeRender,
+    beforeRedraw: beforeRender,
     afterRender: (tagSupport) => {
-        const state = tagSupport.memory.state;
+        const memory = tagSupport.memory;
+        const state = memory.state;
         const config = setUse.memory.stateConfig;
         const rearray = config.rearray;
         if (rearray.length) {
             if (rearray.length !== config.array.length) {
                 const message = `States lengths has changed ${rearray.length} !== ${config.array.length}. Typically occurs when a function is intended to be wrapped with a tag() call`;
+                const wrapper = tagSupport.templater?.wrapper;
                 const details = {
                     oldStates: config.array,
                     newStates: config.rearray,
-                    component: tagSupport.templater?.wrapper.original,
+                    tagFunction: wrapper.original,
                 };
                 const error = new StateMismatchError(message, details);
                 console.warn(message, details);
@@ -26,8 +29,8 @@ setUse({
             }
         }
         delete config.rearray; // clean up any previous runs
-        state.newest = config.array; // [...config.array]
-        state.newest.forEach(item => item.lastValue = getStateValue(item)); // set last values
+        memory.state = config.array; // [...config.array]
+        memory.state.forEach(item => item.lastValue = getStateValue(item)); // set last values
         config.array = [];
     }
 });
@@ -55,30 +58,33 @@ state) {
 export class StateEchoBack {
 }
 function initState(tagSupport) {
-    const state = tagSupport.memory.state;
+    const memory = tagSupport.memory;
+    const state = memory.state;
     const config = setUse.memory.stateConfig;
     // TODO: This guard may no longer be needed
     if (config.rearray) {
+        const wrapper = tagSupport.templater?.wrapper;
+        const wasWrapper = config.tagSupport?.templater.wrapper;
         const message = 'last state not cleared. Possibly in the middle of rendering one component and another is trying to render';
         console.error(message, {
             config,
-            component: tagSupport.templater?.wrapper.original,
-            wasInMiddleOf: config.tagSupport?.templater.wrapper.original,
+            tagFunction: wrapper.original,
+            wasInMiddleOf: wasWrapper.original,
             state,
             expectedClearArray: config.rearray,
         });
         throw new StateMismatchError(message, {
             config,
-            component: tagSupport.templater?.wrapper.original,
+            tagFunction: wrapper.original,
             state,
             expectedClearArray: config.rearray,
         });
     }
     // TODO: this maybe redundant and not needed
     config.rearray = []; // .length = 0
-    if (state?.newest.length) {
-        state.newest.map(state => getStateValue(state));
-        config.rearray.push(...state.newest);
+    if (state?.length) {
+        state.forEach(state => getStateValue(state));
+        config.rearray.push(...state);
     }
     config.tagSupport = tagSupport;
 }

@@ -51,9 +51,6 @@ export function subscribeToTemplate(insertBefore, subject, ownerTag, counts, // 
             updateExistingValue(subject, value, ownerTag, insertBefore);
             return;
         }
-        if (!insertBefore.parentNode) {
-            throw new Error('no insert before parent node - 3');
-        }
         processSubjectValue(value, subject, insertBefore, ownerTag, {
             counts: { ...counts },
             forceElement: isForceElement,

@@ -1,10 +1,8 @@
 import { deepClone } from '../deepFunctions';
 import { setUse } from './setUse.function';
-// TODO: rename
 setUse.memory.providerConfig = {
     providers: [],
-    //currentTagSupport: undefined as TagSupport | undefined,
-    ownerTag: undefined,
+    ownerSupport: undefined,
 };
 function get(constructMethod) {
     const config = setUse.memory.providerConfig;
@@ -40,10 +38,10 @@ export const providers = {
         }
         const config = setUse.memory.providerConfig;
         let owner = {
-            ownerTag: config.ownerTag
+            ownerTagSupport: config.ownerSupport
         };
-        while (owner.ownerTag) {
-            const ownerProviders = owner.ownerTag.tagSupport.templater.global.providers;
+        while (owner.ownerTagSupport) {
+            const ownerProviders = owner.ownerTagSupport.global.providers;
             const provider = ownerProviders.find(provider => {
                 if (provider.constructMethod === constructor) {
                     return true;
@@ -54,7 +52,7 @@ export const providers = {
                 config.providers.push(provider);
                 return provider.instance;
             }
-            owner = owner.ownerTag; // cause reloop
+            owner = owner.ownerTagSupport; // cause reloop
         }
         const msg = `Could not inject provider: ${constructor.name} ${constructor}`;
         console.warn(`${msg}. Available providers`, config.providers);
@@ -62,25 +60,24 @@ export const providers = {
     }
 };
 setUse({
-    beforeRender: (tagSupport, ownerTag) => {
-        run(tagSupport, ownerTag);
+    beforeRender: (tagSupport, ownerSupport) => {
+        run(tagSupport, ownerSupport);
     },
-    beforeRedraw: (tagSupport, tag) => {
-        run(tagSupport, tag.ownerTag);
+    beforeRedraw: (tagSupport, newTagSupport) => {
+        run(tagSupport, newTagSupport.ownerTagSupport);
     },
     afterRender: (tagSupport) => {
         const config = setUse.memory.providerConfig;
-        tagSupport.templater.global.providers = [...config.providers];
+        tagSupport.global.providers = [...config.providers];
         config.providers.length = 0;
     }
 });
-function run(tagSupport, ownerTag) {
+function run(tagSupport, ownerSupport) {
     const config = setUse.memory.providerConfig;
-    // config.currentTagSupport = tagSupport
-    config.ownerTag = ownerTag;
-    if (tagSupport.templater.global.providers.length) {
+    config.ownerSupport = ownerSupport;
+    if (tagSupport.global.providers.length) {
         config.providers.length = 0;
-        config.providers.push(...tagSupport.templater.global.providers);
+        config.providers.push(...tagSupport.global.providers);
     }
 }
 //# sourceMappingURL=providers.js.map

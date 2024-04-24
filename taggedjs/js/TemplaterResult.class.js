@@ -5,76 +5,65 @@ import { destroyTagMemory } from './destroyTag.function';
 export class TemplaterResult {
     props;
     children;
-    isTag = false; // when true, is basic tag non-component
+    isTemplater = true;
     tagged;
     wrapper;
-    global = {
-        newestTemplater: this,
-        context: {}, // populated after reading interpolated.values array converted to an object {variable0, variable:1}
-        providers: [],
-        /** Indicator of re-rending. Saves from double rending something already rendered */
-        renderCount: 0,
-        deleted: false,
-        subscriptions: []
-    };
-    tagSupport;
+    tag;
     constructor(props, children) {
         this.props = props;
         this.children = children;
     }
-    /*
-    redraw?: (
-      force?: boolean, // force children to redraw
-    ) => Tag
-    */
-    isTemplater = true;
 }
-export function renderWithSupport(tagSupport, existingTag, subject, ownerTag) {
-    const wrapTagSupport = tagSupport; // this.tagSupport
+export function renderWithSupport(tagSupport, // new
+lastSupport, // previous
+subject, // events & memory
+ownerSupport) {
     /* BEFORE RENDER */
-    const runtimeOwnerTag = existingTag?.ownerTag || ownerTag;
-    if (existingTag) {
-        wrapTagSupport.memory.state.newest = [...existingTag.tagSupport.memory.state.newest];
-        wrapTagSupport.templater.global = existingTag.tagSupport.templater.global;
-        runBeforeRedraw(wrapTagSupport, existingTag);
+    const lastOwnerSupport = lastSupport?.ownerTagSupport;
+    const runtimeOwnerSupport = lastOwnerSupport || ownerSupport;
+    if (lastSupport) {
+        const lastState = lastSupport.memory.state;
+        const memory = tagSupport.memory;
+        memory.state = [...lastState];
+        tagSupport.global = lastSupport.global;
+        runBeforeRedraw(tagSupport, lastSupport);
     }
     else {
-        if (!wrapTagSupport) {
-            throw new Error('63521');
-        }
         // first time render
-        runBeforeRender(wrapTagSupport, runtimeOwnerTag);
+        runBeforeRender(tagSupport, runtimeOwnerSupport);
         // TODO: Logic below most likely could live within providers.ts inside the runBeforeRender function
         const providers = setUse.memory.providerConfig;
-        providers.ownerTag = runtimeOwnerTag;
+        providers.ownerSupport = runtimeOwnerSupport;
     }
     /* END: BEFORE RENDER */
-    const templater = wrapTagSupport.templater;
+    const templater = tagSupport.templater;
+    const subTag = subject.tagSupport;
     // NEW TAG CREATED HERE
-    const retag = templater.wrapper(wrapTagSupport, subject);
+    const wrapper = templater.wrapper;
+    const reSupport = wrapper(tagSupport, subject);
     /* AFTER */
-    runAfterRender(wrapTagSupport, retag);
-    const isLikeTag = !existingTag || isLikeTags(existingTag, retag);
+    runAfterRender(tagSupport, reSupport);
+    const isLikeTag = !lastSupport || isLikeTags(lastSupport, reSupport);
     if (!isLikeTag) {
-        destroyUnlikeTags(existingTag, templater, subject);
+        destroyUnlikeTags(lastSupport, reSupport, subject);
     }
-    retag.ownerTag = runtimeOwnerTag;
-    wrapTagSupport.templater.global.newest = retag;
-    return retag;
+    reSupport.ownerTagSupport = (ownerSupport || lastOwnerSupport);
+    tagSupport.global.newest = reSupport;
+    return reSupport;
 }
-function destroyUnlikeTags(existingTag, // old
-templater, // new
+function destroyUnlikeTags(lastSupport, // old
+reSupport, // new
 subject) {
-    const oldGlobal = existingTag.tagSupport.templater.global;
+    const oldGlobal = lastSupport.global;
     const insertBefore = oldGlobal.insertBefore;
-    destroyTagMemory(existingTag, subject);
-    // ??? - new so that when a tag is destroy the unlike does not carry the destroy signifier
-    templater.global = { ...templater.global }; // break memory references
-    const global = templater.global;
+    destroyTagMemory(lastSupport, subject);
+    // when a tag is destroyed, disconnect the globals
+    reSupport.global = { ...oldGlobal }; // break memory references
+    const global = reSupport.global;
     global.insertBefore = insertBefore;
     global.deleted = false;
     delete global.oldest;
     delete global.newest;
-    delete subject.tag;
+    delete subject.tagSupport;
 }
 //# sourceMappingURL=TemplaterResult.class.js.map

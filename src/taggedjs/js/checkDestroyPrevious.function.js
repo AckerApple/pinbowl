@@ -1,4 +1,4 @@
-import { isTagArray, isTagComponent, isTagInstance } from './isInstance';
+import { isTag, isTagArray, isTagComponent } from './isInstance';
 import { isLikeTags } from './isLikeTags.function';
 import { destroyTagMemory, destroyTagSupportPast } from './destroyTag.function';
 import { insertAfter } from './insertAfter.function';
@@ -12,22 +12,22 @@ newValue, insertBefore) {
         delete arraySubject.lastArray;
         delete arraySubject.placeholder;
         insertAfter(insertBefore, placeholderElm);
-        wasArray.forEach(({ tag }) => destroyArrayTag(tag, { added: 0, removed: 0 }));
+        wasArray.forEach(({ tagSupport }) => destroyArrayTag(tagSupport, { added: 0, removed: 0 }));
         return 'array';
     }
     const tagSubject = subject;
-    const existingTag = tagSubject.tag;
+    const lastSupport = tagSubject.tagSupport;
     // no longer tag or component?
-    if (existingTag) {
-        const isValueTag = isTagInstance(newValue);
-        const isSubjectTag = isTagInstance(subject.value);
+    if (lastSupport) {
+        const isValueTag = isTag(newValue);
+        const isSubjectTag = isTag(subject.value);
         if (isSubjectTag && isValueTag) {
             const newTag = newValue;
             // its a different tag now
-            if (!isLikeTags(newTag, existingTag)) {
+            if (!isLikeTags(newTag, lastSupport)) {
                 // put template back down
-                restoreTagMarker(existingTag, insertBefore);
-                destroyTagMemory(existingTag, tagSubject);
+                restoreTagMarker(lastSupport, insertBefore);
+                destroyTagMemory(lastSupport, tagSubject);
                 return 2;
             }
             return false;
@@ -37,9 +37,9 @@ newValue, insertBefore) {
             return false; // its still a tag component
         }
         // put template back down
-        restoreTagMarker(existingTag, insertBefore);
+        restoreTagMarker(lastSupport, insertBefore);
         // destroy old component, value is not a component
-        destroyTagMemory(existingTag, tagSubject);
+        destroyTagMemory(lastSupport, tagSubject);
         return 'different-tag';
     }
     const displaySubject = subject;
@@ -48,15 +48,18 @@ newValue, insertBefore) {
     // was simple value but now something bigger
     if (hasLastValue && lastValue !== newValue) {
         destroySimpleValue(insertBefore, displaySubject);
-        return 4;
+        return 'changed-simple-value';
     }
     return false;
 }
-export function destroyArrayTag(tag, counts) {
-    destroyTagSupportPast(tag.tagSupport);
-    tag.destroy({
+export function destroyArrayTag(tagSupport, counts) {
+    destroyTagSupportPast(tagSupport);
+    tagSupport.destroy({
         stagger: counts.removed++,
     });
+    const insertBefore = tagSupport.global.insertBefore;
+    const parentNode = insertBefore.parentNode;
+    parentNode.removeChild(insertBefore);
 }
 function destroySimpleValue(insertBefore, // always a template tag
 subject) {
@@ -68,8 +71,8 @@ subject) {
     delete subject.clone;
     delete subject.lastValue;
 }
-export function restoreTagMarker(existingTag, insertBefore) {
-    const global = existingTag.tagSupport.templater.global;
+export function restoreTagMarker(lastSupport, insertBefore) {
+    const global = lastSupport.global;
     const placeholderElm = global.placeholder;
     if (placeholderElm) {
         insertAfter(insertBefore, placeholderElm);

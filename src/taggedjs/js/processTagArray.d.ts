@@ -1,9 +1,11 @@
 import { Clones, InsertBefore } from './Clones.type';
 import { Tag } from './Tag.class';
 import { ValueSubject } from './subject/ValueSubject';
-import { Counts } from './interpolateTemplate';
+import { Counts } from './interpolations/interpolateTemplate';
+import { TagSupport } from './TagSupport.class';
+import { TemplaterResult } from './TemplaterResult.class';
 export type LastArrayItem = {
-    tag: Tag;
+    tagSupport: TagSupport;
     index: number;
     deleted?: boolean;
 };
@@ -13,9 +15,9 @@ export type TagArraySubject = ValueSubject<Tag[]> & {
     lastArray?: LastArrayItem[];
     isChildSubject?: boolean;
 };
-export declare function processTagArray(subject: TagArraySubject, value: Tag[], // arry of Tag classes
+export declare function processTagArray(subject: TagArraySubject, value: (TemplaterResult | Tag)[], // arry of Tag classes
 insertBefore: InsertBefore, // <template end interpolate />
-ownerTag: Tag, options: {
+ownerSupport: TagSupport, options: {
     counts: Counts;
     forceElement?: boolean;
 }): Clones;

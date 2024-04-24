@@ -13,9 +13,7 @@ export type Config = {
     array: StateConfigArray;
     rearray?: StateConfigArray;
 };
-export type State = {
-    newest: StateConfigArray;
-};
+export type State = StateConfigArray;
 export type GetSet<T> = (y: T) => [T, T];
 export declare function getStateValue<T>(state: StateConfigItem<T>): T | undefined;
 export declare class StateEchoBack {

@@ -1,5 +1,5 @@
-import { TagSubject } from './Tag.utils';
-import { TemplaterResult } from './TemplaterResult.class';
-import { Tag } from './Tag.class';
+import { TagSubject } from './subject.types';
+import { TagSupport } from './TagSupport.class';
 import { InsertBefore } from './Clones.type';
-export declare function updateExistingTagComponent(ownerTag: Tag, templater: TemplaterResult, subject: TagSubject, insertBefore: InsertBefore): Tag;
+export declare function updateExistingTagComponent(ownerSupport: TagSupport, tagSupport: TagSupport, // lastest
+subject: TagSubject, insertBefore: InsertBefore): TagSupport;

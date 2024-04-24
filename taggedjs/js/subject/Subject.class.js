@@ -1,14 +1,17 @@
 export class Subject {
     value;
+    onSubscription;
     methods = [];
     isSubject = true;
     subscribers = [];
     subscribeWith;
     // unsubcount = 0 // 🔬 testing
-    constructor(value) {
+    constructor(value, onSubscription) {
         this.value = value;
+        this.onSubscription = onSubscription;
     }
     subscribe(callback) {
+        const subscription = getSubscription(this, callback);
         // are we within a pipe?
         const subscribeWith = this.subscribeWith;
         if (subscribeWith) {
@@ -16,31 +19,40 @@ export class Subject {
             if (this.methods.length) {
                 const orgCallback = callback;
                 callback = (value) => {
-                    runPipedMethods(value, this.methods, lastValue => orgCallback(lastValue));
+                    runPipedMethods(value, this.methods, lastValue => orgCallback(lastValue, subscription));
                 };
             }
             return subscribeWith(callback);
         }
-        this.subscribers.push(callback);
-        SubjectClass.globalSubs.push(callback); // 🔬 testing
-        const subscription = getSubscription(this, callback);
+        this.subscribers.push(subscription);
+        SubjectClass.globalSubs.push(subscription); // 🔬 testing
+        if (this.onSubscription) {
+            this.onSubscription(subscription);
+        }
         return subscription;
     }
     set(value) {
         this.value = value;
         // Notify all subscribers with the new value
-        this.subscribers.forEach((callback) => {
-            callback.value = value;
-            callback(value);
+        this.subscribers.forEach(sub => {
+            // (sub.callback as any).value = value
+            sub.callback(value, sub);
         });
     }
     next = this.set;
     toPromise() {
         return new Promise((res, rej) => {
-            const subscription = this.subscribe(x => {
+            this.subscribe((x, subscription) => {
                 subscription.unsubscribe();
                 res(x);
             });
+        });
+    }
+    // like toPromise but faster
+    toCallback(callback) {
+        this.subscribe((x, subscription) => {
+            subscription.unsubscribe();
+            callback(x);
         });
     }
     pipe(...operations) {
@@ -51,7 +63,7 @@ export class Subject {
     }
 }
 function removeSubFromArray(subscribers, callback) {
-    const index = subscribers.indexOf(callback);
+    const index = subscribers.findIndex(sub => sub.callback === callback);
     if (index !== -1) {
         subscribers.splice(index, 1);
     }
@@ -66,6 +78,7 @@ function getSubscription(subject, callback) {
     const subscription = () => {
         subscription.unsubscribe();
     };
+    subscription.callback = callback;
     subscription.subscriptions = [];
     // Return a function to unsubscribe from the BehaviorSubject
     subscription.unsubscribe = () => {
@@ -81,6 +94,9 @@ function getSubscription(subject, callback) {
     subscription.add = (sub) => {
         subscription.subscriptions.push(sub);
         return subscription;
+    };
+    subscription.next = (value) => {
+        callback(value, subscription);
     };
     return subscription;
 }

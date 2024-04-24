@@ -10,5 +10,5 @@ export type TagComponentBase<T extends any[]> = (arg: FirstArgOptional<T> extend
 export declare const tags: TagComponentBase<any>[];
 export type TagComponent = TagComponentBase<[any?, TagChildren?]> | TagComponentBase<[]>;
 /** Wraps a tag component in a state manager and always push children to last argument as an array */
-export declare function tag<T extends any[]>(tagComponent: TagComponentArg<T>): (TagComponentBase<T>);
+export declare function tag<T extends any[]>(tagComponent: TagComponentArg<T>): TagComponentBase<T>;
 export {};

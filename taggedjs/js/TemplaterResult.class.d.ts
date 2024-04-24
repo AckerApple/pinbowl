@@ -1,20 +1,19 @@
 import { Context, Tag } from './Tag.class';
-import { BaseTagSupport } from './TagSupport.class';
+import { BaseTagSupport, TagSupport } from './TagSupport.class';
 import { Props } from './Props';
 import { TagChildren } from './tag';
 import { Provider } from './state/providers';
 import { OnDestroyCallback } from './state/onDestroy';
-import { TagSubject } from './Tag.utils';
+import { TagSubject } from './subject.types';
 import { OnInitCallback } from './state/onInit';
 import { Subscription } from './subject/Subject.utils';
 import { InsertBefore } from './Clones.type';
-export type Wrapper = ((tagSupport: BaseTagSupport, subject: TagSubject) => Tag) & {
+export type Wrapper = ((tagSupport: BaseTagSupport, subject: TagSubject) => TagSupport) & {
     original: () => Tag;
 };
 export type TagGlobal = {
-    newestTemplater: TemplaterResult;
-    oldest?: Tag;
-    newest?: Tag;
+    oldest?: TagSupport;
+    newest?: TagSupport;
     context: Context;
     providers: Provider[];
     /** Indicator of re-rending. Saves from double rending something already rendered */
@@ -23,19 +22,20 @@ export type TagGlobal = {
     isApp?: boolean;
     insertBefore?: InsertBefore;
     placeholder?: Text;
-    subscriptions: Subscription[];
+    subscriptions: Subscription<any>[];
     destroyCallback?: OnDestroyCallback;
     init?: OnInitCallback;
 };
 export declare class TemplaterResult {
     props: Props;
     children: TagChildren;
-    isTag: boolean;
-    tagged: boolean;
-    wrapper: Wrapper;
-    global: TagGlobal;
-    tagSupport: BaseTagSupport;
-    constructor(props: Props, children: TagChildren);
     isTemplater: boolean;
+    tagged: boolean;
+    wrapper?: Wrapper;
+    tag?: Tag;
+    constructor(props: Props, children: TagChildren);
 }
-export declare function renderWithSupport(tagSupport: BaseTagSupport, existingTag: Tag | undefined, subject: TagSubject, ownerTag?: Tag): Tag;
+export declare function renderWithSupport(tagSupport: BaseTagSupport, // new
+lastSupport: TagSupport | undefined, // previous
+subject: TagSubject, // events & memory
+ownerSupport?: TagSupport): TagSupport;

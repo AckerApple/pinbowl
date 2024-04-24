@@ -1,17 +1,26 @@
-export function isLikeTags(tag0, tag1) {
-    if (tag0.strings.length !== tag1.strings.length) {
+export function isLikeTags(tagSupport0, // new
+tagSupport1) {
+    const templater0 = tagSupport0.templater;
+    const templater1 = tagSupport1.templater;
+    const tag0 = templater0?.tag || tagSupport0;
+    const tag1 = templater1.tag;
+    const strings0 = tag0.strings;
+    const strings1 = tagSupport1.strings || tag1.strings;
+    if (strings0.length !== strings1.length) {
         return false;
     }
-    const everyStringMatched = tag0.strings.every((string, index) => tag1.strings[index] === string);
+    const everyStringMatched = strings0.every((string, index) => strings1[index] === string);
     if (!everyStringMatched) {
         return false;
     }
-    const valuesLengthsMatch = tag0.values.length === tag1.values.length;
+    const values0 = tagSupport0.values || tag0.values;
+    const values1 = tagSupport1.values || tag1.values;
+    const valuesLengthsMatch = values0.length === values1.length;
     if (!valuesLengthsMatch) {
         return false;
     }
-    const allVarsMatch = tag1.values.every((value, index) => {
-        const compareTo = tag0.values[index];
+    const allVarsMatch = values1.every((value, index) => {
+        const compareTo = values0[index];
         const isFunctions = value instanceof Function && compareTo instanceof Function;
         if (isFunctions) {
             const stringMatch = value.toString() === compareTo.toString();

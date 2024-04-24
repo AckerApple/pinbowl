@@ -1,17 +1,5 @@
 import { deepEqual } from "./deepFunctions";
 export function hasTagSupportChanged(oldTagSupport, newTagSupport, newTemplater) {
-    const sameSupport = oldTagSupport === newTagSupport;
-    const samePropConfig = oldTagSupport.propsConfig === newTagSupport.propsConfig;
-    // const sameProps = oldTagSupport.propsConfig.latest === newTagSupport.propsConfig.latest
-    if (sameSupport) {
-        throw new Error('sameSupport - 22');
-    }
-    if (samePropConfig) {
-        throw new Error('samePropConfig - 22');
-    }
-    if (newTagSupport.templater.isTag || oldTagSupport.templater.isTag || newTemplater.isTag) {
-        throw new Error('trying to compare a basic tag');
-    }
     const latestProps = newTemplater.props; // newTagSupport.propsConfig.latest
     const pastCloneProps = oldTagSupport.propsConfig.latestCloned;
     const propsChanged = hasPropChanges(latestProps, pastCloneProps);

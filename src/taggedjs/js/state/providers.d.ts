@@ -1,9 +1,14 @@
+import { TagSupport } from '../TagSupport.class';
 export type Provider = {
     constructMethod: any;
     instance: any;
     clone: any;
 };
 type ProviderConstructor<T> = (new (...args: any[]) => T) | (() => T);
+export type ProviderConfig = {
+    providers: Provider[];
+    ownerSupport?: TagSupport;
+};
 type functionProvider = <T>() => T;
 type classProvider = new <T>(...args: any[]) => T;
 export declare const providers: {

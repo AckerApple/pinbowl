@@ -8,7 +8,7 @@ export class ValueSubject extends Subject {
     subscribe(callback) {
         const subscription = super.subscribe(callback);
         // Call the callback immediately with the current value
-        callback(this.value);
+        callback(this.value, subscription);
         return subscription;
     }
 }

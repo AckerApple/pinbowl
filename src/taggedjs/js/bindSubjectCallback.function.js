@@ -5,9 +5,6 @@ export function bindSubjectCallback(value, tag) {
     if (value.isChildOverride) {
         return value;
     }
-    if (!tag.ownerTag && !tag.tagSupport.templater.global.isApp) {
-        throw new Error('no ownerTag issue here');
-    }
     const subjectFunction = (element, args) => runTagCallback(value, tag, element, args);
     // link back to original. Mostly used for <div oninit ondestroy> animations
     subjectFunction.tagFunction = value;

@@ -1,9 +1,9 @@
 import { TemplaterResult } from './TemplaterResult.class';
-import { Counts } from './interpolateTemplate';
-import { Tag } from './Tag.class';
-import { TagSubject } from './Tag.utils';
+import { Counts } from './interpolations/interpolateTemplate';
+import { TagSubject } from './subject.types';
+import { TagSupport } from './TagSupport.class';
 import { InsertBefore } from './Clones.type';
-export declare function processSubjectComponent(templater: TemplaterResult, subject: TagSubject, insertBefore: InsertBefore, ownerTag: Tag, options: {
+export declare function processSubjectComponent(templater: TemplaterResult, subject: TagSubject, insertBefore: InsertBefore, ownerSupport: TagSupport, options: {
     counts: Counts;
     forceElement?: boolean;
-}): Tag;
+}): TagSupport;
