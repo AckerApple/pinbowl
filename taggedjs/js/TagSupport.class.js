@@ -12,6 +12,7 @@ import { setTagPlaceholder } from './setTagPlaceholder.function';
 import { interpolateElement, interpolateString } from './interpolations/interpolateElement';
 import { subscribeToTemplate } from './interpolations/interpolateTemplate';
 import { afterInterpolateElement } from './afterInterpolateElement.function';
+import { renderSubjectComponent } from './renderSubjectComponent.function';
 const prefixSearch = new RegExp(variablePrefix, 'g');
 /** used only for apps, otherwise use TagSupport */
 export class BaseTagSupport {
@@ -22,7 +23,6 @@ export class BaseTagSupport {
     propsConfig;
     // stays with current render
     memory = {
-        // context: {}, // populated after reading interpolated.values array converted to an object {variable0, variable:1}
         state: [],
     };
     // travels with all rerenderings
@@ -88,13 +88,12 @@ export class TagSupport extends BaseTagSupport {
             const placeholder = global.placeholder;
             if (placeholder && !('arrayValue' in this.memory)) {
                 if (!options.byParent) {
-                    restoreTagMarker(this, insertBefore);
+                    restoreTagMarker(this);
                 }
             }
         }
-        delete global.placeholder;
         // the isComponent check maybe able to be removed
-        const isComponent = isTagComponent(this) ? true : false;
+        const isComponent = isTagComponent(this.templater) ? true : false;
         if (isComponent) {
             runBeforeDestroy(this, this);
         }
@@ -105,10 +104,17 @@ export class TagSupport extends BaseTagSupport {
             const subGlobal = child.global;
             delete subGlobal.newest;
             subGlobal.deleted = true;
+            // delete subGlobal.placeholder
+            // restoreTagMarker(child)
         });
+        // data reset
+        delete global.placeholder;
+        delete subject.tagSupport;
+        global.context = {};
         delete global.oldest;
         delete global.newest;
         global.deleted = true;
+        this.childTags.length = 0;
         this.hasLiveElements = false;
         delete subject.tagSupport;
         this.destroySubscriptions();
@@ -230,11 +236,13 @@ export class TagSupport extends BaseTagSupport {
         this.hasLiveElements = true;
         // remove old clones
         if (this.clones.length) {
-            this.clones.forEach(clone => this.checkCloneRemoval(clone, 0));
+            // this.destroyClones()
+            // this.clones.forEach(clone => this.checkCloneRemoval(clone, 0))
         }
         global.insertBefore = insertBefore;
         const context = this.update();
         const template = this.getTemplate();
+        const isForceElement = options.forceElement;
         const elementContainer = document.createElement('div');
         elementContainer.id = 'tag-temp-holder';
         // render content with a first child that we can know is our first element
@@ -248,11 +256,9 @@ export class TagSupport extends BaseTagSupport {
         afterInterpolateElement(elementContainer, placeholderElm, this, // ownerSupport
         context, options);
         // Any tag components that were found should be processed AFTER the owner processes its elements. Avoid double processing of elements attributes like (oninit)=${}
-        let isForceElement = options.forceElement;
         tagComponents.forEach(tagComponent => {
             subscribeToTemplate(tagComponent.insertBefore, tagComponent.subject, tagComponent.ownerSupport, options.counts, { isForceElement });
-            afterInterpolateElement(elementContainer, tagComponent.insertBefore, tagComponent.ownerSupport, // this, // ownerTag
-            context, options);
+            afterInterpolateElement(elementContainer, tagComponent.insertBefore, tagComponent.ownerSupport, context, options);
         });
     }
     getTemplate() {
@@ -262,7 +268,6 @@ export class TagSupport extends BaseTagSupport {
         const string = strings.map((string, index) => {
             const safeString = string.replace(prefixSearch, escapeVariable);
             const endString = safeString + (values.length > index ? `{${variablePrefix}${index}}` : '');
-            // const trimString = index === 0 || index === this.strings.length-1 ? endString.trim() : endString
             const trimString = endString.replace(/>\s*/g, '>').replace(/\s*</g, '<');
             return trimString;
         }).join('');
@@ -270,7 +275,6 @@ export class TagSupport extends BaseTagSupport {
         this.lastTemplateString = interpolation.string;
         return {
             interpolation,
-            // string,
             string: interpolation.string,
             strings,
             values,
@@ -278,18 +282,17 @@ export class TagSupport extends BaseTagSupport {
         };
     }
     /** Used during HMR only where static content itself could have been edited */
-    rebuild() {
-        // const insertBefore = this.insertBefore
-        const insertBefore = this.global.insertBefore;
-        if (!insertBefore) {
-            const err = new Error('Cannot rebuild. Previous insertBefore element is not defined on tag');
-            err.tag = this;
-            throw err;
-        }
-        this.buildBeforeElement(insertBefore, {
+    async rebuild() {
+        delete this.strings; // seek the templater strings instead now
+        delete this.values; // seek the templater strings instead now
+        restoreTagMarkers(this);
+        const newSupport = renderSubjectComponent(this.subject, this, this.ownerTagSupport);
+        await this.destroy();
+        newSupport.buildBeforeElement(this.global.insertBefore, {
             forceElement: true,
             counts: { added: 0, removed: 0 },
         });
+        return newSupport;
     }
     getAppElement() {
         let tag = this;
@@ -298,5 +301,9 @@ export class TagSupport extends BaseTagSupport {
         }
         return tag;
     }
+}
+function restoreTagMarkers(support) {
+    restoreTagMarker(support);
+    support.childTags.forEach(childTag => restoreTagMarkers(childTag.global.oldest));
 }
 //# sourceMappingURL=TagSupport.class.js.map

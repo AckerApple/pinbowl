@@ -19,7 +19,7 @@ export declare namespace setUse {
     var memory: Record<string, any> & {
         stateConfig: Config;
         providerConfig: ProviderConfig;
-        initCurrentSupport: TagSupport;
+        currentSupport: TagSupport;
     };
 }
 export {};

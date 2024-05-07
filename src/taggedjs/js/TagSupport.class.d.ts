@@ -53,6 +53,6 @@ export declare class TagSupport extends BaseTagSupport {
     buildBeforeElement(insertBefore: InsertBefore, options?: ElementBuildOptions): void;
     getTemplate(): TagTemplate;
     /** Used during HMR only where static content itself could have been edited */
-    rebuild(): void;
+    rebuild(): Promise<TagSupport>;
     getAppElement(): TagSupport;
 }

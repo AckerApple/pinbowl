@@ -35,7 +35,3 @@ export declare class TemplaterResult {
     tag?: Tag;
     constructor(props: Props, children: TagChildren);
 }
-export declare function renderWithSupport(tagSupport: BaseTagSupport, // new
-lastSupport: TagSupport | undefined, // previous
-subject: TagSubject, // events & memory
-ownerSupport?: TagSupport): TagSupport;

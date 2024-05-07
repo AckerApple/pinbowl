@@ -26,7 +26,7 @@ newValue, insertBefore) {
             // its a different tag now
             if (!isLikeTags(newTag, lastSupport)) {
                 // put template back down
-                restoreTagMarker(lastSupport, insertBefore);
+                restoreTagMarker(lastSupport);
                 destroyTagMemory(lastSupport, tagSubject);
                 return 2;
             }
@@ -37,7 +37,7 @@ newValue, insertBefore) {
             return false; // its still a tag component
         }
         // put template back down
-        restoreTagMarker(lastSupport, insertBefore);
+        restoreTagMarker(lastSupport);
         // destroy old component, value is not a component
         destroyTagMemory(lastSupport, tagSubject);
         return 'different-tag';
@@ -71,11 +71,13 @@ subject) {
     delete subject.clone;
     delete subject.lastValue;
 }
-export function restoreTagMarker(lastSupport, insertBefore) {
+export function restoreTagMarker(lastSupport) {
+    const insertBefore = lastSupport.global.insertBefore;
     const global = lastSupport.global;
     const placeholderElm = global.placeholder;
     if (placeholderElm) {
         insertAfter(insertBefore, placeholderElm);
+        delete global.placeholder;
     }
 }
 //# sourceMappingURL=checkDestroyPrevious.function.js.map

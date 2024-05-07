@@ -1,13 +1,15 @@
 import { setUse } from "./setUse.function";
-/** When undefined, it means a tag is being built for the first time so do run destroy(s) */
-let destroyCurrentTagSupport;
+function setCurrentTagSupport(support) {
+    setUse.memory.destroyCurrentSupport = support;
+}
 export function onDestroy(callback) {
-    destroyCurrentTagSupport.global.destroyCallback = callback;
+    const tagSupport = setUse.memory.destroyCurrentSupport;
+    tagSupport.global.destroyCallback = callback;
 }
 setUse({
-    beforeRender: tagSupport => destroyCurrentTagSupport = tagSupport,
-    beforeRedraw: tagSupport => destroyCurrentTagSupport = tagSupport,
-    beforeDestroy: (tagSupport, tag) => {
+    beforeRender: tagSupport => setCurrentTagSupport(tagSupport),
+    beforeRedraw: tagSupport => setCurrentTagSupport(tagSupport),
+    beforeDestroy: (tagSupport) => {
         const callback = tagSupport.global.destroyCallback;
         if (callback) {
             callback();

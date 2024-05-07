@@ -16,7 +16,7 @@ export function updateContextItem(context, variableName, value) {
         }
     }
     if (isSubjectInstance(value)) {
-        return;
+        return; // emits on its own
     }
     // listeners will evaluate updated values to possibly update display(s)
     subject.set(value);

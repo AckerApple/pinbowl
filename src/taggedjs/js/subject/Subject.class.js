@@ -48,12 +48,13 @@ export class Subject {
             });
         });
     }
-    // like toPromise but faster
+    /** like toPromise but faster */
     toCallback(callback) {
         this.subscribe((x, subscription) => {
             subscription.unsubscribe();
             callback(x);
         });
+        return this;
     }
     pipe(...operations) {
         const subject = new Subject();

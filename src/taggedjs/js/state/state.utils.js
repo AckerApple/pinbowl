@@ -1,9 +1,8 @@
 import { StateMismatchError } from '../errors';
 import { setUse } from './setUse.function';
-// TODO: rename
 setUse.memory.stateConfig = {
     array: [], // state memory on the first render
-    // rearray: [] as StateConfigArray, // state memory to be used before the next render
+    // rearray: [] as State,
 };
 const beforeRender = (tagSupport) => initState(tagSupport);
 setUse({
@@ -11,7 +10,7 @@ setUse({
     beforeRedraw: beforeRender,
     afterRender: (tagSupport) => {
         const memory = tagSupport.memory;
-        const state = memory.state;
+        // const state: State = memory.state
         const config = setUse.memory.stateConfig;
         const rearray = config.rearray;
         if (rearray.length) {
@@ -29,14 +28,13 @@ setUse({
             }
         }
         delete config.rearray; // clean up any previous runs
+        delete config.tagSupport;
         memory.state = config.array; // [...config.array]
         memory.state.forEach(item => item.lastValue = getStateValue(item)); // set last values
         config.array = [];
     }
 });
-export function getStateValue(
-// state: StateConfig,
-state) {
+export function getStateValue(state) {
     const callback = state.callback;
     if (!callback) {
         return state.defaultValue;
@@ -63,29 +61,34 @@ function initState(tagSupport) {
     const config = setUse.memory.stateConfig;
     // TODO: This guard may no longer be needed
     if (config.rearray) {
-        const wrapper = tagSupport.templater?.wrapper;
-        const wasWrapper = config.tagSupport?.templater.wrapper;
-        const message = 'last state not cleared. Possibly in the middle of rendering one component and another is trying to render';
-        console.error(message, {
-            config,
-            tagFunction: wrapper.original,
-            wasInMiddleOf: wasWrapper.original,
-            state,
-            expectedClearArray: config.rearray,
-        });
-        throw new StateMismatchError(message, {
-            config,
-            tagFunction: wrapper.original,
-            state,
-            expectedClearArray: config.rearray,
-        });
+        checkStateMismatch(tagSupport, config, state);
     }
-    // TODO: this maybe redundant and not needed
-    config.rearray = []; // .length = 0
+    config.rearray = [];
     if (state?.length) {
         state.forEach(state => getStateValue(state));
         config.rearray.push(...state);
     }
     config.tagSupport = tagSupport;
+}
+function checkStateMismatch(tagSupport, config, state) {
+    const wrapper = tagSupport.templater?.wrapper;
+    const wasWrapper = config.tagSupport?.templater.wrapper;
+    const message = 'last state not cleared. Possibly in the middle of rendering one component and another is trying to render';
+    if (!wasWrapper) {
+        return; // its not a component or was not a component before
+    }
+    console.error(message, {
+        config,
+        tagFunction: wrapper.original,
+        wasInMiddleOf: wasWrapper.original,
+        state,
+        expectedClearArray: config.rearray,
+    });
+    throw new StateMismatchError(message, {
+        config,
+        tagFunction: wrapper.original,
+        state,
+        expectedClearArray: config.rearray,
+    });
 }
 //# sourceMappingURL=state.utils.js.map

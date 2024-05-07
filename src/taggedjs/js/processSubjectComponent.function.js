@@ -1,7 +1,7 @@
-import { renderWithSupport } from './TemplaterResult.class';
 import { setUse } from './state';
 import { processTagResult } from './processTagResult.function';
 import { TagSupport } from './TagSupport.class';
+import { renderSubjectComponent } from './renderSubjectComponent.function';
 export function processSubjectComponent(templater, subject, insertBefore, ownerSupport, options) {
     // Check if function component is wrapped in a tag() call
     // TODO: This below check not needed in production mode
@@ -30,20 +30,6 @@ export function processSubjectComponent(templater, subject, insertBefore, ownerS
     processTagResult(reSupport, subject, // The element set here will be removed from document. Also result.tag will be added in here
     insertBefore, // <template end interpolate /> (will be removed)
     options);
-    return reSupport;
-}
-function renderSubjectComponent(subject, reSupport, ownerSupport) {
-    const preClones = ownerSupport.clones.map(clone => clone);
-    reSupport = renderWithSupport(reSupport, subject.tagSupport, // existing tag
-    subject, ownerSupport);
-    reSupport.global.newest = reSupport;
-    // ??? - mirroring add 0
-    // reSupport.ownerTagSupport = ownerSupport
-    if (ownerSupport.clones.length > preClones.length) {
-        const myClones = ownerSupport.clones.filter(fClone => !preClones.find(clone => clone === fClone));
-        reSupport.clones.push(...myClones);
-    }
-    ownerSupport.childTags.push(reSupport);
     return reSupport;
 }
 //# sourceMappingURL=processSubjectComponent.function.js.map

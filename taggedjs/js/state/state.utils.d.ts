@@ -7,13 +7,12 @@ export type StateConfigItem<T> = {
     defaultValue?: T;
     watch?: T;
 };
-export type StateConfigArray = StateConfigItem<any>[];
 export type Config = {
-    tagSupport: BaseTagSupport;
-    array: StateConfigArray;
-    rearray?: StateConfigArray;
+    tagSupport?: BaseTagSupport;
+    array: State;
+    rearray?: State;
 };
-export type State = StateConfigArray;
+export type State = StateConfigItem<any>[];
 export type GetSet<T> = (y: T) => [T, T];
 export declare function getStateValue<T>(state: StateConfigItem<T>): T | undefined;
 export declare class StateEchoBack {

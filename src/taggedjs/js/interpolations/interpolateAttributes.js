@@ -3,6 +3,11 @@ function howToSetAttribute(element, name, value) {
     element.setAttribute(name, value);
 }
 function howToSetInputValue(element, name, value) {
+    /*
+    if((element as any)[name] === value) {
+      return // its already the value we are setting
+    }
+    */
     element[name] = value;
 }
 export function interpolateAttributes(child, scope, ownerSupport) {

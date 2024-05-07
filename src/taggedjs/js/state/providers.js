@@ -1,5 +1,6 @@
 import { deepClone } from '../deepFunctions';
 import { setUse } from './setUse.function';
+import { state } from './state.function';
 setUse.memory.providerConfig = {
     providers: [],
     ownerSupport: undefined,
@@ -14,16 +15,24 @@ export const providers = {
         const existing = get(constructMethod);
         if (existing) {
             existing.clone = deepClone(existing.instance);
-            return existing.instance;
+            // fake calling state the same number of previous times
+            for (let x = 0; x < existing.stateDiff; ++x) {
+                state(existing.stateDiff);
+            }
+            return state(existing.stateDiff);
         }
+        const oldStateCount = setUse.memory.stateConfig.array.length;
         // Providers with provider requirements just need to use providers.create() and providers.inject()
-        const instance = constructMethod.constructor ? new constructMethod() : constructMethod();
+        const instance = 'prototype' in constructMethod ? new constructMethod() : constructMethod();
+        const stateDiff = setUse.memory.stateConfig.array.length - oldStateCount;
         const config = setUse.memory.providerConfig;
         config.providers.push({
             constructMethod,
             instance,
-            clone: deepClone(instance)
+            clone: deepClone(instance),
+            stateDiff,
         });
+        state(() => instance); // tie provider to a state for rendering change checking
         return instance;
     },
     /**

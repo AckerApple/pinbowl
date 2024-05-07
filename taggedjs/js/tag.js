@@ -24,7 +24,7 @@ export function tag(tagComponent) {
         const templater = new TemplaterResult(props, childSubject);
         // attach memory back to original function that contains developer display logic
         const innerTagWrap = getTagWrap(templater, madeSubject);
-        innerTagWrap.original = tagComponent;
+        innerTagWrap.original = tagComponent.lastResult?.original || tagComponent;
         templater.tagged = true;
         templater.wrapper = innerTagWrap;
         return templater;
@@ -62,6 +62,7 @@ function updateComponent(tagComponent) {
     tagComponent.tags = tags;
     tagComponent.setUse = setUse;
     tagComponent.tagIndex = tagCount++; // needed for things like HMR
+    tagComponent.lastResult = tagComponent;
 }
 /** creates/returns a function that when called then calls the original component function
  * Gets used as templater.wrapper()

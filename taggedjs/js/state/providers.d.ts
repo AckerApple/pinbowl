@@ -9,10 +9,10 @@ export type ProviderConfig = {
     providers: Provider[];
     ownerSupport?: TagSupport;
 };
-type functionProvider = <T>() => T;
-type classProvider = new <T>(...args: any[]) => T;
+type functionProvider<T> = () => T;
+type classProvider<T> = new (...args: any[]) => T;
 export declare const providers: {
-    create: <T>(constructMethod: classProvider | functionProvider) => T;
+    create: <T>(constructMethod: classProvider<T> | functionProvider<T>) => T;
     /**
      * @template T
      * @param {(new (...args: any[]) => T) | () => T} constructor

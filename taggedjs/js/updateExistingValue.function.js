@@ -98,7 +98,7 @@ function handleStillTag(subject, value, ownerSupport) {
     return processRegularValue(value, subject, subject.insertBefore);
 }
 function prepareUpdateToComponent(templater, subjectTag, insertBefore, ownerSupport) {
-    // When was something before component
+    // When last value was not a component
     if (!subjectTag.tagSupport) {
         processSubjectComponent(templater, subjectTag, insertBefore, // oldInsertBefore as InsertBefore,
         ownerSupport, {
@@ -108,9 +108,7 @@ function prepareUpdateToComponent(templater, subjectTag, insertBefore, ownerSupp
         return subjectTag;
     }
     const tagSupport = new TagSupport(templater, ownerSupport, subjectTag);
-    // ??? new mirroring
     const subjectSup = subjectTag.tagSupport;
-    // const prevSupport = (subjectSup.global.newest || subjectSup) as TagSupport
     const prevSupport = subjectSup.global.newest;
     if (prevSupport) {
         const newestState = prevSupport.memory.state;
@@ -122,7 +120,6 @@ function prepareUpdateToComponent(templater, subjectTag, insertBefore, ownerSupp
             insertAfter(insertBefore, placeholder);
             delete subjectSup.global.placeholder;
         }
-        // insertBefore = subjectSup.global.placeholder || insertBefore
         processSubjectComponent(templater, subjectTag, insertBefore, ownerSupport, {
             forceElement: true,
             counts: { added: 0, removed: 0 },

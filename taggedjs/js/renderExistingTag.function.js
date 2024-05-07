@@ -1,6 +1,6 @@
 import { providersChangeCheck } from './state/provider.utils';
-import { renderWithSupport } from './TemplaterResult.class';
 import { isLikeTags } from './isLikeTags.function';
+import { renderWithSupport } from './renderWithSupport.function';
 /** Returns true when rendering owner is not needed. Returns false when rendering owner should occur */
 export function renderExistingTag(oldestSupport, // oldest with elements on html
 newSupport, // new to be rendered
@@ -18,8 +18,6 @@ subject) {
         oldestSupport.updateBy(prevSupport);
         return prevSupport; // already rendered during triggered events
     }
-    // ??? changed during mirroring - lastSupport keeps having less info than newest
-    // const toRedrawTag = lastSupport || prevSupport || tagSupport.global.oldest
     const toRedrawTag = prevSupport || lastSupport || global.oldest;
     const reSupport = renderWithSupport(newSupport, toRedrawTag, subject, 
     // oldestSupport,

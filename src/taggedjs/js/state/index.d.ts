@@ -3,7 +3,7 @@ export { setUse } from "./setUse.function";
 export { state } from "./state.function";
 export { letState } from "./letState.function";
 export { setProp } from "./setProp.function";
-export { StateConfigArray, State } from "./state.utils";
+export { State } from "./state.utils";
 export { providers } from "./providers";
 export * from "./callbackMaker.function";
 export * from "./onInit";

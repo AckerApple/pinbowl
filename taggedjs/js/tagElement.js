@@ -23,6 +23,12 @@ element, props) {
     templateElm.setAttribute('id', 'app-tag-' + appElements.length);
     templateElm.setAttribute('app-tag-detail', appElements.length.toString());
     element.appendChild(templateElm);
+    element.destroy = async () => {
+        await tagSupport.destroy();
+        const insertBefore = tagSupport.global.insertBefore;
+        const parentNode = insertBefore.parentNode;
+        parentNode.removeChild(insertBefore);
+    };
     tagSupport.buildBeforeElement(templateElm);
     tagSupport.global.oldest = tagSupport;
     tagSupport.global.newest = tagSupport;
