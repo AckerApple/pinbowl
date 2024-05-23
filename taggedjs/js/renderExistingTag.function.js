@@ -1,5 +1,5 @@
 import { providersChangeCheck } from './state/provider.utils';
-import { isLikeTags } from './isLikeTags.function';
+import { isLikeTags } from './tag/isLikeTags.function';
 import { renderWithSupport } from './renderWithSupport.function';
 /** Returns true when rendering owner is not needed. Returns false when rendering owner should occur */
 export function renderExistingTag(oldestSupport, // oldest with elements on html
@@ -19,11 +19,10 @@ subject) {
         return prevSupport; // already rendered during triggered events
     }
     const toRedrawTag = prevSupport || lastSupport || global.oldest;
-    const reSupport = renderWithSupport(newSupport, toRedrawTag, subject, 
-    // oldestSupport,
-    ownerSupport);
+    const reSupport = renderWithSupport(newSupport, toRedrawTag, subject, ownerSupport);
     const oldest = global.oldest || oldestSupport;
     reSupport.global.oldest = oldest;
+    // TODO: renderWithSupport already does an isLikeTags compare
     if (isLikeTags(prevSupport, reSupport)) {
         subject.tagSupport = reSupport;
         oldest.updateBy(reSupport);

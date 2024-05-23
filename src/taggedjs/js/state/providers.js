@@ -5,35 +5,42 @@ setUse.memory.providerConfig = {
     providers: [],
     ownerSupport: undefined,
 };
-function get(constructMethod) {
-    const config = setUse.memory.providerConfig;
-    const providers = config.providers;
-    return providers.find(provider => provider.constructMethod === constructMethod);
-}
 export const providers = {
     create: (constructMethod) => {
-        const existing = get(constructMethod);
-        if (existing) {
-            existing.clone = deepClone(existing.instance);
-            // fake calling state the same number of previous times
-            for (let x = 0; x < existing.stateDiff; ++x) {
-                state(existing.stateDiff);
+        const stateDiffMemory = state(() => ({ stateDiff: 0, provider: undefined }));
+        // mimic how many states were called the first time
+        if (stateDiffMemory.stateDiff) {
+            for (let x = stateDiffMemory.stateDiff; x > 0; --x) {
+                state(undefined);
             }
-            return state(existing.stateDiff);
+            const result = state(undefined);
+            // stateDiffMemory.provider.constructMethod.compareTo = compareTo
+            return result;
         }
-        const oldStateCount = setUse.memory.stateConfig.array.length;
-        // Providers with provider requirements just need to use providers.create() and providers.inject()
-        const instance = 'prototype' in constructMethod ? new constructMethod() : constructMethod();
-        const stateDiff = setUse.memory.stateConfig.array.length - oldStateCount;
-        const config = setUse.memory.providerConfig;
-        config.providers.push({
-            constructMethod,
-            instance,
-            clone: deepClone(instance),
-            stateDiff,
+        const result = state(() => {
+            const memory = setUse.memory;
+            const stateConfig = memory.stateConfig;
+            const oldStateCount = stateConfig.array.length;
+            // Providers with provider requirements just need to use providers.create() and providers.inject()
+            const instance = 'prototype' in constructMethod ? new constructMethod() : constructMethod();
+            const stateDiff = stateConfig.array.length - oldStateCount;
+            const config = memory.providerConfig;
+            const provider = {
+                constructMethod,
+                instance,
+                clone: deepClone(instance),
+                stateDiff,
+            };
+            stateDiffMemory.provider = provider;
+            config.providers.push(provider);
+            stateDiffMemory.stateDiff = stateDiff;
+            return instance;
         });
-        state(() => instance); // tie provider to a state for rendering change checking
-        return instance;
+        const cm = constructMethod;
+        // const compareTo = cm.compareTo = cm.compareTo || cm.toString()
+        const compareTo = cm.compareTo = cm.toString();
+        stateDiffMemory.provider.constructMethod.compareTo = compareTo;
+        return result;
     },
     /**
      * @template T
@@ -41,31 +48,33 @@ export const providers = {
      * @returns {T}
      */
     inject: (constructor) => {
-        const oldValue = get(constructor);
-        if (oldValue) {
-            return oldValue.instance;
-        }
-        const config = setUse.memory.providerConfig;
-        let owner = {
-            ownerTagSupport: config.ownerSupport
-        };
-        while (owner.ownerTagSupport) {
-            const ownerProviders = owner.ownerTagSupport.global.providers;
-            const provider = ownerProviders.find(provider => {
-                if (provider.constructMethod === constructor) {
-                    return true;
+        // find once, return same every time after
+        return state(() => {
+            const config = setUse.memory.providerConfig;
+            const cm = constructor;
+            const compareTo = cm.compareTo = cm.compareTo || constructor.toString();
+            let owner = {
+                ownerTagSupport: config.ownerSupport
+            };
+            while (owner.ownerTagSupport) {
+                const ownerProviders = owner.ownerTagSupport.global.providers;
+                const provider = ownerProviders.find(provider => {
+                    const constructorMatch = provider.constructMethod.compareTo === compareTo;
+                    if (constructorMatch) {
+                        return true;
+                    }
+                });
+                if (provider) {
+                    provider.clone = deepClone(provider.instance); // keep a copy of the latest before any change occur
+                    config.providers.push(provider);
+                    return provider.instance;
                 }
-            });
-            if (provider) {
-                provider.clone = deepClone(provider.instance); // keep a copy of the latest before any change occur
-                config.providers.push(provider);
-                return provider.instance;
+                owner = owner.ownerTagSupport; // cause reloop checking next parent
             }
-            owner = owner.ownerTagSupport; // cause reloop
-        }
-        const msg = `Could not inject provider: ${constructor.name} ${constructor}`;
-        console.warn(`${msg}. Available providers`, config.providers);
-        throw new Error(msg);
+            const msg = `Could not inject provider: ${constructor.name} ${constructor}`;
+            console.warn(`${msg}. Available providers`, config.providers);
+            throw new Error(msg);
+        });
     }
 };
 setUse({

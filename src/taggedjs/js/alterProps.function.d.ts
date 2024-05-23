@@ -1,4 +1,3 @@
-import { Props } from './Props';
-import { TagSupport } from './TagSupport.class';
-export declare function alterProps(props: Props, ownerSupport: TagSupport): any;
+import { TagSupport } from './tag/TagSupport.class';
+export declare function alterProps(props: unknown, ownerSupport: TagSupport): any;
 export declare function callbackPropOwner(toCall: Function, callWith: any, ownerSupport: TagSupport): any;

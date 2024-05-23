@@ -1,13 +1,11 @@
-import { hasTagSupportChanged } from './hasTagSupportChanged.function';
+import { hasTagSupportChanged } from './tag/hasTagSupportChanged.function';
 import { processSubjectComponent } from './processSubjectComponent.function';
 import { destroyTagMemory } from './destroyTag.function';
 import { renderTagSupport } from './renderTagSupport.function';
 import { callbackPropOwner } from './alterProps.function';
-import { isLikeTags } from './isLikeTags.function';
+import { isLikeTags } from './tag/isLikeTags.function';
 export function updateExistingTagComponent(ownerSupport, tagSupport, // lastest
 subject, insertBefore) {
-    // ??? changed during mirroring
-    // let lastSupport = subject.tagSupport
     let lastSupport = subject.tagSupport?.global.newest; // || subject.tagSupport
     let oldestTag = lastSupport.global.oldest;
     const oldWrapper = lastSupport.templater.wrapper;

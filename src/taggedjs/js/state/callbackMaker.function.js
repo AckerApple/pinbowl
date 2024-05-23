@@ -1,7 +1,8 @@
 import { setUse } from "./setUse.function";
-import { getStateValue } from "./state.utils";
-import { renderTagSupport } from "../renderTagSupport.function";
+import { renderTagSupport } from "../tag/render/renderTagSupport.function";
 import { SyncCallbackError } from "../errors";
+import { syncStates } from "./syncStates.function";
+import { getSupportInCycle } from "../tag/getSupportInCycle.function";
 let innerCallback = (callback) => (a, b, c, d, e, f) => {
     throw new SyncCallbackError('Callback function was called immediately in sync and must instead be call async');
 };
@@ -10,42 +11,63 @@ const originalGetter = innerCallback; // callbackMaker
 setUse({
     beforeRender: (tagSupport) => initMemory(tagSupport),
     beforeRedraw: (tagSupport) => initMemory(tagSupport),
-    afterRender: (_tagSupport) => {
+    afterRender: (tagSupport) => {
+        ;
+        tagSupport.global.callbackMaker = true;
         innerCallback = originalGetter; // prevent crossing callbacks with another tag
     },
 });
-function updateState(stateFrom, stateTo) {
-    stateFrom.forEach((state, index) => {
-        const fromValue = getStateValue(state);
-        const callback = stateTo[index].callback;
-        if (callback) {
-            callback(fromValue); // set the value
+export function callback(callback) {
+    const tagSupport = getSupportInCycle();
+    if (!tagSupport) {
+        const error = new SyncCallbackError('callback() was called outside of synchronous rendering. Use `callback = callbackMaker()` to create a callback that could be called out of sync with rendering');
+        throw error;
+    }
+    const oldState = setUse.memory.stateConfig.array;
+    const trigger = (...args) => {
+        const callbackMaker = tagSupport.global.callbackMaker;
+        if (callbackMaker) {
+            return triggerStateUpdate(tagSupport, callback, oldState, ...args);
         }
-        stateTo[index].lastValue = fromValue; // record the value
-    });
+        return callback(...args);
+    };
+    return trigger;
 }
 function initMemory(tagSupport) {
     const oldState = setUse.memory.stateConfig.array;
     innerCallback = (callback) => {
-        const trigger = (...args) => triggerStateUpdate(tagSupport, callback, oldState, ...args);
+        const trigger = (...args) => {
+            const callbackMaker = tagSupport.global.callbackMaker;
+            if (callbackMaker) {
+                return triggerStateUpdate(tagSupport, callback, oldState, ...args);
+            }
+            return callback(...args);
+        };
         return trigger;
     };
 }
 function triggerStateUpdate(tagSupport, callback, oldState, ...args) {
     const state = tagSupport.memory.state;
     // ensure that the oldest has the latest values first
-    updateState(state, oldState);
+    syncStates(state, oldState);
     // run the callback
-    const promise = callback(...args);
+    const maybePromise = callback(...args);
     // send the oldest state changes into the newest
-    updateState(oldState, state);
+    syncStates(oldState, state);
+    /*
+    if(tagSupport.global.deleted) {
+      return maybePromise // While running callback the tag was deleted. Often that happens
+    }
+    */
     renderTagSupport(tagSupport, false);
-    if (promise instanceof Promise) {
-        promise.finally(() => {
+    if (maybePromise instanceof Promise) {
+        maybePromise.finally(() => {
             // send the oldest state changes into the newest
-            updateState(oldState, state);
+            syncStates(oldState, state);
             renderTagSupport(tagSupport, false);
         });
     }
+    // return undefined as T
+    return maybePromise;
 }
 //# sourceMappingURL=callbackMaker.function.js.map

@@ -1,5 +1,6 @@
+import { Subject } from "./Subject.class";
 export type Resolve<T> = (x: T) => any;
-export type Subscription<T> = (() => void) & {
+export type Subscription<T> = ((arg: T) => void) & {
     callback: SubjectSubscriber<T>;
     unsubscribe: () => Subscription<T>;
     add: (sub: Subscription<T>) => Subscription<T>;
@@ -7,10 +8,10 @@ export type Subscription<T> = (() => void) & {
     subscriptions: Subscription<T>[];
 };
 export type SubjectSubscriber<T> = (value: T, subscription: Subscription<T>) => unknown;
-export interface SubjectLike<T> {
+export type SubjectLike<T> = {
     subscribe?: (callback: SubjectSubscriber<T>) => any;
     isSubject?: boolean;
-}
+};
 export type Closer<T> = {
     createCallback: (callback: (result: T) => any) => any;
     subscribe: (subject: SubjectLike<T>) => any;
@@ -27,3 +28,5 @@ export type PipeUtils<H> = {
     setHandler: setHandler<H>;
     next: (newValue: any) => any;
 };
+export declare function getSubscription<T>(subject: Subject<T>, callback: SubjectSubscriber<any>): Subscription<any>;
+export declare function runPipedMethods(value: any, methods: OperatorFunction<any, any, any>[], onComplete: (lastValue: any) => any): void;

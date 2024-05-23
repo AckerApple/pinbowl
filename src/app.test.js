@@ -29,16 +29,16 @@ export default async function runTest() {
     playerAddButton = byId('player_add_button')
     playerAddButton.click()
 
-    // player 1 input should now be gone
+    // player 1 input should now present
     player0inputs = document.querySelectorAll('#player_0_input')
-    expect(player0inputs.length).toBe(0, `expected 1 player input but got ${player0inputs.length}`)
+    expect(player0inputs.length).toBe(1, `expected 1 players but got ${player0inputs.length}`)
     expect(document.querySelectorAll('#player_1_input').length).toBe(1, 'expected 2 player input')
 
     const player1Input = byId('player_1_input')
     player1Input.value = 'Mark'
     player1Input.onkeyup({target:player1Input})
     player0inputs = document.querySelectorAll('#player_0_input')
-    expect(document.querySelectorAll('#player_0_input').length).toBe(0)
+    expect(document.querySelectorAll('#player_0_input').length).toBe(1)
     expect(document.querySelectorAll('#player_1_input').length).toBe(1)
 
     console.info('🔵 clicking start...')

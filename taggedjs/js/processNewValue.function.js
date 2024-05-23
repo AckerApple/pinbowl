@@ -1,7 +1,7 @@
 import { ValueSubject } from './subject/ValueSubject';
 import { isSubjectInstance, isTagClass, isTagComponent, isTagTemplater } from './isInstance';
 import { TemplaterResult } from './TemplaterResult.class';
-import { TagSupport } from './TagSupport.class';
+import { TagSupport } from './tag/TagSupport.class';
 export function processNewValue(hasValue, value, ownerSupport) {
     if (isTagComponent(value)) {
         const tagSubject = new ValueSubject(value);

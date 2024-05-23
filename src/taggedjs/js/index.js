@@ -1,21 +1,24 @@
-export * from "./tag";
-export * from "./html";
+export * from "./tag/tag";
+export * from "./tag/html";
 export * from "./errors";
 export * from "./isInstance";
 export * from "./state/index";
 export * from "./subject/index";
-export * from "./TagSupport.class";
-export * from "./ElementTargetEvent.interface";
+export * from "./tag/TagSupport.class";
+export * from "./interpolations/ElementTargetEvent.interface";
 export * from "./interpolations/interpolateElement";
-export { tagElement } from "./tagElement";
-export { Tag } from "./Tag.class";
-export { runBeforeRender } from "./tagRunner";
-export { renderTagSupport } from "./renderTagSupport.function";
-export { renderWithSupport } from "./renderWithSupport.function";
-import { renderTagSupport } from "./renderTagSupport.function";
-import { renderWithSupport } from "./renderWithSupport.function";
-import { tagElement } from "./tagElement";
+export { tagElement } from "./tag/tagElement";
+export { Tag } from "./tag/Tag.class";
+export { runBeforeRender } from "./tag/tagRunner";
+export { renderTagSupport } from "./tag/render/renderTagSupport.function";
+export { renderWithSupport } from "./tag/render/renderWithSupport.function";
+export { isLikeValueSets } from "./tag/isLikeTags.function";
+import { renderTagOnly } from "./tag/render/renderTagOnly.function";
+import { renderTagSupport } from "./tag/render/renderTagSupport.function";
+import { renderWithSupport } from "./tag/render/renderWithSupport.function";
+import { tagElement } from "./tag/tagElement";
 export const hmr = {
     tagElement, renderWithSupport, renderTagSupport,
+    renderTagOnly,
 };
 //# sourceMappingURL=index.js.map

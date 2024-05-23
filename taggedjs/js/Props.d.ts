@@ -1,1 +1,1 @@
-export type Props = unknown;
+export type Props = any[];

@@ -7,9 +7,17 @@ export function combineLatest(subjects) {
         const setValue = (x, index) => {
             valuesSeen[index] = true;
             values[index] = x;
-            if (valuesSeen.length === subjects.length && valuesSeen.every(x => x)) {
-                callback(values, subscription);
+            const countMatched = valuesSeen.length === subjects.length;
+            if (!countMatched) {
+                return;
             }
+            for (let index = valuesSeen.length - 1; index >= 0; --index) {
+                if (!valuesSeen[index]) {
+                    return;
+                }
+            }
+            // everyone has reported values
+            callback(values, subscription);
         };
         const clones = [...subjects];
         const firstSub = clones.shift();

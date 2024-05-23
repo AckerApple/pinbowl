@@ -1,15 +1,19 @@
-import { Context, Tag } from './Tag.class';
-import { BaseTagSupport, TagSupport } from './TagSupport.class';
+import { Context, Tag } from './tag/Tag.class';
+import { BaseTagSupport, TagSupport } from './tag/TagSupport.class';
 import { Props } from './Props';
-import { TagChildren } from './tag';
+import { TagChildren, TagWrapper } from './tag/tag';
 import { Provider } from './state/providers';
 import { OnDestroyCallback } from './state/onDestroy';
 import { TagSubject } from './subject.types';
 import { OnInitCallback } from './state/onInit';
-import { Subscription } from './subject/Subject.utils';
-import { InsertBefore } from './Clones.type';
+import { Subscription } from './subject/subject.utils';
+import { InsertBefore } from './interpolations/Clones.type';
+import { TagValues } from './tag/html';
+export type OriginalFunction = (() => Tag) & {
+    compareTo: string;
+};
 export type Wrapper = ((tagSupport: BaseTagSupport, subject: TagSubject) => TagSupport) & {
-    original: () => Tag;
+    parentWrap: TagWrapper<any>;
 };
 export type TagGlobal = {
     oldest?: TagSupport;
@@ -28,10 +32,12 @@ export type TagGlobal = {
 };
 export declare class TemplaterResult {
     props: Props;
-    children: TagChildren;
     isTemplater: boolean;
     tagged: boolean;
     wrapper?: Wrapper;
+    madeChildIntoSubject: boolean;
     tag?: Tag;
-    constructor(props: Props, children: TagChildren);
+    children: TagChildren;
+    constructor(props: Props);
+    html(strings: string[] | TemplateStringsArray, ...values: TagValues): this;
 }

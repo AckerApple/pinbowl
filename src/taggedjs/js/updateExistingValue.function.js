@@ -1,4 +1,4 @@
-import { TagSupport } from './TagSupport.class';
+import { TagSupport } from './tag/TagSupport.class';
 import { TemplaterResult } from './TemplaterResult.class';
 import { isSubjectInstance, isTagArray, isTagClass, isTagComponent, isTagTemplater } from './isInstance';
 import { processTagArray } from './processTagArray';
@@ -7,7 +7,7 @@ import { processRegularValue } from './processRegularValue.function';
 import { checkDestroyPrevious } from './checkDestroyPrevious.function';
 import { ValueSubject } from './subject/ValueSubject';
 import { processSubjectComponent } from './processSubjectComponent.function';
-import { isLikeTags } from './isLikeTags.function';
+import { isLikeTags } from './tag/isLikeTags.function';
 import { bindSubjectCallback } from './interpolations/bindSubjectCallback.function';
 import { setupNewTemplater, getFakeTemplater, processTag } from './processTag.function';
 import { insertAfter } from './insertAfter.function';

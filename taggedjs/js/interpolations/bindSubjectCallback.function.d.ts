@@ -1,5 +1,5 @@
 /** File largely responsible for reacting to element events, such as onclick */
-import { TagSupport } from "../TagSupport.class";
+import { TagSupport } from "../tag/TagSupport.class";
 export type Callback = (...args: any[]) => any & {
     isChildOverride?: true;
 };

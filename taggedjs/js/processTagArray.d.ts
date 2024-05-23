@@ -2,7 +2,7 @@ import { Clones, InsertBefore } from './Clones.type';
 import { Tag } from './Tag.class';
 import { ValueSubject } from './subject/ValueSubject';
 import { Counts } from './interpolations/interpolateTemplate';
-import { TagSupport } from './TagSupport.class';
+import { TagSupport } from './tag/TagSupport.class';
 import { TemplaterResult } from './TemplaterResult.class';
 export type LastArrayItem = {
     tagSupport: TagSupport;

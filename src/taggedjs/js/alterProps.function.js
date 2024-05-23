@@ -1,8 +1,8 @@
 import { deepClone, deepEqual } from './deepFunctions';
 import { isTag } from './isInstance';
-import { renderTagSupport } from './renderTagSupport.function';
+import { renderTagSupport } from './tag/render/renderTagSupport.function';
 import { setUse } from './state';
-import { isInCycle } from './tagRunner';
+import { getSupportInCycle } from './tag/getSupportInCycle.function';
 /* Used to rewrite props that are functions. When they are called it should cause parent rendering */
 export function alterProps(props, ownerSupport) {
     const isPropTag = isTag(props);
@@ -10,11 +10,10 @@ export function alterProps(props, ownerSupport) {
     const newProps = resetFunctionProps(watchProps, ownerSupport);
     return newProps;
 }
-function resetFunctionProps(props, ownerSupport) {
-    if (typeof (props) !== 'object' || !ownerSupport) {
-        return props;
+function resetFunctionProps(newProps, ownerSupport) {
+    if (typeof (newProps) !== 'object' || !ownerSupport) {
+        return newProps;
     }
-    const newProps = props;
     // BELOW: Do not clone because if first argument is object, the memory ref back is lost
     // const newProps = {...props} 
     Object.entries(newProps).forEach(([name, value]) => {
@@ -38,7 +37,7 @@ function resetFunctionProps(props, ownerSupport) {
 }
 export function callbackPropOwner(toCall, callWith, ownerSupport) {
     // const renderCount = ownerSupport.global.renderCount
-    const cycle = isInCycle();
+    const cycle = getSupportInCycle();
     const result = toCall(...callWith);
     const run = () => {
         const lastestOwner = ownerSupport.global.newest;

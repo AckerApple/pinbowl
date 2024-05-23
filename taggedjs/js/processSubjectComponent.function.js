@@ -1,6 +1,6 @@
 import { setUse } from './state';
 import { processTagResult } from './processTagResult.function';
-import { TagSupport } from './TagSupport.class';
+import { TagSupport } from './tag/TagSupport.class';
 import { renderSubjectComponent } from './renderSubjectComponent.function';
 export function processSubjectComponent(templater, subject, insertBefore, ownerSupport, options) {
     // Check if function component is wrapped in a tag() call

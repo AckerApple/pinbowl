@@ -1,4 +1,4 @@
-import { TagSupport } from './TagSupport.class';
+import { TagSupport } from './tag/TagSupport.class';
 export type DestroyOptions = {
     stagger: number;
     byParent?: boolean;

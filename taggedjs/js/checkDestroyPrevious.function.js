@@ -1,6 +1,6 @@
 import { isTag, isTagArray, isTagComponent } from './isInstance';
-import { isLikeTags } from './isLikeTags.function';
-import { destroyTagMemory, destroyTagSupportPast } from './destroyTag.function';
+import { isLikeTags } from './tag/isLikeTags.function';
+import { destroyTagMemory, destroyTagSupportPast } from './tag/destroyTag.function';
 import { insertAfter } from './insertAfter.function';
 export function checkDestroyPrevious(subject, // existing.value is the old value
 newValue, insertBefore) {

@@ -1,2 +1,2 @@
-import { TagSupport } from '../TagSupport.class';
+import { TagSupport } from '../tag/TagSupport.class';
 export declare function providersChangeCheck(tagSupport: TagSupport): void;

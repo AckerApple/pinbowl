@@ -1,5 +1,5 @@
 /** File largely responsible for reacting to element events, such as onclick */
-import { renderTagSupport } from "../renderTagSupport.function";
+import { renderTagSupport } from "../tag/render/renderTagSupport.function";
 export function bindSubjectCallback(value, tagSupport) {
     // Is this children? No override needed
     if (value.isChildOverride) {
@@ -11,12 +11,14 @@ export function bindSubjectCallback(value, tagSupport) {
     return subjectFunction;
 }
 export function runTagCallback(value, tagSupport, bindTo, args) {
-    const renderCount = tagSupport.global.renderCount;
+    const myGlobal = tagSupport.global;
+    const renderCount = myGlobal.renderCount;
     const method = value.bind(bindTo);
     const callbackResult = method(...args);
-    const sameRenderCount = renderCount === tagSupport.global.renderCount;
+    const sameRenderCount = renderCount === myGlobal.renderCount;
+    const skipRender = !sameRenderCount || myGlobal.deleted;
     // already rendered OR tag was deleted before event processing
-    if (!sameRenderCount || tagSupport.global.deleted) {
+    if (skipRender) {
         if (callbackResult instanceof Promise) {
             return callbackResult.then(() => {
                 return 'promise-no-data-ever'; // tag was deleted during event processing
@@ -24,15 +26,15 @@ export function runTagCallback(value, tagSupport, bindTo, args) {
         }
         return 'no-data-ever'; // already rendered
     }
-    const newest = renderTagSupport(tagSupport.global.newest, true);
-    tagSupport.global.newest = newest;
+    const newest = renderTagSupport(myGlobal.newest, true);
+    myGlobal.newest = newest;
     if (callbackResult instanceof Promise) {
         return callbackResult.then(() => {
-            if (tagSupport.global.deleted) {
+            if (myGlobal.deleted) {
                 return 'promise-no-data-ever'; // tag was deleted during event processing
             }
-            const newest = renderTagSupport(tagSupport.global.newest, true);
-            tagSupport.global.newest = newest;
+            const newest = renderTagSupport(myGlobal.newest, true);
+            myGlobal.newest = newest;
             return 'promise-no-data-ever';
         });
     }

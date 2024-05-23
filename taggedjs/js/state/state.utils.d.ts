@@ -1,4 +1,4 @@
-import { BaseTagSupport } from '../TagSupport.class';
+import { BaseTagSupport } from '../tag/TagSupport.class';
 export type StateConfig<T> = (x: T) => [T, T];
 export type StateConfigItem<T> = {
     get: () => T;
@@ -17,3 +17,4 @@ export type GetSet<T> = (y: T) => [T, T];
 export declare function getStateValue<T>(state: StateConfigItem<T>): T | undefined;
 export declare class StateEchoBack {
 }
+export declare function getCallbackValue<T>(callback: StateConfig<T>): [T, T];

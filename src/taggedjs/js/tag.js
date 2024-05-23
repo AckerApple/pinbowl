@@ -3,7 +3,7 @@ import { setUse } from './state';
 import { TemplaterResult } from './TemplaterResult.class';
 import { runTagCallback } from './interpolations/bindSubjectCallback.function';
 import { deepClone } from './deepFunctions';
-import { TagSupport } from './TagSupport.class';
+import { TagSupport } from './tag/TagSupport.class';
 import { alterProps } from './alterProps.function';
 import { ValueSubject } from './subject/ValueSubject';
 export const tags = [];

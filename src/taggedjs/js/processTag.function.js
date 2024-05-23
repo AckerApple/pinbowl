@@ -1,4 +1,4 @@
-import { TagSupport } from './TagSupport.class';
+import { TagSupport } from './tag/TagSupport.class';
 import { ValueSubject } from './subject';
 /** Could be a regular tag or a component. Both are Tag.class */
 export function processTag(templater, insertBefore, ownerSupport, // owner

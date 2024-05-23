@@ -1,5 +1,5 @@
 import { isSubjectInstance, isTagComponent } from './isInstance';
-import { TagSupport } from './TagSupport.class';
+import { TagSupport } from './tag/TagSupport.class';
 export function updateContextItem(context, variableName, value) {
     const subject = context[variableName];
     const tagSubject = subject;
@@ -32,7 +32,6 @@ function shareTemplaterGlobal(oldTagSupport, tagSupport) {
     const fnMatched = oldValueFn === newValueFn;
     if (fnMatched) {
         tagSupport.global = oldTagSupport.global;
-        // ??? new mirroring transfer state
         const newest = oldTagSupport.global.newest;
         if (newest) {
             const prevState = newest.memory.state;
