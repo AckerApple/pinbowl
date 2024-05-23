@@ -12,7 +12,6 @@ import { setTagPlaceholder } from './setTagPlaceholder.function';
 import { interpolateElement, interpolateString } from '../interpolations/interpolateElement';
 import { subscribeToTemplate } from '../interpolations/interpolateTemplate';
 import { afterInterpolateElement } from '../interpolations/afterInterpolateElement.function';
-import { renderSubjectComponent } from './render/renderSubjectComponent.function';
 const prefixSearch = new RegExp(variablePrefix, 'g');
 /** used only for apps, otherwise use TagSupport */
 export class BaseTagSupport {
@@ -83,10 +82,12 @@ export class BaseTagSupport {
         afterInterpolateElement(elementContainer, placeholderElm, this, // ownerSupport
         context, options);
         // Any tag components that were found should be processed AFTER the owner processes its elements. Avoid double processing of elements attributes like (oninit)=${}
-        tagComponents.forEach(tagComponent => {
+        const length = tagComponents.length;
+        for (let index = 0; index < length; ++index) {
+            const tagComponent = tagComponents[index];
             subscribeToTemplate(tagComponent.insertBefore, tagComponent.subject, tagComponent.ownerSupport, options.counts);
             afterInterpolateElement(elementContainer, tagComponent.insertBefore, tagComponent.ownerSupport, context, options);
-        });
+        }
     }
     getTemplate() {
         const thisTag = this.templater.tag;
@@ -160,14 +161,15 @@ export class TagSupport extends BaseTagSupport {
         }
         this.destroySubscriptions();
         // signify immediately child has been deleted (looked for during event processing)
-        childTags.forEach(child => {
+        for (let index = childTags.length - 1; index >= 0; --index) {
+            const child = childTags[index];
             const subGlobal = child.global;
             delete subGlobal.newest;
             subGlobal.deleted = true;
             if (isTagComponent(child.templater)) {
                 runBeforeDestroy(child, child);
             }
-        });
+        }
         // HTML DOM manipulation. Put back down the template tag
         const insertBefore = global.insertBefore;
         if (insertBefore.nodeName === 'TEMPLATE') {
@@ -213,9 +215,11 @@ export class TagSupport extends BaseTagSupport {
         return mainPromise.then(() => options.stagger);
     }
     destroySubscriptions() {
-        const global = this.global;
-        global.subscriptions.forEach(cloneSub => cloneSub.unsubscribe());
-        global.subscriptions.length = 0;
+        const subs = this.global.subscriptions;
+        for (let index = subs.length - 1; index >= 0; --index) {
+            subs[index].unsubscribe();
+        }
+        subs.length = 0;
     }
     destroyClones({ stagger } = {
         stagger: 0,
@@ -225,12 +229,13 @@ export class TagSupport extends BaseTagSupport {
         const promises = oldClones.map(clone => this.checkCloneRemoval(clone, stagger)).filter(x => x); // only return promises
         // check subjects that may have clones attached to them
         const oldContext = this.global.context;
-        Object.values(oldContext).forEach(value => {
+        for (const name in oldContext) {
+            const value = oldContext[name];
             const clone = value.clone;
-            if (clone && clone.parentNode) {
+            if (clone?.parentNode) {
                 clone.parentNode.removeChild(clone);
             }
-        });
+        }
         if (promises.length) {
             return { promise: Promise.all(promises), stagger };
         }
@@ -274,18 +279,6 @@ export class TagSupport extends BaseTagSupport {
         this.values = values;
         return this.updateContext(this.global.context);
     }
-    /** Used during HMR only where static content itself could have been edited */
-    async rebuild() {
-        delete this.strings; // seek the templater strings instead now
-        delete this.values; // seek the templater strings instead now
-        restoreTagMarkers(this);
-        const newSupport = renderSubjectComponent(this.subject, this, this.ownerTagSupport);
-        await this.destroy();
-        newSupport.buildBeforeElement(this.global.insertBefore, {
-            counts: { added: 0, removed: 0 },
-        });
-        return newSupport;
-    }
     getAppTagSupport() {
         let tag = this;
         while (tag.ownerTagSupport) {
@@ -296,6 +289,9 @@ export class TagSupport extends BaseTagSupport {
 }
 function restoreTagMarkers(support) {
     restoreTagMarker(support);
-    support.childTags.forEach(childTag => restoreTagMarkers(childTag.global.oldest));
+    const childTags = support.childTags;
+    for (let index = childTags.length - 1; index >= 0; --index) {
+        restoreTagMarkers(childTags[index].global.oldest);
+    }
 }
 //# sourceMappingURL=TagSupport.class.js.map

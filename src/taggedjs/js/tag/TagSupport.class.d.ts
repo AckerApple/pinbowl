@@ -51,7 +51,5 @@ export declare class TagSupport extends BaseTagSupport {
     updateBy(tagSupport: TagSupport): void;
     updateConfig(strings: string[], values: any[]): void;
     updateValues(values: any[]): Context;
-    /** Used during HMR only where static content itself could have been edited */
-    rebuild(): Promise<TagSupport>;
     getAppTagSupport(): TagSupport;
 }

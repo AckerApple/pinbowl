@@ -8,12 +8,15 @@ export function inputAttribute(name, value, element) {
     if (names[0] === 'class') {
         names.shift();
         if (value) {
-            names.forEach(name => element.classList.add(name));
+            for (let index = 0; index < names.length; ++index) {
+                element.classList.add(names[index]);
+            }
         }
         else {
-            names.forEach(name => element.classList.remove(name));
+            for (let index = 0; index < names.length; ++index) {
+                element.classList.remove(names[index]);
+            }
         }
-        return;
     }
 }
 //# sourceMappingURL=inputAttribute.js.map

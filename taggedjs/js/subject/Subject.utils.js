@@ -21,7 +21,10 @@ export function getSubscription(subject, callback) {
         // any double unsubscribes will be ignored
         subscription.unsubscribe = () => subscription;
         // unsubscribe from any combined subjects
-        subscription.subscriptions.forEach(subscription => subscription.unsubscribe());
+        const subscriptions = subscription.subscriptions;
+        for (let index = subscriptions.length - 1; index >= 0; --index) {
+            subscriptions[index].unsubscribe();
+        }
         return subscription;
     };
     subscription.add = (sub) => {
@@ -41,7 +44,6 @@ export function runPipedMethods(value, methods, onComplete) {
             return runPipedMethods(newValue, cloneMethods, onComplete);
         }
         onComplete(newValue);
-        // return newValue = next
     };
     let handler = next;
     const setHandler = (x) => handler = x;

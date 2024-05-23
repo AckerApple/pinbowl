@@ -37,7 +37,9 @@ ownerSupport, options) {
         }
         return true;
     });
-    value.forEach((item, index) => {
+    const length = value.length;
+    for (let index = 0; index < length; ++index) {
+        const item = value[index];
         const previous = lastArray[index];
         const previousSupport = previous?.tagSupport;
         const subTag = item;
@@ -45,7 +47,6 @@ ownerSupport, options) {
             tagFakeTemplater(subTag);
         }
         const tagSupport = new TagSupport(subTag.templater, ownerSupport, new ValueSubject(undefined));
-        // tagSupport.templater = subTag.templater
         if (previousSupport) {
             setupNewTemplater(tagSupport, ownerSupport, previousSupport.subject);
             const global = previousSupport.global;
@@ -71,11 +72,12 @@ ownerSupport, options) {
             // subTag.tagSupport = subTag.tagSupport || prevSupport
             const oldest = prevGlobal.oldest;
             oldest.updateBy(tagSupport);
-            return [];
+            // return []
+            continue;
         }
         processAddTagArrayItem(runtimeInsertBefore, tagSupport, index, options, lastArray);
         ownerSupport.childTags.push(tagSupport);
-    });
+    }
     return clones;
 }
 function setPlaceholderElm(insertBefore, subject) {

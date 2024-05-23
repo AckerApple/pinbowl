@@ -5,8 +5,11 @@ export function afterInterpolateElement(container, insertBefore, tagSupport, con
     if (!clones.length) {
         return clones;
     }
-    clones.forEach(clone => afterElmBuild(clone, options, context, tagSupport));
-    tagSupport.clones.push(...clones);
+    for (let index = clones.length - 1; index >= 0; --index) {
+        const clone = clones[index];
+        afterElmBuild(clone, options, context, tagSupport);
+        tagSupport.clones.push(clone);
+    }
     return clones;
 }
 //# sourceMappingURL=afterInterpolateElement.function.js.map

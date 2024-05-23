@@ -4,25 +4,29 @@ export function providersChangeCheck(tagSupport) {
     const global = tagSupport.global;
     const providersWithChanges = global.providers.filter(provider => !deepEqual(provider.instance, provider.clone));
     // reset clones
-    providersWithChanges.forEach(provider => {
+    for (let index = providersWithChanges.length - 1; index >= 0; --index) {
+        const provider = providersWithChanges[index];
         const appSupport = tagSupport.getAppTagSupport();
         handleProviderChanges(appSupport, provider);
         provider.clone = deepClone(provider.instance);
-    });
+    }
 }
 function handleProviderChanges(appSupport, provider) {
     const tagsWithProvider = getTagsWithProvider(appSupport, provider);
-    tagsWithProvider.forEach(({ tagSupport, renderCount, provider }) => {
+    for (let index = tagsWithProvider.length - 1; index >= 0; --index) {
+        const { tagSupport, renderCount, provider } = tagsWithProvider[index];
         if (tagSupport.global.deleted) {
-            return; // i was deleted after another tag processed
+            continue; // i was deleted after another tag processed
         }
         const notRendered = renderCount === tagSupport.global.renderCount;
         if (notRendered) {
             provider.clone = deepClone(provider.instance);
-            return renderTagSupport(tagSupport, false);
+            renderTagSupport(tagSupport, false);
+            continue;
         }
-    });
+    }
 }
+/** Updates and returns memory of tag providers */
 function getTagsWithProvider(tagSupport, provider, memory = []) {
     const global = tagSupport.global;
     const compare = global.providers;
@@ -34,7 +38,10 @@ function getTagsWithProvider(tagSupport, provider, memory = []) {
             provider: hasProvider,
         });
     }
-    tagSupport.childTags.forEach(child => getTagsWithProvider(child, provider, memory));
+    const childTags = tagSupport.childTags;
+    for (let index = childTags.length - 1; index >= 0; --index) {
+        getTagsWithProvider(childTags[index], provider, memory);
+    }
     return memory;
 }
 //# sourceMappingURL=provider.utils.js.map

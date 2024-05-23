@@ -15,8 +15,7 @@ subject, insertBefore) {
         const oldFunction = oldWrapper.parentWrap.original;
         const newFunction = newWrapper.parentWrap.original;
         // string compare both functions
-        // isSameTag = oldFunction.compareTo === newFunction.compareTo // ???
-        isSameTag = oldFunction === newFunction; // ???
+        isSameTag = oldFunction === newFunction;
     }
     const templater = tagSupport.templater;
     if (!isSameTag) {
@@ -85,7 +84,8 @@ function syncFunctionProps(lastSupport, ownerSupport, newPropsArray) {
     const priorPropConfig = lastSupport.propsConfig;
     const priorPropsArray = priorPropConfig.latestCloned;
     const prevSupport = ownerSupport.global.newest;
-    newPropsArray.forEach((argPosition, index) => {
+    for (let index = newPropsArray.length - 1; index >= 0; --index) {
+        const argPosition = newPropsArray[index];
         if (typeof (argPosition) !== 'object') {
             return;
         }
@@ -93,22 +93,22 @@ function syncFunctionProps(lastSupport, ownerSupport, newPropsArray) {
         if (typeof (priorProps) !== 'object') {
             return;
         }
-        Object.entries(argPosition).forEach(([name, value]) => {
+        for (const name in argPosition) {
+            const value = argPosition[name];
             if (!(value instanceof Function)) {
-                return;
+                continue;
             }
             const newCallback = argPosition[name]; // || value
             const original = newCallback instanceof Function && newCallback.toCall;
             if (original) {
-                return; // already previously converted
+                continue; // already previously converted
             }
             // Currently, call self but over parent state changes, I may need to call a newer parent tag owner
             priorProps[name].toCall = (...args) => {
                 return callbackPropOwner(newCallback, // value, // newOriginal,
                 args, prevSupport);
             };
-            return;
-        });
-    });
+        }
+    }
 }
 //# sourceMappingURL=updateExistingTagComponent.function.js.map
