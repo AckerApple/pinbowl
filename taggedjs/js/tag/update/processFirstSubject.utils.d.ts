@@ -10,10 +10,10 @@ import { Tag } from '../Tag.class';
 import { Subject } from '../../subject';
 export declare enum ValueTypes {
     unknown = "unknown",
-    tag = "tag",
+    tag = "tag",// this one might be bad
     templater = "templater",
-    tagArray = "tag-array",
     tagComponent = "tag-component",
+    tagArray = "tag-array",
     subject = "subject",
     date = "date",
     string = "string",

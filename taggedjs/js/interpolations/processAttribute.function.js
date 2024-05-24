@@ -75,8 +75,14 @@ function processNameValueAttr(attrName, result, child, ownerSupport, howToSet) {
     if (isSubjectInstance(result)) {
         child.removeAttribute(attrName);
         const callback = (newAttrValue) => {
+            // should the function be wrapped so every time its called we re-render?
             if (newAttrValue instanceof Function) {
-                newAttrValue = bindSubjectCallback(newAttrValue, ownerSupport);
+                const wrapper = ownerSupport.templater.wrapper;
+                const parentWrap = wrapper?.parentWrap;
+                const oneRender = parentWrap?.oneRender;
+                if (!oneRender) {
+                    newAttrValue = bindSubjectCallback(newAttrValue, ownerSupport);
+                }
             }
             return processAttributeSubjectValue(newAttrValue, child, attrName, isSpecial, howToSet);
         };

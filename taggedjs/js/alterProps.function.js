@@ -1,11 +1,11 @@
 import { deepClone, deepEqual } from './deepFunctions';
-import { isTag } from './isInstance';
+import { isStaticTag } from './isInstance';
 import { renderTagSupport } from './tag/render/renderTagSupport.function';
 import { setUse } from './state';
 import { getSupportInCycle } from './tag/getSupportInCycle.function';
 /* Used to rewrite props that are functions. When they are called it should cause parent rendering */
 export function alterProps(props, ownerSupport) {
-    const isPropTag = isTag(props);
+    const isPropTag = isStaticTag(props);
     const watchProps = isPropTag ? 0 : props;
     const newProps = resetFunctionProps(watchProps, ownerSupport);
     return newProps;

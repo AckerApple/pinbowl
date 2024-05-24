@@ -9,7 +9,9 @@ export function updateContextItem(context, variableName, value) {
             if (isTagComponent(value)) {
                 const templater = value;
                 let newSupport = new TagSupport(templater, tagSupport.ownerTagSupport, subject);
+                // TODO: Need to review if this is used
                 if (isTagComponent(tagSupport)) {
+                    console.warn('👉 deprecated code is being used #shareTemplaterGlobal 👈');
                     shareTemplaterGlobal(tagSupport, newSupport);
                 }
             }

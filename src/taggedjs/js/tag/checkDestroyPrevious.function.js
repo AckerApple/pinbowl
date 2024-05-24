@@ -1,4 +1,5 @@
-import { isTag, isTagArray, isTagComponent } from '../isInstance';
+import { isStaticTag } from '../isInstance';
+import { ValueTypes, getValueType } from './update/processFirstSubject.utils';
 import { isLikeTags } from './isLikeTags.function';
 import { destroyTagMemory, destroyTagSupportPast } from './destroyTag.function';
 import { insertAfter } from '../insertAfter.function';
@@ -9,6 +10,7 @@ newValue, insertBefore) {
     const lastValue = displaySubject.lastValue; // TODO: we maybe able to use displaySubject.value and remove concept of lastValue
     // was simple value but now something bigger
     if (hasLastValue && lastValue !== newValue) {
+        // below is faster than using getValueType
         const newType = typeof (newValue);
         if (isSimpleType(newType) && typeof (lastValue) === newType) {
             return false;
@@ -19,10 +21,11 @@ newValue, insertBefore) {
         destroySimpleValue(insertBefore, displaySubject);
         return 'changed-simple-value';
     }
+    const valueType = getValueType(newValue);
     const arraySubject = subject;
     const wasArray = arraySubject.lastArray;
     // no longer an array
-    if (wasArray && !isTagArray(newValue)) {
+    if (wasArray && valueType !== ValueTypes.tagArray) {
         const placeholderElm = arraySubject.placeholder;
         delete arraySubject.lastArray;
         delete arraySubject.placeholder;
@@ -37,8 +40,8 @@ newValue, insertBefore) {
     const lastSupport = tagSubject.tagSupport;
     // no longer tag or component?
     if (lastSupport) {
-        const isValueTag = isTag(newValue);
-        const isSubjectTag = isTag(subject.value);
+        const isValueTag = isStaticTag(newValue);
+        const isSubjectTag = isStaticTag(subject.value);
         if (isSubjectTag && isValueTag) {
             const newTag = newValue;
             // its a different tag now
@@ -50,9 +53,11 @@ newValue, insertBefore) {
             }
             return false;
         }
-        const isValueTagComponent = isTagComponent(newValue);
-        if (isValueTagComponent) {
+        if (valueType === ValueTypes.tagComponent) {
             return false; // its still a tag component
+        }
+        if (newValue && newValue.oneRender) {
+            return false;
         }
         // put template back down
         restoreTagMarker(lastSupport);

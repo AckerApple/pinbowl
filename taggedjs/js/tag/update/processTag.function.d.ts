@@ -9,3 +9,4 @@ subject: TagSubject): void;
 export declare function setupNewTemplater(tagSupport: TagSupport, ownerSupport: TagSupport, subject: TagSubject): void;
 export declare function tagFakeTemplater(tag: Tag): TemplaterResult;
 export declare function getFakeTemplater(): TemplaterResult;
+export declare function newTagSupportByTemplater(templater: TemplaterResult, ownerSupport: TagSupport, subject: TagSubject): TagSupport;

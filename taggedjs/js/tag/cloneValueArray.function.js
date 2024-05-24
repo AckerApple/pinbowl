@@ -1,17 +1,17 @@
 import { deepClone } from '../deepFunctions';
-import { isTagArray, isTagClass, isTagComponent, isTagTemplater } from '../isInstance';
+import { ValueTypes, getValueType } from './update/processFirstSubject.utils';
 export function cloneValueArray(values) {
     return values.map((value) => {
         const tag = value;
-        if (isTagComponent(value)) {
-            const tagComponent = value;
-            return deepClone(tagComponent.props);
-        }
-        if (isTagClass(tag) || isTagTemplater(tag)) {
-            return cloneValueArray(tag.values);
-        }
-        if (isTagArray(tag)) {
-            return cloneValueArray(tag);
+        switch (getValueType(value)) {
+            case ValueTypes.tagComponent:
+                const tagComponent = value;
+                return deepClone(tagComponent.props);
+            case ValueTypes.tag:
+            case ValueTypes.templater:
+                return cloneValueArray(tag.values);
+            case ValueTypes.tagArray:
+                return cloneValueArray(tag);
         }
         return deepClone(value);
     });

@@ -3,7 +3,7 @@ import { kidsToTagArraySubject } from './tag/tag';
 import { ValueSubject } from './subject';
 export class TemplaterResult {
     props;
-    isTemplater = true;
+    tagJsType = 'templater';
     tagged;
     wrapper;
     madeChildIntoSubject = false;

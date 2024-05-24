@@ -1,7 +1,7 @@
 import { Context, Tag } from './tag/Tag.class';
 import { BaseTagSupport, TagSupport } from './tag/TagSupport.class';
 import { Props } from './Props';
-import { TagChildren, TagWrapper } from './tag/tag';
+import { TagChildren, TagWrapper } from './tag/tag.utils';
 import { Provider } from './state/providers';
 import { OnDestroyCallback } from './state/onDestroy';
 import { TagSubject } from './subject.types';
@@ -32,7 +32,7 @@ export type TagGlobal = {
 };
 export declare class TemplaterResult {
     props: Props;
-    isTemplater: boolean;
+    tagJsType: string;
     tagged: boolean;
     wrapper?: Wrapper;
     madeChildIntoSubject: boolean;

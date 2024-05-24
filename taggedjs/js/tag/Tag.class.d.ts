@@ -1,7 +1,7 @@
 import { Counts } from '../interpolations/interpolateTemplate';
 import { State } from '../state';
 import { InterpolatedTemplates } from '../interpolations/interpolations';
-import { InterpolateSubject } from './update/processFirstSubject.utils';
+import { InterpolateSubject, ValueTypes } from './update/processFirstSubject.utils';
 import { TemplaterResult } from '../TemplaterResult.class';
 import { TagValues } from './html';
 export declare const variablePrefix = "__tagvar";
@@ -23,7 +23,7 @@ export interface TagTemplate {
 export declare class Tag {
     strings: string[];
     values: any[];
-    isTagClass: boolean;
+    tagJsType: ValueTypes;
     memory: {
         arrayValue?: unknown;
     };

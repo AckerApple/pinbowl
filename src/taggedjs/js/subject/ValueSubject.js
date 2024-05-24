@@ -1,14 +1,19 @@
 import { Subject } from './Subject.class';
 export class ValueSubject extends Subject {
-    value;
     constructor(value) {
         super(value);
-        this.value = value;
+    }
+    get value() {
+        return this._value;
+    }
+    set value(newValue) {
+        this._value = newValue;
+        this.set(newValue);
     }
     subscribe(callback) {
         const subscription = super.subscribe(callback);
         // Call the callback immediately with the current value
-        callback(this.value, subscription);
+        callback(this._value, subscription);
         return subscription;
     }
 }

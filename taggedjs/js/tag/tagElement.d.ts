@@ -1,6 +1,6 @@
 import { TagSupport } from './TagSupport.class';
 import { TemplaterResult } from '../TemplaterResult.class';
-import { TagComponent, TagMaker } from './tag';
+import { TagComponent, TagMaker } from './tag.utils';
 /**
  *
  * @param app taggedjs tag

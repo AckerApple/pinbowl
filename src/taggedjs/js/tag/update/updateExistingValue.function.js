@@ -21,6 +21,9 @@ export function updateExistingValue(subject, value, ownerSupport, insertBefore) 
     // was component but no longer
     const tagSupport = subjectTag.tagSupport;
     if (tagSupport) {
+        if (valueType === ValueTypes.function) {
+            return subjectTag; // its a oneRender tag
+        }
         handleStillTag(subject, value, ownerSupport);
         return subjectTag;
     }

@@ -1,4 +1,5 @@
 export * from "./tag/tag";
+export * from "./tag/tag.utils";
 export * from "./tag/html";
 export * from "./errors";
 export * from "./isInstance";
