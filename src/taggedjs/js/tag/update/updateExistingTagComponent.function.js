@@ -170,22 +170,16 @@ function syncPriorPropFunction(priorProp, prop, newSupport, ownerSupport, seen =
     return prop;
 }
 export function moveProviders(lastSupport, newSupport) {
-    // console.log('----- start', lastSupport.global.providers.length, lastSupport.global.providers[0].children.length)
     const destroy$ = lastSupport.global.destroy$;
     lastSupport.global.providers.forEach(provider => {
         provider.children.forEach((child, index) => {
             const wasSameGlobals = lastSupport.global.destroy$ === child.global.destroy$;
             if (wasSameGlobals) {
-                // console.log('wasSameGlobals!!!!')
                 provider.children.splice(index, 1);
                 provider.children.push(newSupport);
                 return;
             }
-            // if(lastSupport.templater.wrapper?.parentWrap.original === child.templater.wrapper?.parentWrap.original) {
-            //   throw new Error('too far')
-            // }
         });
     });
-    // console.log('----- stp[', newSupport.global.deleted, newSupport.global.providers[0].children.length)
 }
 //# sourceMappingURL=updateExistingTagComponent.function.js.map

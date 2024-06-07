@@ -1,4 +1,4 @@
-import { destroyTagMemory } from '../destroyTag.function.js';
+import { softDestroySupport } from './softDestroySupport.function.js';
 import { moveProviders } from '../update/updateExistingTagComponent.function.js';
 export function destroyUnlikeTags(lastSupport, // old
 reSupport, // new
@@ -8,7 +8,9 @@ subject) {
     // when a tag is destroyed, disconnect the globals
     const global = reSupport.global = { ...oldGlobal }; // break memory references
     moveProviders(lastSupport, reSupport);
-    destroyTagMemory(lastSupport);
+    // destroyTagMemory(lastSupport)
+    softDestroySupport(lastSupport);
+    lastSupport.global.oldest = reSupport; // any outstanding callbacks/state like activities should refer to replacing tag
     global.insertBefore = insertBefore;
     delete global.deleted;
     global.oldest = reSupport;

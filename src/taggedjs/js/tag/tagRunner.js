@@ -47,7 +47,6 @@ export function runBeforeDestroy(tagSupport, ownerTagSupport) {
         const global = tagSupport.global;
         global.providers.forEach(provider => provider.children.forEach((child, index) => {
             if (child.global === global) {
-                // console.log('removed provider child during destroy')
                 provider.children.splice(index, 1);
             }
         }));

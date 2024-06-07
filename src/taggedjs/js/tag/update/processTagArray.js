@@ -8,7 +8,7 @@ import { renderTagOnly } from '../render/renderTagOnly.function.js';
 export function processTagArray(subject, value, // arry of Tag classes
 insertBefore, // <template end interpolate />
 ownerSupport, options) {
-    const clones = ownerSupport.clones; // []
+    const clones = ownerSupport.global.clones; // []
     let lastArray = subject.lastArray = subject.lastArray || [];
     if (!subject.placeholder) {
         setPlaceholderElm(insertBefore, subject);

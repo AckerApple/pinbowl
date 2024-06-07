@@ -34,6 +34,7 @@ export type TagGlobal = {
     locked?: true;
     blocked: (BaseTagSupport | TagSupport)[];
     childTags: TagSupport[];
+    clones: (Element | Text | ChildNode)[];
 };
 export declare class TemplaterResult {
     props: Props;

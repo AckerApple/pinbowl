@@ -27,7 +27,6 @@ export class BaseTagSupport {
     memory = {
         state: [],
     };
-    clones = []; // elements on document. Needed at destroy process to know what to destroy
     // travels with all rerenderings
     global = {
         destroy$: new Subject(),
@@ -39,6 +38,7 @@ export class BaseTagSupport {
         oldest: this,
         blocked: [], // renders that did not occur because an event was processing
         childTags: [], // tags on me
+        clones: [], // elements on document. Needed at destroy process to know what to destroy
     };
     hasLiveElements = false;
     constructor(templater, subject, castedProps) {
@@ -165,7 +165,6 @@ export class BaseTagSupport {
     }) {
         const firstDestroy = !options.byParent;
         const global = this.global;
-        const subject = this.subject;
         const childTags = options.byParent ? [] : getChildTagsToDestroy(this.global.childTags);
         if (firstDestroy && isTagComponent(this.templater)) {
             global.destroy$.next();
@@ -183,17 +182,8 @@ export class BaseTagSupport {
             }
         }
         let mainPromise;
-        // HTML DOM manipulation. Put back down the template tag
-        const insertBefore = global.insertBefore;
         // FIRST DOM Manipulation to cause painting cycle
-        if (insertBefore.nodeName === 'TEMPLATE') {
-            const placeholder = global.placeholder;
-            if (placeholder && !('arrayValue' in this.memory)) {
-                if (!options.byParent) {
-                    restoreTagMarker(this);
-                }
-            }
-        }
+        checkRestoreTagMarker(this, options);
         if (firstDestroy) {
             const { stagger, promise } = this.destroyClones(options);
             options.stagger = stagger;
@@ -205,12 +195,7 @@ export class BaseTagSupport {
             this.destroyClones();
         }
         // data reset
-        delete global.placeholder;
-        global.context = {};
-        delete global.oldest; // may not be needed
-        delete global.newest;
-        this.global.childTags.length = 0;
-        delete subject.tagSupport;
+        resetTagSupport(this);
         if (mainPromise) {
             mainPromise = mainPromise.then(async () => {
                 const promises = childTags.map(kid => kid.destroy({ stagger: 0, byParent: true }));
@@ -225,8 +210,8 @@ export class BaseTagSupport {
     destroyClones({ stagger } = {
         stagger: 0,
     }) {
-        const oldClones = [...this.clones];
-        this.clones.length = 0; // tag maybe used for something else
+        const oldClones = [...this.global.clones];
+        this.global.clones.length = 0; // tag maybe used for something else
         const promises = oldClones.map(clone => this.checkCloneRemoval(clone, stagger)).filter(x => x); // only return promises
         // check subjects that may have clones attached to them
         const oldContext = this.global.context;
@@ -257,7 +242,7 @@ export class BaseTagSupport {
             const ownerSupport = this.ownerTagSupport;
             if (ownerSupport) {
                 // Sometimes my clones were first registered to my owner, remove them from owner
-                ownerSupport.clones = ownerSupport.clones.filter(compareClone => compareClone !== clone);
+                ownerSupport.global.clones = ownerSupport.global.clones.filter(compareClone => compareClone !== clone);
             }
         };
         if (promise instanceof Promise) {
@@ -298,11 +283,27 @@ export class TagSupport extends BaseTagSupport {
         return tag;
     }
 }
-function restoreTagMarkers(support) {
-    restoreTagMarker(support);
-    const childTags = support.global.childTags;
-    for (let index = childTags.length - 1; index >= 0; --index) {
-        restoreTagMarkers(childTags[index].global.oldest);
+export function checkRestoreTagMarker(support, options) {
+    const global = support.global;
+    // HTML DOM manipulation. Put back down the template tag
+    const insertBefore = global.insertBefore;
+    if (insertBefore.nodeName === 'TEMPLATE') {
+        const placeholder = global.placeholder;
+        if (placeholder && !('arrayValue' in support.memory)) {
+            if (!options.byParent) {
+                restoreTagMarker(support);
+            }
+        }
     }
+}
+export function resetTagSupport(support) {
+    const global = support.global;
+    delete global.placeholder;
+    global.context = {};
+    delete global.oldest; // may not be needed
+    delete global.newest;
+    support.global.childTags.length = 0;
+    const subject = support.subject;
+    delete subject.tagSupport;
 }
 //# sourceMappingURL=TagSupport.class.js.map
