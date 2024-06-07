@@ -1,4 +1,4 @@
-import { processAttribute } from './processAttribute.function';
+import { processAttribute } from './processAttribute.function.js';
 const search = new RegExp('\\s*<template interpolate end id="__tagvar(\\d{1,4})"([^>]*)></template>(\\s*)');
 export function scanTextAreaValue(textarea, context, ownerSupport) {
     const value = textarea.value;

@@ -1,7 +1,7 @@
-import { setUse } from '../../state';
-import { processTagResult } from './processTagResult.function';
-import { TagSupport } from '../TagSupport.class';
-import { renderSubjectComponent } from '../render/renderSubjectComponent.function';
+import { processTagResult } from './processTagResult.function.js';
+import { TagSupport } from '../TagSupport.class.js';
+import { renderSubjectComponent } from '../render/renderSubjectComponent.function.js';
+/** create new support, connects globals to old support if one, and  */
 export function processSubjectComponent(templater, subject, insertBefore, ownerSupport, options) {
     // Check if function component is wrapped in a tag() call
     // TODO: This below check not needed in production mode
@@ -20,16 +20,16 @@ export function processSubjectComponent(templater, subject, insertBefore, ownerS
     let reSupport = subject.tagSupport;
     const global = tagSupport.global = reSupport?.global || tagSupport.global;
     global.insertBefore = insertBefore;
-    const providers = setUse.memory.providerConfig;
-    providers.ownerSupport = ownerSupport;
     const isRender = !reSupport;
     if (isRender) {
         const support = reSupport || tagSupport;
         reSupport = renderSubjectComponent(subject, support, ownerSupport);
     }
-    processTagResult(reSupport, subject, // The element set here will be removed from document. Also result.tag will be added in here
+    const newSupport = processTagResult(reSupport, subject, // The element set here will be removed from document. Also result.tag will be added in here
     insertBefore, // <template end interpolate /> (will be removed)
     options);
+    // subject.tagSupport = newSupport
+    ownerSupport.global.childTags.push(newSupport);
     return reSupport;
 }
 //# sourceMappingURL=processSubjectComponent.function.js.map

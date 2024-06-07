@@ -1,17 +1,18 @@
-import { escapeVariable, variablePrefix } from './Tag.class';
-import { deepClone } from '../deepFunctions';
-import { isTagComponent } from '../isInstance';
-import { cloneValueArray } from './cloneValueArray.function';
-import { restoreTagMarker } from './checkDestroyPrevious.function';
-import { runBeforeDestroy } from './tagRunner';
-import { getChildTagsToDestroy } from './destroy.support';
-import { elementDestroyCheck } from './elementDestroyCheck.function';
-import { updateContextItem } from './update/updateContextItem.function';
-import { processNewValue } from './update/processNewValue.function';
-import { setTagPlaceholder } from './setTagPlaceholder.function';
-import { interpolateElement, interpolateString } from '../interpolations/interpolateElement';
-import { subscribeToTemplate } from '../interpolations/interpolateTemplate';
-import { afterInterpolateElement } from '../interpolations/afterInterpolateElement.function';
+import { escapeVariable, variablePrefix } from './Tag.class.js';
+import { deepClone } from '../deepFunctions.js';
+import { isTagComponent } from '../isInstance.js';
+import { cloneValueArray } from './cloneValueArray.function.js';
+import { restoreTagMarker } from './checkDestroyPrevious.function.js';
+import { runBeforeDestroy } from './tagRunner.js';
+import { getChildTagsToDestroy } from './destroy.support.js';
+import { elementDestroyCheck } from './elementDestroyCheck.function.js';
+import { updateContextItem } from './update/updateContextItem.function.js';
+import { processNewValue } from './update/processNewValue.function.js';
+import { setTagPlaceholder } from './setTagPlaceholder.function.js';
+import { interpolateElement, interpolateString } from '../interpolations/interpolateElement.js';
+import { subscribeToTemplate } from '../interpolations/interpolateTemplate.js';
+import { afterInterpolateElement } from '../interpolations/afterInterpolateElement.function.js';
+import { Subject } from '../subject/Subject.class.js';
 const prefixSearch = new RegExp(variablePrefix, 'g');
 /** used only for apps, otherwise use TagSupport */
 export class BaseTagSupport {
@@ -29,24 +30,31 @@ export class BaseTagSupport {
     clones = []; // elements on document. Needed at destroy process to know what to destroy
     // travels with all rerenderings
     global = {
+        destroy$: new Subject(),
         context: {}, // populated after reading interpolated.values array converted to an object {variable0, variable:1}
         providers: [],
         /** Indicator of re-rending. Saves from double rending something already rendered */
         renderCount: 0,
-        deleted: false,
         subscriptions: [],
+        oldest: this,
+        blocked: [], // renders that did not occur because an event was processing
+        childTags: [], // tags on me
     };
     hasLiveElements = false;
-    constructor(templater, subject) {
+    constructor(templater, subject, castedProps) {
         this.templater = templater;
         this.subject = subject;
-        const children = templater.children; // children tags passed in as arguments
-        const kidValue = children.value;
         const props = templater.props; // natural props
+        this.propsConfig = this.clonePropsBy(props, castedProps);
+    }
+    clonePropsBy(props, castedProps) {
+        const children = this.templater.children; // children tags passed in as arguments
+        const kidValue = children.value;
         const latestCloned = props.map(props => deepClone(props));
-        this.propsConfig = {
+        return this.propsConfig = {
             latest: props,
             latestCloned, // assume its HTML children and then detect
+            castProps: castedProps, //?? castProps(props, this, this.memory.state),
             lastClonedKidValues: kidValue.map(kid => {
                 const cloneValues = cloneValueArray(kid.values);
                 return cloneValues;
@@ -115,7 +123,7 @@ export class BaseTagSupport {
         const thisTag = this.templater.tag;
         const strings = this.strings || thisTag.strings;
         const values = this.values || thisTag.values;
-        strings.map((_string, index) => {
+        strings.forEach((_string, index) => {
             const hasValue = values.length > index;
             if (!hasValue) {
                 return;
@@ -125,6 +133,13 @@ export class BaseTagSupport {
             // is something already there?
             const exists = variableName in context;
             if (exists) {
+                if (this.global.deleted) {
+                    const valueSupport = (value && value.tagSupport);
+                    if (valueSupport) {
+                        valueSupport.destroy();
+                        return context; // item was deleted, no need to emit
+                    }
+                }
                 return updateContextItem(context, variableName, value);
             }
             // 🆕 First time values below
@@ -132,21 +147,17 @@ export class BaseTagSupport {
         });
         return context;
     }
-}
-export class TagSupport extends BaseTagSupport {
-    templater;
-    ownerTagSupport;
-    subject;
-    version;
-    isApp = false;
-    childTags = []; // tags on me
-    constructor(templater, // at runtime rendering of a tag, it needs to be married to a new TagSupport()
-    ownerTagSupport, subject, version = 0) {
-        super(templater, subject);
-        this.templater = templater;
-        this.ownerTagSupport = ownerTagSupport;
-        this.subject = subject;
-        this.version = version;
+    updateBy(tagSupport) {
+        const tempTag = tagSupport.templater.tag;
+        this.updateConfig(tempTag.strings, tempTag.values);
+    }
+    updateConfig(strings, values) {
+        this.strings = strings;
+        this.updateValues(values);
+    }
+    updateValues(values) {
+        this.values = values;
+        return this.updateContext(this.global.context);
     }
     destroy(options = {
         stagger: 0,
@@ -155,8 +166,9 @@ export class TagSupport extends BaseTagSupport {
         const firstDestroy = !options.byParent;
         const global = this.global;
         const subject = this.subject;
-        const childTags = options.byParent ? [] : getChildTagsToDestroy(this.childTags);
+        const childTags = options.byParent ? [] : getChildTagsToDestroy(this.global.childTags);
         if (firstDestroy && isTagComponent(this.templater)) {
+            global.destroy$.next();
             runBeforeDestroy(this, this);
         }
         this.destroySubscriptions();
@@ -170,8 +182,10 @@ export class TagSupport extends BaseTagSupport {
                 runBeforeDestroy(child, child);
             }
         }
+        let mainPromise;
         // HTML DOM manipulation. Put back down the template tag
         const insertBefore = global.insertBefore;
+        // FIRST DOM Manipulation to cause painting cycle
         if (insertBefore.nodeName === 'TEMPLATE') {
             const placeholder = global.placeholder;
             if (placeholder && !('arrayValue' in this.memory)) {
@@ -179,10 +193,6 @@ export class TagSupport extends BaseTagSupport {
                     restoreTagMarker(this);
                 }
             }
-        }
-        let mainPromise;
-        if (this.ownerTagSupport) {
-            this.ownerTagSupport.childTags = this.ownerTagSupport.childTags.filter(child => child !== this);
         }
         if (firstDestroy) {
             const { stagger, promise } = this.destroyClones(options);
@@ -197,11 +207,9 @@ export class TagSupport extends BaseTagSupport {
         // data reset
         delete global.placeholder;
         global.context = {};
-        delete global.oldest;
+        delete global.oldest; // may not be needed
         delete global.newest;
-        global.deleted = true;
-        this.childTags.length = 0;
-        this.hasLiveElements = false;
+        this.global.childTags.length = 0;
         delete subject.tagSupport;
         if (mainPromise) {
             mainPromise = mainPromise.then(async () => {
@@ -213,13 +221,6 @@ export class TagSupport extends BaseTagSupport {
             mainPromise = Promise.all(childTags.map(kid => kid.destroy({ stagger: 0, byParent: true })));
         }
         return mainPromise.then(() => options.stagger);
-    }
-    destroySubscriptions() {
-        const subs = this.global.subscriptions;
-        for (let index = subs.length - 1; index >= 0; --index) {
-            subs[index].unsubscribe();
-        }
-        subs.length = 0;
     }
     destroyClones({ stagger } = {
         stagger: 0,
@@ -267,17 +268,27 @@ export class TagSupport extends BaseTagSupport {
         }
         return promise;
     }
-    updateBy(tagSupport) {
-        const tempTag = tagSupport.templater.tag;
-        this.updateConfig(tempTag.strings, tempTag.values);
+    destroySubscriptions() {
+        const subs = this.global.subscriptions;
+        for (let index = subs.length - 1; index >= 0; --index) {
+            subs[index].unsubscribe();
+        }
+        subs.length = 0;
     }
-    updateConfig(strings, values) {
-        this.strings = strings;
-        this.updateValues(values);
-    }
-    updateValues(values) {
-        this.values = values;
-        return this.updateContext(this.global.context);
+}
+export class TagSupport extends BaseTagSupport {
+    templater;
+    ownerTagSupport;
+    subject;
+    version;
+    isApp = false;
+    constructor(templater, // at runtime rendering of a tag, it needs to be married to a new TagSupport()
+    ownerTagSupport, subject, castedProps, version = 0) {
+        super(templater, subject, castedProps);
+        this.templater = templater;
+        this.ownerTagSupport = ownerTagSupport;
+        this.subject = subject;
+        this.version = version;
     }
     getAppTagSupport() {
         let tag = this;
@@ -289,7 +300,7 @@ export class TagSupport extends BaseTagSupport {
 }
 function restoreTagMarkers(support) {
     restoreTagMarker(support);
-    const childTags = support.childTags;
+    const childTags = support.global.childTags;
     for (let index = childTags.length - 1; index >= 0; --index) {
         restoreTagMarkers(childTags[index].global.oldest);
     }

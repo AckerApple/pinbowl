@@ -1,16 +1,6 @@
-import { setUse } from "./setUse.function";
-function setCurrentTagSupport(support) {
-    setUse.memory.currentSupport = support;
-}
+import { state } from './state.function.js';
+/** runs a callback function one time and never again. Same as calling state(() => ...) */
 export function onInit(callback) {
-    const tagSupport = setUse.memory.currentSupport;
-    if (!tagSupport.global.init) {
-        tagSupport.global.init = callback;
-        callback(); // fire init
-    }
+    state(callback);
 }
-setUse({
-    beforeRender: tagSupport => setCurrentTagSupport(tagSupport),
-    beforeRedraw: tagSupport => setCurrentTagSupport(tagSupport),
-});
 //# sourceMappingURL=onInit.js.map

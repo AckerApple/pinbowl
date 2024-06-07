@@ -1,3 +1,4 @@
+/** checks if previous support exists on subject or as a last global support. If first render, calls builder. Otherwise calls tagSupport.updateBy() */
 export function processTagResult(tagSupport, subject, // used for recording past and current value
 insertBefore, // <template end interpolate />
 { counts, }) {
@@ -12,6 +13,7 @@ insertBefore, // <template end interpolate />
     tagSupport.buildBeforeElement(insertBefore, {
         counts,
     });
+    return tagSupport;
 }
 function processTagResultUpdate(tagSupport, subject, // used for recording past and current value
 prevSupport) {
@@ -20,10 +22,10 @@ prevSupport) {
         const newSupport = subject(prevSupport);
         prevSupport.updateBy(newSupport);
         subject.tagSupport = newSupport;
-        return;
+        return newSupport;
     }
     prevSupport.updateBy(tagSupport);
     subject.tagSupport = tagSupport;
-    return;
+    return tagSupport;
 }
 //# sourceMappingURL=processTagResult.function.js.map

@@ -1,13 +1,13 @@
-import { deepClone, deepEqual } from '../deepFunctions';
-import { renderTagSupport } from '../tag/render/renderTagSupport.function';
+import { deepClone, deepEqual } from '../deepFunctions.js';
+import { renderTagSupport } from '../tag/render/renderTagSupport.function.js';
 export function providersChangeCheck(tagSupport) {
     const global = tagSupport.global;
     const providersWithChanges = global.providers.filter(provider => !deepEqual(provider.instance, provider.clone));
     // reset clones
     for (let index = providersWithChanges.length - 1; index >= 0; --index) {
         const provider = providersWithChanges[index];
-        const appSupport = tagSupport.getAppTagSupport();
-        handleProviderChanges(appSupport, provider);
+        const owner = provider.owner;
+        handleProviderChanges(owner, provider);
         provider.clone = deepClone(provider.instance);
     }
 }
@@ -21,26 +21,26 @@ function handleProviderChanges(appSupport, provider) {
         const notRendered = renderCount === tagSupport.global.renderCount;
         if (notRendered) {
             provider.clone = deepClone(provider.instance);
-            renderTagSupport(tagSupport, false);
+            renderTagSupport(tagSupport, // tagSupport.global.newest as TagSupport,
+            false);
             continue;
         }
     }
 }
 /** Updates and returns memory of tag providers */
 function getTagsWithProvider(tagSupport, provider, memory = []) {
-    const global = tagSupport.global;
-    const compare = global.providers;
-    const hasProvider = compare.find(xProvider => xProvider.constructMethod.compareTo === provider.constructMethod.compareTo);
-    if (hasProvider) {
-        memory.push({
-            tagSupport,
-            renderCount: global.renderCount,
-            provider: hasProvider,
-        });
-    }
-    const childTags = tagSupport.childTags;
+    memory.push({
+        tagSupport,
+        renderCount: tagSupport.global.renderCount,
+        provider,
+    });
+    const childTags = provider.children;
     for (let index = childTags.length - 1; index >= 0; --index) {
-        getTagsWithProvider(childTags[index], provider, memory);
+        memory.push({
+            tagSupport: childTags[index],
+            renderCount: childTags[index].global.renderCount,
+            provider,
+        });
     }
     return memory;
 }

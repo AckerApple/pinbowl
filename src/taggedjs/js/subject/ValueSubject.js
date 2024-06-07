@@ -1,14 +1,10 @@
-import { Subject } from './Subject.class';
+import { Subject, defineValueOn } from './Subject.class.js';
 export class ValueSubject extends Subject {
+    value;
     constructor(value) {
         super(value);
-    }
-    get value() {
-        return this._value;
-    }
-    set value(newValue) {
-        this._value = newValue;
-        this.set(newValue);
+        this.value = value;
+        defineValueOn(this);
     }
     subscribe(callback) {
         const subscription = super.subscribe(callback);

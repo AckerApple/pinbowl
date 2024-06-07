@@ -1,9 +1,10 @@
-import { ValueSubject } from '../../subject/ValueSubject';
-import { ArrayNoKeyError } from '../../errors';
-import { destroyArrayTag } from '../checkDestroyPrevious.function';
-import { setupNewTemplater, tagFakeTemplater } from './processTag.function';
-import { TagSupport } from '../TagSupport.class';
-import { isTagClass } from '../../isInstance';
+import { ValueSubject } from '../../subject/ValueSubject.js';
+import { ArrayNoKeyError } from '../../errors.js';
+import { destroyArrayTag } from '../checkDestroyPrevious.function.js';
+import { newTagSupportByTemplater, setupNewSupport, tagFakeTemplater } from './processTag.function.js';
+import { TagSupport } from '../TagSupport.class.js';
+import { isTagClass } from '../../isInstance.js';
+import { renderTagOnly } from '../render/renderTagOnly.function.js';
 export function processTagArray(subject, value, // arry of Tag classes
 insertBefore, // <template end interpolate />
 ownerSupport, options) {
@@ -19,20 +20,31 @@ ownerSupport, options) {
         const newLength = value.length - 1;
         const at = index - removed;
         const lessLength = newLength < at;
-        const subValue = value[index - removed];
-        const subTag = subValue;
+        if (lessLength) {
+            destroyArrayItem(lastArray, index, options);
+            ++removed;
+            return false;
+        }
+        const subTag = value[index - removed];
+        const tagClass = isTagClass(subTag);
+        let tag = subTag;
+        let templater = subTag.templater;
+        let prevArrayValue;
+        if (tagClass) {
+            prevArrayValue = tag.memory.arrayValue;
+        }
+        else {
+            templater = subTag;
+            tag = templater.tag;
+            prevArrayValue = templater.arrayValue;
+        }
         // const tag = subTag?.templater.tag as Tag
         const lastTag = item.tagSupport.templater.tag;
-        const newArrayValue = subTag?.memory.arrayValue;
         const lastArrayValue = lastTag.memory.arrayValue;
-        const destroyItem = lessLength || !areLikeValues(newArrayValue, lastArrayValue);
+        const destroyItem = !areLikeValues(prevArrayValue, lastArrayValue);
         if (destroyItem) {
-            const last = lastArray[index];
-            const tagSupport = last.tagSupport;
-            destroyArrayTag(tagSupport, options.counts);
-            last.deleted = true;
+            destroyArrayItem(lastArray, index, options);
             ++removed;
-            ++options.counts.removed;
             return false;
         }
         return true;
@@ -43,18 +55,30 @@ ownerSupport, options) {
         const previous = lastArray[index];
         const previousSupport = previous?.tagSupport;
         const subTag = item;
-        if (isTagClass(subTag) && !subTag.templater) {
-            tagFakeTemplater(subTag);
+        const tagClass = isTagClass(subTag);
+        const itemSubject = new ValueSubject(undefined);
+        let templater = subTag.templater;
+        let tagSupport;
+        if (tagClass) {
+            if (!templater) {
+                templater = tagFakeTemplater(subTag);
+            }
+            tagSupport = new TagSupport(templater, ownerSupport, itemSubject);
         }
-        const tagSupport = new TagSupport(subTag.templater, ownerSupport, new ValueSubject(undefined));
+        else {
+            templater = subTag;
+            tagSupport = setupNewTemplater(templater, ownerSupport, itemSubject);
+        }
+        // share global between old and new
         if (previousSupport) {
-            setupNewTemplater(tagSupport, ownerSupport, previousSupport.subject);
+            setupNewSupport(tagSupport, ownerSupport, previousSupport.subject);
             const global = previousSupport.global;
             tagSupport.global = global;
             global.newest = tagSupport;
         }
         // check for html``.key()
-        const keySet = 'arrayValue' in subTag.memory;
+        const tag = templater.tag || subTag;
+        const keySet = 'arrayValue' in tag.memory;
         if (!keySet) {
             const details = {
                 template: tagSupport.getTemplate().string,
@@ -69,14 +93,12 @@ ownerSupport, options) {
         if (couldBeSame) {
             const prevSupport = previous.tagSupport;
             const prevGlobal = prevSupport.global;
-            // subTag.tagSupport = subTag.tagSupport || prevSupport
             const oldest = prevGlobal.oldest;
             oldest.updateBy(tagSupport);
-            // return []
             continue;
         }
         processAddTagArrayItem(runtimeInsertBefore, tagSupport, index, options, lastArray);
-        ownerSupport.childTags.push(tagSupport);
+        ownerSupport.global.childTags.push(tagSupport);
     }
     return clones;
 }
@@ -119,5 +141,17 @@ function areLikeValues(valueA, valueB) {
         return valueA.every((item, index) => item == valueB[index]);
     }
     return false;
+}
+function setupNewTemplater(templater, ownerSupport, itemSubject) {
+    const tagSupport = newTagSupportByTemplater(templater, ownerSupport, itemSubject);
+    renderTagOnly(tagSupport, tagSupport, itemSubject, ownerSupport);
+    return tagSupport;
+}
+function destroyArrayItem(lastArray, index, options) {
+    const last = lastArray[index];
+    const tagSupport = last.tagSupport;
+    destroyArrayTag(tagSupport, options.counts);
+    last.deleted = true;
+    ++options.counts.removed;
 }
 //# sourceMappingURL=processTagArray.js.map

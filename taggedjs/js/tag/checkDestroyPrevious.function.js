@@ -1,10 +1,10 @@
-import { isStaticTag } from '../isInstance';
-import { ValueTypes, getValueType } from './update/processFirstSubject.utils';
-import { isLikeTags } from './isLikeTags.function';
-import { destroyTagMemory, destroyTagSupportPast } from './destroyTag.function';
-import { insertAfter } from '../insertAfter.function';
+import { isStaticTag } from '../isInstance.js';
+import { isLikeTags } from './isLikeTags.function.js';
+import { destroyTagMemory } from './destroyTag.function.js';
+import { insertAfter } from '../insertAfter.function.js';
+import { ValueTypes } from './ValueTypes.enum.js';
 export function checkDestroyPrevious(subject, // existing.value is the old value
-newValue, insertBefore) {
+newValue, insertBefore, valueType) {
     const displaySubject = subject;
     const hasLastValue = 'lastValue' in displaySubject;
     const lastValue = displaySubject.lastValue; // TODO: we maybe able to use displaySubject.value and remove concept of lastValue
@@ -21,7 +21,6 @@ newValue, insertBefore) {
         destroySimpleValue(insertBefore, displaySubject);
         return 'changed-simple-value';
     }
-    const valueType = getValueType(newValue);
     const arraySubject = subject;
     const wasArray = arraySubject.lastArray;
     // no longer an array
@@ -41,14 +40,15 @@ newValue, insertBefore) {
     // no longer tag or component?
     if (lastSupport) {
         const isValueTag = isStaticTag(newValue);
-        const isSubjectTag = isStaticTag(subject.value);
+        const isSubjectTag = isStaticTag(subject._value);
+        const newTag = newValue;
         if (isSubjectTag && isValueTag) {
-            const newTag = newValue;
             // its a different tag now
             if (!isLikeTags(newTag, lastSupport)) {
                 // put template back down
                 restoreTagMarker(lastSupport);
                 destroyTagMemory(lastSupport);
+                // delete lastSupport.global.deleted // ???
                 return 2;
             }
             return false;
@@ -63,6 +63,7 @@ newValue, insertBefore) {
         restoreTagMarker(lastSupport);
         // destroy old component, value is not a component
         destroyTagMemory(lastSupport);
+        // delete lastSupport.global.deleted // ???
         return 'different-tag';
     }
     return false;
@@ -71,7 +72,6 @@ export function isSimpleType(value) {
     return ['string', 'number', 'boolean'].includes(value);
 }
 export function destroyArrayTag(tagSupport, counts) {
-    destroyTagSupportPast(tagSupport);
     tagSupport.destroy({
         stagger: counts.removed++,
     });

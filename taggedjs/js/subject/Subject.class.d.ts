@@ -1,18 +1,18 @@
-import { OperatorFunction, SubjectLike, SubjectSubscriber, Subscription } from "./subject.utils";
+import { OperatorFunction, SubjectLike, SubjectSubscriber, Subscription } from './subject.utils.js';
 export type OnSubscription<T> = (subscription: Subscription<T>) => unknown;
 export declare class Subject<T> implements SubjectLike<T> {
+    value?: T | undefined;
     onSubscription?: OnSubscription<T> | undefined;
     methods: OperatorFunction<any, any, any>[];
     isSubject: boolean;
     subscribers: Subscription<T>[];
     subscribeWith?: (x: SubjectSubscriber<T>) => Subscription<T>;
     _value?: T;
-    constructor(value?: T, onSubscription?: OnSubscription<T> | undefined);
-    get value(): T | undefined;
-    set value(newValue: T | undefined);
+    set: T;
+    constructor(value?: T | undefined, onSubscription?: OnSubscription<T> | undefined);
     subscribe(callback: SubjectSubscriber<T>): Subscription<any> | Subscription<T>;
-    set(value?: any): void;
-    next: (value?: any) => void;
+    next(value?: any): void;
+    emit(): void;
     toPromise(): Promise<T>;
     /** like toPromise but faster */
     toCallback(callback: (x: T) => any): this;
@@ -27,6 +27,7 @@ export declare class Subject<T> implements SubjectLike<T> {
     pipe<A, B, C, D, E, F, G, H, RESOLVE>(op1: OperatorFunction<T, A, RESOLVE>, op2: OperatorFunction<A, B, RESOLVE>, op3: OperatorFunction<B, C, RESOLVE>, op4: OperatorFunction<C, D, RESOLVE>, op5: OperatorFunction<D, E, RESOLVE>, op6: OperatorFunction<E, F, RESOLVE>, op7: OperatorFunction<F, G, RESOLVE>, op8: OperatorFunction<G, H, RESOLVE>): Subject<H>;
     pipe<A, B, C, D, E, F, G, H, I, RESOLVE>(op1: OperatorFunction<T, A, RESOLVE>, op2: OperatorFunction<A, B, RESOLVE>, op3: OperatorFunction<B, C, RESOLVE>, op4: OperatorFunction<C, D, RESOLVE>, op5: OperatorFunction<D, E, RESOLVE>, op6: OperatorFunction<E, F, RESOLVE>, op7: OperatorFunction<F, G, RESOLVE>, op8: OperatorFunction<G, H, RESOLVE>, op9: OperatorFunction<H, I, RESOLVE>): Subject<I>;
     pipe<A, B, C, D, E, F, G, H, I, RESOLVE>(op1: OperatorFunction<T, A, RESOLVE>, op2: OperatorFunction<A, B, RESOLVE>, op3: OperatorFunction<B, C, RESOLVE>, op4: OperatorFunction<C, D, RESOLVE>, op5: OperatorFunction<D, E, RESOLVE>, op6: OperatorFunction<E, F, RESOLVE>, op7: OperatorFunction<F, G, RESOLVE>, op8: OperatorFunction<G, H, RESOLVE>, op9: OperatorFunction<H, I, RESOLVE>, ...operations: OperatorFunction<any, any, any>[]): Subject<unknown>;
+    setMethods(operations: OperatorFunction<any, any, any>[]): void;
     static all<A, B, C, D, E, F>(args: [Subject<A> | A, Subject<B> | B, Subject<C> | C, Subject<D> | D, Subject<E> | E, Subject<F> | F]): Subject<[A, B, C, D, E, F]>;
     static all<A, B, C, D, E>(args: [Subject<A> | A, Subject<B> | B, Subject<C> | C, Subject<D> | D, Subject<E> | E]): Subject<[A, B, C, D, E]>;
     static all<A, B, C, D>(args: [Subject<A> | A, Subject<B> | B, Subject<C> | C, Subject<D> | D]): Subject<[A, B, C, D]>;
@@ -35,3 +36,4 @@ export declare class Subject<T> implements SubjectLike<T> {
     static all<A>(args: [Subject<A> | A]): Subject<[A]>;
     static globalSubCount$: Subject<number>;
 }
+export declare function defineValueOn(subject: Subject<any>): void;

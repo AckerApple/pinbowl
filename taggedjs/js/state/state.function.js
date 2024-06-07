@@ -1,6 +1,6 @@
-import { setUse } from './setUse.function';
-import { getStateValue } from './state.utils';
-import { syncStates } from './syncStates.function';
+import { setUse } from './setUse.function.js';
+import { getStateValue } from './state.utils.js';
+import { syncStates } from './syncStates.function.js';
 /** Used for variables that need to remain the same variable during render passes */
 export function state(defaultValue) {
     const config = setUse.memory.stateConfig;

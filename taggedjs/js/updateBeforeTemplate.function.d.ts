@@ -1,5 +1,5 @@
-import { InsertBefore } from "./interpolations/Clones.type";
-import { NoDisplayValue } from "./interpolations/processAttribute.function";
+import { InsertBefore } from './interpolations/InsertBefore.type.js';
+import { NoDisplayValue } from './interpolations/processAttribute.function.js';
 export declare function updateBeforeTemplate(value: string, // value should be casted before calling here
 lastFirstChild: InsertBefore): Text;
 type TextableValue = string | boolean | number | NoDisplayValue;

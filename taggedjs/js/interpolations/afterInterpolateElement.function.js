@@ -1,5 +1,5 @@
-import { buildClones } from '../render';
-import { afterElmBuild } from './interpolateTemplate';
+import { buildClones } from '../render.js';
+import { afterElmBuild } from './interpolateTemplate.js';
 export function afterInterpolateElement(container, insertBefore, tagSupport, context, options) {
     const clones = buildClones(container, insertBefore);
     if (!clones.length) {

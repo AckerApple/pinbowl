@@ -1,4 +1,4 @@
-import { Subject } from "./Subject.class";
+import { Subject } from './Subject.class.js';
 export type Resolve<T> = (x: T) => any;
 export type Subscription<T> = ((arg: T) => void) & {
     callback: SubjectSubscriber<T>;
@@ -28,5 +28,5 @@ export type PipeUtils<H> = {
     setHandler: setHandler<H>;
     next: (newValue: any) => any;
 };
-export declare function getSubscription<T>(subject: Subject<T>, callback: SubjectSubscriber<any>): Subscription<any>;
+export declare function getSubscription<T>(subject: Subject<T>, callback: SubjectSubscriber<any>, subscribers: Subscription<T>[]): Subscription<any>;
 export declare function runPipedMethods(value: any, methods: OperatorFunction<any, any, any>[], onComplete: (lastValue: any) => any): void;

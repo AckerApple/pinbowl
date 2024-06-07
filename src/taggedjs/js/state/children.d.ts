@@ -1,1 +1,1 @@
-export declare function children(): import("..").TagChildren;
+export declare function children(): import("../index.js").TagChildren;

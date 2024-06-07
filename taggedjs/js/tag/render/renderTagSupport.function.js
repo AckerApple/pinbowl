@@ -1,5 +1,5 @@
-import { deepEqual } from '../../deepFunctions';
-import { renderExistingTag } from './renderExistingTag.function';
+import { deepEqual } from '../../deepFunctions.js';
+import { renderExistingTag } from './renderExistingTag.function.js';
 /** Main function used by all other callers to render/update display of a tag component */
 export function renderTagSupport(tagSupport, // must be latest/newest state render
 renderUp) {
@@ -9,9 +9,17 @@ renderUp) {
     if (!templater.wrapper) { // || isTagTemplater(templater) 
         const ownerTag = tagSupport.ownerTagSupport;
         ++global.renderCount;
-        return renderTagSupport(ownerTag, true);
+        if (ownerTag.global.deleted) {
+            return tagSupport;
+        }
+        return renderTagSupport(ownerTag.global.newest, true);
+    }
+    if (tagSupport.global.locked) {
+        tagSupport.global.blocked.push(tagSupport);
+        return tagSupport;
     }
     const subject = tagSupport.subject;
+    const oldest = tagSupport.global.oldest;
     let ownerSupport;
     let selfPropChange = false;
     const shouldRenderUp = renderUp && tagSupport;
@@ -20,15 +28,13 @@ renderUp) {
         if (ownerSupport) {
             const nowProps = templater.props;
             const latestProps = tagSupport.propsConfig.latestCloned;
-            selfPropChange = !nowProps.every((props, index) => deepEqual(props, latestProps[index]));
+            selfPropChange = !deepEqual(nowProps, latestProps);
         }
     }
-    const oldest = tagSupport.global.oldest;
     const tag = renderExistingTag(oldest, tagSupport, ownerSupport, // useTagSupport,
     subject);
-    const renderOwner = ownerSupport && selfPropChange;
-    if (renderOwner) {
-        const ownerTagSupport = ownerSupport;
+    if (ownerSupport && selfPropChange) {
+        const ownerTagSupport = ownerSupport.global.newest;
         renderTagSupport(ownerTagSupport, true);
         return tag;
     }

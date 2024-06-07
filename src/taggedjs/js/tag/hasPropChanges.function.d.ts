@@ -1,4 +1,4 @@
-import { Props } from "../Props";
+import { Props } from '../Props.js';
 /**
  *
  * @param props

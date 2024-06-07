@@ -1,8 +1,8 @@
-import { OnSubscription, Subject } from "../subject";
+import { OnSubscription, Subject } from '../subject/index.js';
 /** Create a Subject that on updates will sync state values to keep chained functions using latest variables */
 export declare function subject<T>(value?: T, onSubscription?: OnSubscription<T>): Subject<T>;
 export declare namespace subject {
-    var value: <T>(value: T) => Subject<T>;
+    var _value: <T>(value: T) => Subject<T>;
     var all: {
         <A, B, C, D, E, F>(args: [A | Subject<A>, B | Subject<B>, C | Subject<C>, D | Subject<D>, E | Subject<E>, F | Subject<F>]): Subject<[A, B, C, D, E, F]>;
         <A_1, B_1, C_1, D_1, E_1>(args: [A_1 | Subject<A_1>, B_1 | Subject<B_1>, C_1 | Subject<C_1>, D_1 | Subject<D_1>, E_1 | Subject<E_1>]): Subject<[A_1, B_1, C_1, D_1, E_1]>;

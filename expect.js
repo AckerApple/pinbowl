@@ -109,12 +109,16 @@ async function runTests(tests) {
 
 export function expect(expected) {
   return {
-    toBeDefined: () => {
+    toBeDefined: (customMessage) => {
       if(expected !== undefined && expected !== null) {
         return
       }
 
-      const message = `Expected ${JSON.stringify(expected)} to be defined`
+      if(customMessage instanceof Function) {
+        customMessage = customMessage()
+      }
+
+      const message = customMessage || `Expected ${JSON.stringify(expected)} to be defined`
       console.error(message, {expected})
       throw new Error(message)
     },
@@ -127,6 +131,7 @@ export function expect(expected) {
         customMessage = customMessage()
       }
 
+      console.log('expected', {expected, received})
       const message = customMessage || `Expected ${typeof(expected)} ${JSON.stringify(expected)} to be ${typeof(received)} ${JSON.stringify(received)}`
       console.error(message, {received, expected})
       throw new Error(message)

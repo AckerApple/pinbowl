@@ -1,4 +1,4 @@
-import { InsertBefore } from '../../interpolations/Clones.type';
+import { InsertBefore } from '../../interpolations/InsertBefore.type.js';
 import { DisplaySubject } from '../../subject.types';
 export type RegularValue = string | number | undefined | boolean;
 export declare function processRegularValue(value: RegularValue, subject: DisplaySubject, // could be tag via subject.tag

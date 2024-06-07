@@ -45,20 +45,26 @@ export const SmallBowlApp = tag(() => {// app.js - SmallBowlApp
 
   const endGame = async () => {
     console.info('👎 ending game...')
-    await restartGame()
-    game.gameStarted = false
-    game.playerTurn = -1
-    console.info('👎 ended game')
+    const confirmed = await restartGame()
+
+    if(confirmed) {
+      game.gameStarted = false
+      game.playerTurn = -1
+      console.info('👎 ended game')
+    }
   }
 
   const restartGame = async () => {
-    if(!await game.confirm('Are you sure you want to end current game?')){
-      return
+    const confirm = await game.confirm('Are you sure you want to end current game?')
+    console.log('confirm', confirm)
+    if(!confirm){
+      return confirm
     }
     
     console.info('👎 restarting game...')
     game.restart()
     console.info('👎 game restarted')
+    return confirm
   }
 
   function scoreByModal(score) {

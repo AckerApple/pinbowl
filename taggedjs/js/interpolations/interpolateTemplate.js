@@ -1,40 +1,34 @@
-import { variablePrefix } from "../tag/Tag.class";
-import { elementInitCheck } from "./elementInitCheck";
-import { processFirstSubjectValue } from "../tag/update/processFirstSubjectValue.function";
-import { isTagArray, isTagComponent } from "../isInstance";
-import { scanTextAreaValue } from "./scanTextAreaValue.function";
-import { updateExistingValue } from "../tag/update/updateExistingValue.function";
-import { swapInsertBefore } from "../tag/setTagPlaceholder.function";
+import { variablePrefix } from '../tag/Tag.class.js';
+import { elementInitCheck } from './elementInitCheck.js';
+import { processFirstSubjectValue } from '../tag/update/processFirstSubjectValue.function.js';
+import { isTagArray, isTagComponent } from '../isInstance.js';
+import { scanTextAreaValue } from './scanTextAreaValue.function.js';
+import { updateExistingValue } from '../tag/update/updateExistingValue.function.js';
+import { swapInsertBefore } from '../tag/setTagPlaceholder.function.js';
 export function interpolateTemplate(insertBefore, // <template end interpolate /> (will be removed)
 context, // variable scope of {`__tagvar${index}`:'x'}
 ownerSupport, // Tag class
-counts, // used for animation stagger computing
-options) {
-    // TODO: THe clones array is useless here
-    const clones = [];
+counts) {
     if (!insertBefore.hasAttribute('end')) {
-        return { clones }; // only care about <template end>
+        return; // only care about <template end>
     }
     const variableName = insertBefore.getAttribute('id');
     if (variableName?.substring(0, variablePrefix.length) !== variablePrefix) {
-        return { clones }; // ignore, not a tagVar
+        return; // ignore, not a tagVar
     }
     const existingSubject = context[variableName];
-    const isDynamic = isTagComponent(existingSubject.value) || isTagArray(existingSubject.value);
+    const isDynamic = isTagComponent(existingSubject._value) || isTagArray(existingSubject.value);
     // process dynamics later
     if (isDynamic) {
         return {
-            clones,
-            tagComponent: {
-                variableName,
-                ownerSupport,
-                subject: existingSubject,
-                insertBefore
-            }
+            variableName,
+            ownerSupport,
+            subject: existingSubject,
+            insertBefore
         };
     }
     subscribeToTemplate(insertBefore, existingSubject, ownerSupport, counts);
-    return { clones };
+    return;
 }
 export function subscribeToTemplate(insertBefore, subject, ownerSupport, counts) {
     let called = false;
@@ -66,25 +60,36 @@ export function subscribeToTemplate(insertBefore, subject, ownerSupport, counts)
     }
     ownerSupport.global.subscriptions.push(sub);
 }
+/** This is the function that enhances elements such as [class.something] and [style.color] OR it fixes elements that alter innerHTML */
 export function afterElmBuild(elm, options, context, ownerSupport) {
     if (!elm.getAttribute) {
         return;
     }
+    // Elements that alter innerHTML
     const tagName = elm.nodeName; // elm.tagName
     if (tagName === 'TEXTAREA') {
         scanTextAreaValue(elm, context, ownerSupport);
     }
     let diff = options.counts.added;
     diff = elementInitCheck(elm, options.counts) - diff;
-    if (elm.children) {
-        const children = elm.children;
+    const hasFocusFun = elm.focus;
+    if (hasFocusFun) {
+        if (elm.hasAttribute('autofocus')) {
+            elm.focus();
+        }
+        if (elm.hasAttribute('autoselect')) {
+            elm.select();
+        }
+    }
+    const children = elm.children;
+    if (children) {
         for (let index = children.length - 1; index >= 0; --index) {
             const child = children[index];
             const subOptions = {
                 ...options,
                 counts: options.counts,
             };
-            return afterElmBuild(child, subOptions, context, ownerSupport);
+            afterElmBuild(child, subOptions, context, ownerSupport);
         }
     }
 }

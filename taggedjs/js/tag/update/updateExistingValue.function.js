@@ -1,19 +1,20 @@
-import { TagSupport } from '../TagSupport.class';
-import { TemplaterResult } from '../../TemplaterResult.class';
-import { isTagClass, isTagTemplater } from '../../isInstance';
-import { ValueTypes, getValueType } from './processFirstSubject.utils';
-import { processTagArray } from './processTagArray';
-import { updateExistingTagComponent } from './updateExistingTagComponent.function';
-import { processRegularValue } from './processRegularValue.function';
-import { checkDestroyPrevious, restoreTagMarker } from '../checkDestroyPrevious.function';
-import { processSubjectComponent } from './processSubjectComponent.function';
-import { isLikeTags } from '../isLikeTags.function';
-import { setupNewTemplater, getFakeTemplater, processTag } from './processTag.function';
-import { swapInsertBefore } from '../setTagPlaceholder.function';
+import { TagSupport } from '../TagSupport.class.js';
+import { TemplaterResult } from '../TemplaterResult.class.js';
+import { isTagClass, isTagTemplater } from '../../isInstance.js';
+import { processTagArray } from './processTagArray.js';
+import { updateExistingTagComponent } from './updateExistingTagComponent.function.js';
+import { processRegularValue } from './processRegularValue.function.js';
+import { checkDestroyPrevious, restoreTagMarker } from '../checkDestroyPrevious.function.js';
+import { processSubjectComponent } from './processSubjectComponent.function.js';
+import { isLikeTags } from '../isLikeTags.function.js';
+import { getFakeTemplater, processTag, setupNewSupport } from './processTag.function.js';
+import { swapInsertBefore } from '../setTagPlaceholder.function.js';
+import { ValueTypes } from '../ValueTypes.enum.js';
+import { getValueType } from '../getValueType.function.js';
 export function updateExistingValue(subject, value, ownerSupport, insertBefore) {
     const subjectTag = subject;
     const valueType = getValueType(value);
-    checkDestroyPrevious(subject, value, insertBefore);
+    checkDestroyPrevious(subject, value, insertBefore, valueType);
     // handle already seen tag components
     if (valueType === ValueTypes.tagComponent) {
         return prepareUpdateToComponent(value, subjectTag, insertBefore, ownerSupport);
@@ -52,8 +53,6 @@ export function updateExistingValue(subject, value, ownerSupport, insertBefore) 
             return value;
         // now its a useless function (we don't automatically call functions)
         case ValueTypes.function:
-            // const bound = bindSubjectCallback(value as Callback, ownerSupport)
-            // subject.set(bound)
             if (!subject.clone) {
                 subject.clone = swapInsertBefore(insertBefore);
             }
@@ -77,12 +76,14 @@ function handleStillTag(subject, value, ownerSupport) {
         }
     }
     const valueSupport = new TagSupport(templater, ownerSupport, subject);
+    // ??? new
+    // subject.tagSupport = valueSupport
     if (isClass) {
         valueSupport.global = lastSupport.global;
     }
     const isSameTag = value && isLikeTags(lastSupport, valueSupport);
     if (isTagTemplater(value)) {
-        setupNewTemplater(valueSupport, ownerSupport, subject);
+        setupNewSupport(valueSupport, ownerSupport, subject);
     }
     if (isSameTag) {
         lastSupport.updateBy(valueSupport);

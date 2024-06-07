@@ -1,13 +1,13 @@
-import { Subject } from "./Subject.class";
+import { Subject } from './Subject.class.js';
 function removeSubFromArray(subscribers, callback) {
     const index = subscribers.findIndex(sub => sub.callback === callback);
     if (index !== -1) {
         subscribers.splice(index, 1);
     }
 }
-export function getSubscription(subject, callback) {
+export function getSubscription(subject, callback, subscribers) {
     const countSubject = Subject.globalSubCount$;
-    Subject.globalSubCount$.set(countSubject.value + 1);
+    Subject.globalSubCount$.next(countSubject._value + 1);
     const subscription = () => {
         subscription.unsubscribe();
     };
@@ -15,9 +15,9 @@ export function getSubscription(subject, callback) {
     subscription.subscriptions = [];
     // Return a function to unsubscribe from the BehaviorSubject
     subscription.unsubscribe = () => {
-        removeSubFromArray(subject.subscribers, callback); // each will be called when update comes in
+        removeSubFromArray(subscribers, callback); // each will be called when update comes in
         // removeSubFromArray(Subject.globalSubs, callback) // 🔬 testing
-        Subject.globalSubCount$.set(countSubject.value - 1);
+        Subject.globalSubCount$.next(countSubject._value - 1);
         // any double unsubscribes will be ignored
         subscription.unsubscribe = () => subscription;
         // unsubscribe from any combined subjects

@@ -51,7 +51,7 @@ export default async function runTest() {
     // frame 1 - strike
     const firstScore = byId('player_0_frame_0').onclick()
     
-    expect(byId('score_strike_button')).toBeDefined()
+    expect(byId('score_strike_button')).toBeDefined('modal did not show the strike score button')
     await byId('score_strike_button').onclick()    
     expect(byId('score_strike_button')).toBe(null)
     

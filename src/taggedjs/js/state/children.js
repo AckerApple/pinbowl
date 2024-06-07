@@ -1,4 +1,4 @@
-import { setUse } from "./setUse.function";
+import { setUse } from './setUse.function.js';
 function setCurrentTagSupport(support) {
     setUse.memory.childrenCurrentSupport = support;
 }

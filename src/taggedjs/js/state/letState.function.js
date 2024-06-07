@@ -1,6 +1,6 @@
-import { getStateValue } from './state.utils';
-import { setUse } from './setUse.function';
-/** Used for variables that need to remain the same variable during render passes */
+import { getStateValue } from './state.utils.js';
+import { setUse } from './setUse.function.js';
+/** Used for variables that need to remain the same variable during render passes. If defaultValue is a function it is called only once, its return value is first state, and let value can changed */
 export function letState(defaultValue) {
     const config = setUse.memory.stateConfig;
     const rearray = config.rearray;

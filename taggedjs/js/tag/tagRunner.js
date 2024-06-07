@@ -1,6 +1,6 @@
-import { setUse } from '../state';
-import { Subject } from '../subject';
-import { getSupportInCycle } from './getSupportInCycle.function';
+import { setUse } from '../state/index.js';
+import { Subject } from '../subject/index.js';
+import { getSupportInCycle } from './getSupportInCycle.function.js';
 // Emits event at the end of a tag being rendered. Use tagClosed$.toPromise() to render a tag after a current tag is done rendering
 setUse.memory.tagClosed$ = new Subject(undefined, subscription => {
     if (!getSupportInCycle()) {
@@ -38,6 +38,19 @@ export function runBeforeDestroy(tagSupport, ownerTagSupport) {
     const length = tagUse.length;
     for (let index = 0; index < length; ++index) {
         tagUse[index].beforeDestroy(tagSupport, ownerTagSupport);
+    }
+    tagSupport.global.deleted = true;
+    tagSupport.hasLiveElements = false;
+    // remove me from my parents
+    if (ownerTagSupport) {
+        ownerTagSupport.global.childTags = ownerTagSupport.global.childTags.filter(child => child !== tagSupport.global.oldest);
+        const global = tagSupport.global;
+        global.providers.forEach(provider => provider.children.forEach((child, index) => {
+            if (child.global === global) {
+                // console.log('removed provider child during destroy')
+                provider.children.splice(index, 1);
+            }
+        }));
     }
 }
 //# sourceMappingURL=tagRunner.js.map

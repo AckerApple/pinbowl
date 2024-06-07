@@ -1,4 +1,4 @@
-import { Subject } from "./Subject.class";
+import { Subject } from './Subject.class.js';
 export function combineLatest(subjects) {
     const output = new Subject();
     const subscribe = (callback) => {

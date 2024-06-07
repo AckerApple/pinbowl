@@ -1,4 +1,4 @@
-import { Subject } from '../subject';
+import { Subject } from '../subject/index.js';
 export type WatchCallback<T> = (currentValues: any[], previousValues: any[] | undefined) => T | ((currentValues: any[]) => T) | (() => T);
 type WatchOperators<T> = {
     setup: WatchSetup<T>;

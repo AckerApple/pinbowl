@@ -1,6 +1,6 @@
-import { BaseTagSupport } from './TagSupport.class';
-import { runAfterRender, runBeforeRender } from './tagRunner';
-import { ValueSubject } from '../subject/ValueSubject';
+import { BaseTagSupport } from './TagSupport.class.js';
+import { runAfterRender, runBeforeRender } from './tagRunner.js';
+import { ValueSubject } from '../subject/ValueSubject.js';
 const appElements = [];
 /**
  *
@@ -22,7 +22,6 @@ element, props) {
     const wrapper = app(props);
     // have a function setup and call the tagWrapper with (props, {update, async, on})
     const tagSupport = runWrapper(wrapper);
-    // TODO: is the below needed?
     tagSupport.appElement = element;
     tagSupport.isApp = true;
     tagSupport.global.isApp = true;
@@ -50,9 +49,10 @@ element, props) {
 }
 export function runWrapper(templater) {
     let newSupport = {};
+    // TODO: A fake subject may become a problem
     const subject = new ValueSubject(newSupport);
     newSupport = new BaseTagSupport(templater, subject);
-    subject.set(templater);
+    subject.next(templater);
     subject.tagSupport = newSupport;
     runBeforeRender(newSupport, undefined);
     // Call the apps function for our tag templater

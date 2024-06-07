@@ -1,19 +1,9 @@
-import { setUse } from "./setUse.function";
-function setCurrentTagSupport(support) {
-    setUse.memory.destroyCurrentSupport = support;
-}
+import { getSupportInCycle } from "../tag/getSupportInCycle.function.js";
+import { state } from "./state.function.js";
 export function onDestroy(callback) {
-    const tagSupport = setUse.memory.destroyCurrentSupport;
-    tagSupport.global.destroyCallback = callback;
+    state(() => {
+        const tagSupport = getSupportInCycle();
+        tagSupport?.global.destroy$.toCallback(callback);
+    });
 }
-setUse({
-    beforeRender: tagSupport => setCurrentTagSupport(tagSupport),
-    beforeRedraw: tagSupport => setCurrentTagSupport(tagSupport),
-    beforeDestroy: (tagSupport) => {
-        const callback = tagSupport.global.destroyCallback;
-        if (callback) {
-            callback();
-        }
-    }
-});
 //# sourceMappingURL=onDestroy.js.map

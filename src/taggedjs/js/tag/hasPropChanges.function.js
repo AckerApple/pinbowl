@@ -1,4 +1,4 @@
-import { deepEqual } from "../deepFunctions";
+import { deepEqual } from '../deepFunctions.js';
 /**
  *
  * @param props

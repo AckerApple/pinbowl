@@ -1,4 +1,4 @@
-import { interpolateTemplate } from "./interpolateTemplate";
+import { interpolateTemplate } from './interpolateTemplate.js';
 export function interpolateContentTemplates(context, tagSupport, options, children) {
     // counting for animation stagger computing
     const counts = options.counts;
@@ -7,8 +7,8 @@ export function interpolateContentTemplates(context, tagSupport, options, childr
     const childLength = children.length;
     for (let index = childLength - 1; index >= 0; --index) {
         const child = children[index];
-        const { clones: nextClones, tagComponent } = interpolateTemplate(child, context, tagSupport, counts, options);
-        clones.push(...nextClones);
+        const tagComponent = interpolateTemplate(child, context, tagSupport, counts);
+        // clones.push(...nextClones)
         if (tagComponent) {
             tagComponents.push(tagComponent);
             continue;
@@ -18,7 +18,7 @@ export function interpolateContentTemplates(context, tagSupport, options, childr
                 const subChild = child.children[index];
                 // IF <template end /> its a variable to be processed
                 if (isRenderEndTemplate(subChild)) {
-                    const { tagComponent } = interpolateTemplate(subChild, context, tagSupport, counts, options);
+                    const tagComponent = interpolateTemplate(subChild, context, tagSupport, counts);
                     if (tagComponent) {
                         tagComponents.push(tagComponent);
                     }

@@ -1,4 +1,4 @@
-import { BaseTagSupport } from '../tag/TagSupport.class';
+import { BaseTagSupport, TagSupport } from '../tag/TagSupport.class.js';
 export type StateConfig<T> = (x: T) => [T, T];
 export type StateConfigItem<T> = {
     get: () => T;
@@ -8,7 +8,7 @@ export type StateConfigItem<T> = {
     watch?: T;
 };
 export type Config = {
-    tagSupport?: BaseTagSupport;
+    tagSupport?: BaseTagSupport | TagSupport;
     array: State;
     rearray?: State;
 };

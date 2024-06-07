@@ -1,4 +1,4 @@
-import { GetSet } from "./state.utils";
+import { GetSet } from './state.utils.js';
 /**
  * Enables the ability to maintain a change to a props value until the prop itself changes
  * @param prop typically the name of an existing prop

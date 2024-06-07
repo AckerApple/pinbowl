@@ -1,17 +1,16 @@
-import { BaseTagSupport, TagSupport } from '../tag/TagSupport.class';
-import { ProviderConfig } from './providers';
-import { Config } from './state.utils';
+import { BaseTagSupport, TagSupport } from '../tag/TagSupport.class.js';
+import { Config } from './state.utils.js';
 interface TagUse {
-    beforeRender: (tagSupport: BaseTagSupport, ownerTag?: TagSupport) => void;
-    beforeRedraw: (tagSupport: BaseTagSupport, tag: TagSupport) => void;
-    afterRender: (tagSupport: BaseTagSupport, ownerTagSupport?: TagSupport) => void;
-    beforeDestroy: (tagSupport: BaseTagSupport, tag: TagSupport) => void;
+    beforeRender: (tagSupport: BaseTagSupport | TagSupport, ownerTag?: TagSupport | BaseTagSupport) => void;
+    beforeRedraw: (tagSupport: BaseTagSupport | TagSupport, tag: TagSupport | BaseTagSupport) => void;
+    afterRender: (tagSupport: BaseTagSupport | TagSupport, ownerTagSupport?: TagSupport | BaseTagSupport) => void;
+    beforeDestroy: (tagSupport: BaseTagSupport | TagSupport, tag: TagSupport | BaseTagSupport) => void;
 }
 export type UseOptions = {
-    beforeRender?: (tagSupport: BaseTagSupport, ownerTag?: TagSupport) => void;
-    beforeRedraw?: (tagSupport: BaseTagSupport, tag: TagSupport) => void;
-    afterRender?: (tagSupport: BaseTagSupport, ownerTagSupport?: TagSupport) => void;
-    beforeDestroy?: (tagSupport: BaseTagSupport, tag: TagSupport) => void;
+    beforeRender?: (tagSupport: TagSupport | BaseTagSupport, ownerTag?: TagSupport | BaseTagSupport) => void;
+    beforeRedraw?: (tagSupport: BaseTagSupport | TagSupport, tag: TagSupport | BaseTagSupport) => void;
+    afterRender?: (tagSupport: BaseTagSupport | TagSupport, ownerTagSupport?: TagSupport | BaseTagSupport) => void;
+    beforeDestroy?: (tagSupport: BaseTagSupport | TagSupport, tag: TagSupport | BaseTagSupport) => void;
 };
 export declare function setUse(use: UseOptions): void;
 export declare namespace setUse {
@@ -20,7 +19,6 @@ export declare namespace setUse {
 }
 type UseMemory = (Record<string, any> & {
     stateConfig: Config;
-    providerConfig: ProviderConfig;
     currentSupport: TagSupport;
 });
 export {};

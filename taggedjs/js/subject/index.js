@@ -1,5 +1,5 @@
-export * from './Subject.class';
-export * from './ValueSubject';
-export * from './combineLatest.function';
-export * from './will.functions';
+export * from './Subject.class.js';
+export * from './ValueSubject.js';
+export * from './combineLatest.function.js';
+export * from './will.functions.js';
 //# sourceMappingURL=index.js.map

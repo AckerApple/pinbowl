@@ -1,11 +1,11 @@
-import { InsertBefore } from "./interpolations/Clones.type";
-import { TagSupport } from "./tag/TagSupport.class";
-import { TemplaterResult } from "./TemplaterResult.class";
-import { Template } from "./interpolations/interpolateTemplate";
-import { Subject } from "./subject/Subject.class";
-import { ValueSubject } from "./subject/ValueSubject";
+import { InsertBefore } from './interpolations/InsertBefore.type.js';
+import { BaseTagSupport, TagSupport } from './tag/TagSupport.class.js';
+import { TemplaterResult } from './tag/TemplaterResult.class.js';
+import { Template } from './interpolations/interpolateTemplate.js';
+import { Subject } from './subject/Subject.class.js';
+import { ValueSubject } from './subject/ValueSubject.js';
 export type WasTagSubject = Subject<TemplaterResult> & {
-    tagSupport?: TagSupport;
+    tagSupport?: BaseTagSupport | TagSupport;
 };
 export type TagSubject = ValueSubject<TemplaterResult> & {
     tagSupport: TagSupport;

@@ -1,23 +1,23 @@
-export * from "./tag/tag";
-export * from "./tag/tag.utils";
-export * from "./tag/html";
-export * from "./errors";
-export * from "./isInstance";
-export * from "./state/index";
-export * from "./subject/index";
-export * from "./tag/TagSupport.class";
-export * from "./interpolations/ElementTargetEvent.interface";
-export * from "./interpolations/interpolateElement";
-export { tagElement } from "./tag/tagElement";
-export { Tag } from "./tag/Tag.class";
-export { runBeforeRender } from "./tag/tagRunner";
-export { renderTagSupport } from "./tag/render/renderTagSupport.function";
-export { renderWithSupport } from "./tag/render/renderWithSupport.function";
-export { isLikeValueSets } from "./tag/isLikeTags.function";
-import { renderTagOnly } from "./tag/render/renderTagOnly.function";
-import { renderTagSupport } from "./tag/render/renderTagSupport.function";
-import { renderWithSupport } from "./tag/render/renderWithSupport.function";
-import { tagElement } from "./tag/tagElement";
+export * from './tag/index.js';
+export * from './errors.js';
+export * from './subject.types.js';
+export * from './isInstance.js';
+export * from './state/index.js';
+export * from './subject/index.js';
+export * from './tag/TagSupport.class.js';
+export * from './interpolations/ElementTargetEvent.interface.js';
+export * from './interpolations/interpolateElement.js';
+export * from './interpolations/InsertBefore.type.js';
+export { tagElement } from './tag/tagElement.js';
+export { Tag, variablePrefix } from './tag/Tag.class.js';
+export { runBeforeRender } from './tag/tagRunner.js';
+export { renderTagSupport } from './tag/render/renderTagSupport.function.js';
+export { renderWithSupport } from './tag/render/renderWithSupport.function.js';
+export { isLikeValueSets } from './tag/isLikeTags.function.js';
+import { renderTagOnly } from './tag/render/renderTagOnly.function.js';
+import { renderTagSupport } from './tag/render/renderTagSupport.function.js';
+import { renderWithSupport } from './tag/render/renderWithSupport.function.js';
+import { tagElement } from './tag/tagElement.js';
 export const hmr = {
     tagElement, renderWithSupport, renderTagSupport,
     renderTagOnly,

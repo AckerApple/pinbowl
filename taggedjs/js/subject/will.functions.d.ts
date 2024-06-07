@@ -1,4 +1,4 @@
-import { OperatorFunction, SubjectLike } from "./subject.utils";
+import { OperatorFunction, SubjectLike } from './subject.utils.js';
 type WillCallback<T, R> = (lastValue: T, resolve: (result: R) => void) => void;
 export declare function willCallback<T = any, R = any>(callback: WillCallback<T, R>): OperatorFunction<T, R, any>;
 /** .pipe( promise((x) => Promise.resolve(44)) ) */

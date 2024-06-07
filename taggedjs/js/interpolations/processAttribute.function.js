@@ -1,12 +1,13 @@
-import { inputAttribute } from './inputAttribute';
-import { isSubjectInstance } from '../isInstance';
-import { bindSubjectCallback } from './bindSubjectCallback.function';
+import { specialAttribute } from './specialAttribute.js';
+import { isSubjectInstance } from '../isInstance.js';
+import { bindSubjectCallback } from './bindSubjectCallback.function.js';
 const startRegX = /^\s*{__tagvar/;
 const endRegX = /}\s*$/;
 function isTagVar(value) {
     return value && value.search(startRegX) >= 0 && value.search(endRegX) >= 0;
 }
-export function processAttribute(attrName, value, child, scope, ownerSupport, howToSet) {
+export function processAttribute(attrName, value, // current attribute value by using .getAttribute
+child, scope, ownerSupport, howToSet) {
     if (isTagVar(value)) {
         return processScopedNameValueAttr(attrName, value, child, scope, ownerSupport, howToSet);
     }
@@ -15,6 +16,9 @@ export function processAttribute(attrName, value, child, scope, ownerSupport, ho
         let lastValue;
         // the above callback gets called immediately since its a ValueSubject()
         const sub = contextValueSubject.subscribe((value) => {
+            if (value === lastValue) {
+                return; // value did not change
+            }
             processNameOnlyAttr(value, lastValue, child, ownerSupport, howToSet);
             lastValue = value;
         });
@@ -25,7 +29,7 @@ export function processAttribute(attrName, value, child, scope, ownerSupport, ho
     // Non dynamic
     const isSpecial = isSpecialAttr(attrName);
     if (isSpecial) {
-        return inputAttribute(attrName, value, child);
+        return specialAttribute(attrName, value, child);
     }
 }
 function processScopedNameValueAttr(attrName, value, // {__tagVarN}
@@ -74,16 +78,17 @@ function processNameValueAttr(attrName, result, child, ownerSupport, howToSet) {
     // Most every variable comes in here since everything is made a ValueSubject
     if (isSubjectInstance(result)) {
         child.removeAttribute(attrName);
+        let lastValue;
         const callback = (newAttrValue) => {
             // should the function be wrapped so every time its called we re-render?
             if (newAttrValue instanceof Function) {
-                const wrapper = ownerSupport.templater.wrapper;
-                const parentWrap = wrapper?.parentWrap;
-                const oneRender = parentWrap?.oneRender;
-                if (!oneRender) {
-                    newAttrValue = bindSubjectCallback(newAttrValue, ownerSupport);
-                }
+                return callbackFun(ownerSupport, newAttrValue, child, attrName, isSpecial, howToSet);
             }
+            // TODO: we maybe able to block higher before instance of check
+            if (lastValue === newAttrValue) {
+                return lastValue;
+            }
+            lastValue = newAttrValue;
             return processAttributeSubjectValue(newAttrValue, child, attrName, isSpecial, howToSet);
         };
         // 🗞️ Subscribe. Above callback called immediately since its a ValueSubject()
@@ -103,11 +108,15 @@ function processAttributeSubjectValue(newAttrValue, child, attrName, isSpecial, 
         };
         // access to original function
         fun.tagFunction = newAttrValue;
+        if (attrName === 'ondoubleclick') {
+            attrName = 'ondblclick';
+        }
+        ;
         child[attrName] = fun;
         return;
     }
     if (isSpecial) {
-        inputAttribute(attrName, newAttrValue, child);
+        specialAttribute(attrName, newAttrValue, child);
         return;
     }
     if (newAttrValue) {
@@ -125,5 +134,14 @@ function processAttributeSubjectValue(newAttrValue, child, attrName, isSpecial, 
 /** Looking for (class | style) followed by a period */
 function isSpecialAttr(attrName) {
     return attrName.search(/^(class|style)(\.)/) >= 0;
+}
+function callbackFun(ownerSupport, newAttrValue, child, attrName, isSpecial, howToSet) {
+    const wrapper = ownerSupport.templater.wrapper;
+    const parentWrap = wrapper?.parentWrap;
+    const oneRender = parentWrap?.oneRender;
+    if (!oneRender) {
+        newAttrValue = bindSubjectCallback(newAttrValue, ownerSupport);
+    }
+    return processAttributeSubjectValue(newAttrValue, child, attrName, isSpecial, howToSet);
 }
 //# sourceMappingURL=processAttribute.function.js.map

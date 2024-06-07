@@ -1,9 +1,10 @@
-import { Counts } from '../interpolations/interpolateTemplate';
-import { State } from '../state';
-import { InterpolatedTemplates } from '../interpolations/interpolations';
-import { InterpolateSubject, ValueTypes } from './update/processFirstSubject.utils';
-import { TemplaterResult } from '../TemplaterResult.class';
-import { TagValues } from './html';
+import { Counts } from '../interpolations/interpolateTemplate.js';
+import { State } from '../state/index.js';
+import { InterpolatedTemplates } from '../interpolations/interpolations.js';
+import { InterpolateSubject } from './update/processFirstSubject.utils.js';
+import { TemplaterResult } from './TemplaterResult.class.js';
+import { TagValues } from './html.js';
+import { ValueTypes } from './ValueTypes.enum.js';
 export declare const variablePrefix = "__tagvar";
 export declare const escapeVariable: string;
 export declare const escapeSearch: RegExp;

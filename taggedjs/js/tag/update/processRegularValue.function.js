@@ -1,4 +1,4 @@
-import { castTextValue, updateBeforeTemplate } from '../../updateBeforeTemplate.function';
+import { castTextValue, updateBeforeTemplate } from '../../updateBeforeTemplate.function.js';
 export function processRegularValue(value, subject, // could be tag via subject.tag
 insertBefore) {
     subject.insertBefore = insertBefore;

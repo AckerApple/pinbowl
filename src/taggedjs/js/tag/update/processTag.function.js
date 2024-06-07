@@ -1,6 +1,6 @@
-import { TagSupport } from '../TagSupport.class';
-import { ValueSubject } from '../../subject';
-/** Could be a regular tag or a component. Both are Tag.class */
+import { TagSupport } from '../TagSupport.class.js';
+import { ValueSubject } from '../../subject/index.js';
+/** When first time render, adds to owner childTags */
 export function processTag(templater, insertBefore, ownerSupport, // owner
 subject) {
     let tagSupport = subject.tagSupport;
@@ -10,16 +10,11 @@ subject) {
     }
     subject.tagSupport = tagSupport;
     tagSupport.ownerTagSupport = ownerSupport;
+    // ++tagSupport.global.renderCount
     tagSupport.buildBeforeElement(insertBefore, {
         counts: { added: 0, removed: 0 },
     });
-}
-export function setupNewTemplater(tagSupport, ownerSupport, subject) {
-    tagSupport.global.oldest = tagSupport;
-    tagSupport.global.newest = tagSupport;
-    // asking me to render will cause my parent to render
-    tagSupport.ownerTagSupport = ownerSupport;
-    subject.tagSupport = tagSupport;
+    return tagSupport;
 }
 export function tagFakeTemplater(tag) {
     const templater = getFakeTemplater();
@@ -35,15 +30,23 @@ export function getFakeTemplater() {
         isTag: true,
         tagJsType: 'templater',
         tagged: false,
-        madeChildIntoSubject: false,
-        html: () => fake
+        html: () => fake,
+        key: () => fake,
     };
     return fake;
 }
+/** Create TagSupport for a tag component */
 export function newTagSupportByTemplater(templater, ownerSupport, subject) {
     const tagSupport = new TagSupport(templater, ownerSupport, subject);
-    setupNewTemplater(tagSupport, ownerSupport, subject);
-    ownerSupport.childTags.push(tagSupport);
+    setupNewSupport(tagSupport, ownerSupport, subject);
+    ownerSupport.global.childTags.push(tagSupport);
     return tagSupport;
+}
+export function setupNewSupport(tagSupport, ownerSupport, subject) {
+    tagSupport.global.oldest = tagSupport;
+    tagSupport.global.newest = tagSupport;
+    // asking me to render will cause my parent to render
+    tagSupport.ownerTagSupport = ownerSupport;
+    subject.tagSupport = tagSupport;
 }
 //# sourceMappingURL=processTag.function.js.map

@@ -1,4 +1,4 @@
-import { ValueTypes } from "./tag/update/processFirstSubject.utils";
+import { ValueTypes } from './tag/ValueTypes.enum.js';
 export function isStaticTag(value) {
     return [
         ValueTypes.tag,

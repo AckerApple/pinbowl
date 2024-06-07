@@ -1,10 +1,6 @@
-import { deepClone } from '../deepFunctions';
-import { setUse } from './setUse.function';
-import { state } from './state.function';
-setUse.memory.providerConfig = {
-    providers: [],
-    ownerSupport: undefined,
-};
+import { deepClone } from '../deepFunctions.js';
+import { setUse } from './setUse.function.js';
+import { state } from './state.function.js';
 export const providers = {
     create: (constructMethod) => {
         const stateDiffMemory = state(() => ({ stateDiff: 0, provider: undefined }));
@@ -14,7 +10,6 @@ export const providers = {
                 state(undefined);
             }
             const result = state(undefined);
-            // stateDiffMemory.provider.constructMethod.compareTo = compareTo
             return result;
         }
         const result = state(() => {
@@ -23,16 +18,18 @@ export const providers = {
             const oldStateCount = stateConfig.array.length;
             // Providers with provider requirements just need to use providers.create() and providers.inject()
             const instance = 'prototype' in constructMethod ? new constructMethod() : constructMethod();
+            const tagSupport = stateConfig.tagSupport;
             const stateDiff = stateConfig.array.length - oldStateCount;
-            const config = memory.providerConfig;
             const provider = {
                 constructMethod,
                 instance,
                 clone: deepClone(instance),
                 stateDiff,
+                owner: tagSupport,
+                children: [],
             };
             stateDiffMemory.provider = provider;
-            config.providers.push(provider);
+            tagSupport.global.providers.push(provider);
             stateDiffMemory.stateDiff = stateDiff;
             return instance;
         });
@@ -50,15 +47,18 @@ export const providers = {
     inject: (constructor) => {
         // find once, return same every time after
         return state(() => {
-            const config = setUse.memory.providerConfig;
+            const memory = setUse.memory;
             const cm = constructor;
             const compareTo = cm.compareTo = cm.compareTo || constructor.toString();
+            const tagSupport = memory.stateConfig.tagSupport;
+            const providers = [];
             let owner = {
-                ownerTagSupport: config.ownerSupport
+                ownerTagSupport: tagSupport.ownerTagSupport
             };
             while (owner.ownerTagSupport) {
                 const ownerProviders = owner.ownerTagSupport.global.providers;
                 const provider = ownerProviders.find(provider => {
+                    providers.push(provider);
                     const constructorMatch = provider.constructMethod.compareTo === compareTo;
                     if (constructorMatch) {
                         return true;
@@ -66,36 +66,17 @@ export const providers = {
                 });
                 if (provider) {
                     provider.clone = deepClone(provider.instance); // keep a copy of the latest before any change occur
-                    config.providers.push(provider);
+                    const tagSupport = memory.stateConfig.tagSupport;
+                    tagSupport.global.providers.push(provider);
+                    provider.children.push(tagSupport);
                     return provider.instance;
                 }
                 owner = owner.ownerTagSupport; // cause reloop checking next parent
             }
             const msg = `Could not inject provider: ${constructor.name} ${constructor}`;
-            console.warn(`${msg}. Available providers`, config.providers);
+            console.warn(`${msg}. Available providers`, providers);
             throw new Error(msg);
         });
     }
 };
-setUse({
-    beforeRender: (tagSupport, ownerSupport) => {
-        run(tagSupport, ownerSupport);
-    },
-    beforeRedraw: (tagSupport, newTagSupport) => {
-        run(tagSupport, newTagSupport.ownerTagSupport);
-    },
-    afterRender: (tagSupport) => {
-        const config = setUse.memory.providerConfig;
-        tagSupport.global.providers = [...config.providers];
-        config.providers.length = 0;
-    }
-});
-function run(tagSupport, ownerSupport) {
-    const config = setUse.memory.providerConfig;
-    config.ownerSupport = ownerSupport;
-    if (tagSupport.global.providers.length) {
-        config.providers.length = 0;
-        config.providers.push(...tagSupport.global.providers);
-    }
-}
 //# sourceMappingURL=providers.js.map
