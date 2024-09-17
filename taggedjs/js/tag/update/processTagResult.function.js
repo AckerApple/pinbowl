@@ -1,31 +1,40 @@
-/** checks if previous support exists on subject or as a last global support. If first render, calls builder. Otherwise calls tagSupport.updateBy() */
-export function processTagResult(tagSupport, subject, // used for recording past and current value
-insertBefore, // <template end interpolate />
-{ counts, }) {
-    // *if appears we already have seen
-    const subjectTag = subject;
-    const lastSupport = subjectTag.tagSupport;
-    const prevSupport = lastSupport?.global.oldest || undefined;
-    const justUpdate = prevSupport;
-    if (prevSupport && justUpdate) {
-        return processTagResultUpdate(tagSupport, subjectTag, prevSupport);
+import { subscribeToTemplate } from '../../interpolations/subscribeToTemplate.function.js';
+import { buildBeforeElement } from '../buildBeforeElement.function.js';
+import { paintAppends } from '../paint.function.js';
+import { checkTagValueChange } from '../index.js';
+export function processReplaceTagResult(support, counts, contextItem) {
+    contextItem.checkValueChange = checkTagValueChange;
+    const ph = contextItem.placeholder;
+    const result = buildBeforeElement(support, undefined, // element for append child
+    ph, // placeholder
+    { counts });
+    const subs = result.subs;
+    for (const sub of subs) {
+        subscribeToTemplate(sub);
     }
-    tagSupport.buildBeforeElement(insertBefore, {
-        counts,
-    });
-    return tagSupport;
+    return support;
 }
-function processTagResultUpdate(tagSupport, subject, // used for recording past and current value
-prevSupport) {
-    // components
-    if (subject instanceof Function) {
-        const newSupport = subject(prevSupport);
-        prevSupport.updateBy(newSupport);
-        subject.tagSupport = newSupport;
-        return newSupport;
+export function processFirstTagResult(support, counts, appendTo) {
+    let appendIndex = paintAppends.length;
+    const result = buildBeforeElement(support, appendTo, undefined, { counts });
+    for (const dom of result.dom) {
+        if (dom.domElement) {
+            paintAppends.splice(appendIndex++, 0, {
+                element: dom.domElement,
+                relative: appendTo,
+            });
+        }
+        if (dom.marker) {
+            paintAppends.splice(appendIndex++, 0, {
+                element: dom.marker,
+                relative: appendTo,
+            });
+        }
     }
-    prevSupport.updateBy(tagSupport);
-    subject.tagSupport = tagSupport;
-    return tagSupport;
+    const subs = result.subs;
+    for (const sub of subs) {
+        subscribeToTemplate(sub);
+    }
+    return support;
 }
 //# sourceMappingURL=processTagResult.function.js.map

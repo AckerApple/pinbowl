@@ -1,4 +1,5 @@
 import { deepEqual } from '../deepFunctions.js';
+import { BasicTypes } from './ValueTypes.enum.js';
 /**
  *
  * @param props
@@ -7,34 +8,24 @@ import { deepEqual } from '../deepFunctions.js';
  */
 export function hasPropChanges(props, // natural props
 pastCloneProps) {
-    /*
-    const isCommonEqual = props === undefined && props === compareToProps
-    if(isCommonEqual) {
-      return false
-    }
-    */
     let castedProps = props;
     let castedPastProps = pastCloneProps;
     // check all prop functions match
-    if (typeof (props) === 'object') {
+    if (typeof (props) === BasicTypes.object) {
         if (!pastCloneProps) {
             return 3;
         }
-        // castedProps = {...props}
         castedProps = [...props];
-        // castedPastProps = {...(pastCloneProps || {})}
         castedPastProps = [...(pastCloneProps || [])];
         const allFunctionsMatch = castedProps.every((value, index) => {
-            let compare = castedPastProps[index];
-            if (value && typeof (value) === 'object') {
+            const compare = castedPastProps[index];
+            if (value && typeof (value) === BasicTypes.object) {
                 const subCastedProps = { ...value };
                 const subCompareProps = { ...compare || {} };
-                const matched = Object.entries(subCastedProps).every(([key, value]) => {
-                    return compareProps(value, subCompareProps[key], () => {
-                        delete subCastedProps[key]; // its a function and not needed to be compared
-                        delete subCompareProps[key]; // its a function and not needed to be compared
-                    });
-                });
+                const matched = Object.entries(subCastedProps).every(([key, value]) => compareProps(value, subCompareProps[key], () => {
+                    delete subCastedProps[key]; // its a function and not needed to be compared
+                    delete subCompareProps[key]; // its a function and not needed to be compared
+                }));
                 return matched;
             }
             return compareProps(value, compare, () => {
@@ -43,7 +34,7 @@ pastCloneProps) {
             });
         });
         if (!allFunctionsMatch) {
-            return 6; // a change has been detected by function comparisons
+            return 'functions-changed'; // a change has been detected by function comparisons
         }
     }
     // const isEqual = deepEqual(castedPastProps, castedProps)

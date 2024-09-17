@@ -1,27 +1,41 @@
-import { ValueTypes } from './tag/ValueTypes.enum.js';
+import { BasicTypes, ImmutableTypes, ValueTypes } from './tag/ValueTypes.enum.js';
+export function isSimpleType(value) {
+    switch (value) {
+        case ImmutableTypes.string:
+        case ImmutableTypes.number:
+        case ImmutableTypes.boolean:
+            return true;
+    }
+    return false;
+}
 export function isStaticTag(value) {
-    return [
-        ValueTypes.tag,
-        ValueTypes.templater,
-    ].includes(value?.tagJsType);
+    switch (value?.tagJsType) {
+        case ValueTypes.dom:
+        case ValueTypes.tag:
+        case ValueTypes.templater:
+            return true;
+    }
+    return false;
 }
-export function isTagTemplater(value) {
-    return value?.tagJsType === ValueTypes.templater;
-}
-// TODO: whats the difference between isTagClass and isTagComponent
+/** passed in is expected to be a TemplaterResult */
 export function isTagComponent(value) {
-    return value?.tagJsType === ValueTypes.tagComponent;
-}
-export function isTagClass(value) {
-    return value?.tagJsType === ValueTypes.tag;
+    const tagType = value?.tagJsType;
+    return tagType === ValueTypes.tagComponent || tagType === ValueTypes.stateRender;
 }
 // isSubjectLike
 export function isSubjectInstance(subject) {
-    return (subject?.isSubject === true || subject?.subscribe) ? true : false; // subject?.isSubject === true || 
+    return isObject(subject) && typeof subject.subscribe === BasicTypes.function;
 }
-export function isTagArray(value) {
-    return value instanceof Array && value.every(x => [
-        ValueTypes.tag, ValueTypes.templater, ValueTypes.tag, ValueTypes.tagComponent
-    ].includes(x?.tagJsType));
+export function isPromise(value) {
+    return value && isFunction(value.then);
+}
+export function isFunction(value) {
+    return typeof value === BasicTypes.function;
+}
+export function isObject(value) {
+    return typeof (value) === BasicTypes.object && value !== null;
+}
+export function isArray(value) {
+    return Array.isArray(value);
 }
 //# sourceMappingURL=isInstance.js.map

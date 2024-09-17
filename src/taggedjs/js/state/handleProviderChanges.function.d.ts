@@ -1,3 +1,9 @@
+import { Support } from '../tag/Support.class.js';
 import { Provider } from './providers.js';
-import { TagSupport } from '../tag/TagSupport.class.js';
-export declare function handleProviderChanges(appSupport: TagSupport, provider: Provider): void;
+export declare function handleProviderChanges(appSupport: Support, provider: Provider): TagWithProvider[];
+type TagWithProvider = {
+    support: Support;
+    renderCount: number;
+    provider: Provider;
+};
+export {};

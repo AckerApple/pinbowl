@@ -1,5 +1,5 @@
-import { BaseTagSupport, TagSupport } from '../TagSupport.class.js';
-import { TagSubject } from '../../subject.types.js';
-export declare function destroyUnlikeTags(lastSupport: TagSupport | BaseTagSupport, // old
-reSupport: TagSupport, // new
-subject: TagSubject): void;
+import { AnySupport } from '../Support.class.js';
+import { ContextItem } from '../Tag.class.js';
+export declare function destroyUnlikeTags(lastSupport: AnySupport, // old
+reSupport: AnySupport, // new
+subject: ContextItem): void;

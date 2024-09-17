@@ -1,39 +1,35 @@
-import { runBeforeRedraw, runBeforeRender } from '../tagRunner.js';
-import { runAfterRender } from '../tagRunner.js';
-export function renderTagOnly(newTagSupport, prevSupport, subject, ownerSupport) {
-    const oldRenderCount = newTagSupport.global.renderCount;
-    beforeWithRender(newTagSupport, ownerSupport, prevSupport);
-    const templater = newTagSupport.templater;
+import { getSupport } from '../Support.class.js';
+import { beforeRender } from './beforeRender.function.js';
+import { executeWrap } from '../executeWrap.function.js';
+import { ValueTypes } from '../ValueTypes.enum.js';
+import { runAfterRender } from '../afterRender.function.js';
+export function renderTagOnly(newSupport, prevSupport, // causes restate
+subject, ownerSupport) {
+    const global = subject.global;
+    const oldRenderCount = subject.renderCount;
+    beforeRender(newSupport, prevSupport?.state);
+    const templater = newSupport.templater;
+    let reSupport;
     // NEW TAG CREATED HERE
-    const wrapper = templater.wrapper;
-    let reSupport = wrapper(newTagSupport, subject);
-    /* AFTER */
-    runAfterRender(newTagSupport, ownerSupport);
-    newTagSupport.global.newest = reSupport;
-    if (!prevSupport && ownerSupport) {
-        ownerSupport.global.childTags.push(reSupport);
+    if (templater.tagJsType === ValueTypes.stateRender) {
+        const result = templater; // .wrapper as any// || {original: templater} as any
+        const useSupport = getSupport(templater, ownerSupport, newSupport.appSupport, // ownerSupport.appSupport as Support,
+        subject);
+        reSupport = executeWrap(templater, result, useSupport);
     }
+    else {
+        // functions wrapped in tag()
+        const wrapper = templater.wrapper;
+        // calls the function returned from getTagWrap()
+        reSupport = wrapper(newSupport, subject, prevSupport);
+    }
+    runAfterRender(reSupport, ownerSupport);
+    global.newest = reSupport;
     // When we rendered, only 1 render should have taken place OTHERWISE rendering caused another render and that is the latest instead
-    if (reSupport.global.renderCount > oldRenderCount + 1) {
-        return newTagSupport.global.newest;
+    // TODO: below most likely not needed
+    if (subject.renderCount > oldRenderCount + 1) {
+        return global.newest;
     }
     return reSupport;
-}
-function beforeWithRender(tagSupport, // new
-parentSupport, prevSupport) {
-    const lastOwnerSupport = prevSupport?.ownerTagSupport;
-    const runtimeOwnerSupport = lastOwnerSupport || parentSupport;
-    if (prevSupport) {
-        if (prevSupport !== tagSupport) {
-            const lastState = prevSupport.memory.state;
-            const memory = tagSupport.memory;
-            tagSupport.global = prevSupport.global;
-            memory.state.length = 0;
-            memory.state.push(...lastState);
-        }
-        return runBeforeRedraw(tagSupport, prevSupport);
-    }
-    // first time render
-    return runBeforeRender(tagSupport, runtimeOwnerSupport);
 }
 //# sourceMappingURL=renderTagOnly.function.js.map

@@ -1,4 +1,5 @@
-import { providers, html, tag, tagElement, onInit, callbackMaker, state, letState } from "./taggedjs/bundle.js"
+// import { providers, html, tag, tagElement, onInit, callback, state, letState, callbackMaker } from "./taggedjs/js/index.js"
+import { providers, html, tag, tagElement, onInit, callback, state, letState, callbackMaker } from "./taggedjs/bundle.js"
 import { playersLoop } from "./playersLoop.js"
 import { footerButtons } from "./footerButtons.js"
 import { debugApp } from "./debugApp.js"
@@ -8,21 +9,21 @@ import { animateDestroy } from "./animations.js"
 export const SmallBowlApp = tag(() => {// app.js - SmallBowlApp
   const frameScoreModalDetails = state(frameScoreDetails)
   let debug = letState(false)(x => [debug, debug = x])
-  const callback = callbackMaker()
+  const callbacks = callbackMaker()
 
   /** @type {Game} */
   const game = providers.create(Game)
 
   onInit(() => {
     // one time subscriptions
-    game.tieBreaker.subscribe(callback(() => game.alert('🤗 Multiple winners, get ready for an additional round!')))
+    game.tieBreaker.subscribe(callbacks(() => game.alert('🤗 Multiple winners, get ready for an additional round!')))
     game.winner.subscribe(leader => {
-      callback(leader => {
+      callbacks(leader => {
         game.alert(`🎉 Winner is Player ${leader.playerIndex + 1}, ${leader.player.name}`)
       })(leader)
     })
 
-    game.lastFrameStrike.subscribe(callback(() =>
+    game.lastFrameStrike.subscribe(callbacks(() =>
       game.alert('💥 Strike on the last frame! Another frame added.\n\nFor now, it\'s the next players turn.')
     ))
     
@@ -109,10 +110,6 @@ export const SmallBowlApp = tag(() => {// app.js - SmallBowlApp
       ondrag="const {t,e,dt,d}={e:event,dt:event.dataTransfer,d:this.drag}; if(e.clientX===0) return;d.x = d.x + e.offsetX - d.startX; d.y = d.y + e.offsetY - d.startY; this.style.left = d.x + 'px'; this.style.top = d.y+'px';"
       ondragend="const {t,e,d}={t:this,e:event,d:this.drag};if (d.initX === d.x) {d.x=d.x+e.offsetX-(d.startX-d.x);d.y=d.y+e.offsetY-(d.startY-d.y);this.style.transform=translate3d(d.x+'px', d.y+'px', 0)};this.draggable=false"
     >
-      <!--
-      <div style="padding:.25em" onmousedown="this.parentNode.draggable=true"
-      >dialog title</div>
-      -->
       <div style="padding:.25em">
         <p>
           ${game.alertData.message}
@@ -126,15 +123,15 @@ export const SmallBowlApp = tag(() => {// app.js - SmallBowlApp
           }}>🅧 ${game.alertData.confirm ? 'cancel' : 'close'}</button>
 
           ${game.alertData.confirm && html`
-          <button id="confirmAlert" type="button" class="alert-button"
-            onclick=${() => {
-              document.getElementById('alertDialog').close()
-              setTimeout(() => game.alertData.message='', 1000)
-              game.alertData.resolve(true)
-            }}
-          >✅ confirm</button>
+            <button id="confirmAlert" type="button" class="alert-button"
+              onclick=${() => {
+                document.getElementById('alertDialog').close()
+                setTimeout(() => game.alertData.message='', 1000)
+                return game.alertData.resolve(true)
+              }}
+            >✅ confirm</button>
+          `}
         </div>
-        `}
       </div>
     </dialog>
 

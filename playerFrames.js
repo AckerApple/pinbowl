@@ -21,6 +21,7 @@ export const playerFrames = tag(({
             (game.playerTurn === playerIndex && game.currentFrame === frameIndex ? '' : 'cursor:default;')
           }
           onclick=${() => {
+            console.log('clicked...')
             if(!(game.playerTurn === playerIndex && game.currentFrame === frameIndex)) {
               console.warn('skip score edit click')
               if(!player.edit) {
@@ -28,6 +29,7 @@ export const playerFrames = tag(({
               }
             }
 
+            console.log('show score modal')
             return showFrameScoreModal(player, playerIndex, frameIndex, frameScoreModalDetails)
           }}
         >

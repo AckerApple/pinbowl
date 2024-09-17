@@ -1,33 +1,22 @@
-import { deepClone } from '../deepFunctions.js';
-import { renderTagSupport } from '../tag/render/renderTagSupport.function.js';
 export function handleProviderChanges(appSupport, provider) {
     const tagsWithProvider = getTagsWithProvider(appSupport, provider);
-    for (let index = tagsWithProvider.length - 1; index >= 0; --index) {
-        const { tagSupport, renderCount, provider } = tagsWithProvider[index];
-        if (tagSupport.global.deleted) {
-            continue; // i was deleted after another tag processed
-        }
-        const notRendered = renderCount === tagSupport.global.renderCount;
-        if (notRendered) {
-            provider.clone = deepClone(provider.instance);
-            renderTagSupport(tagSupport.global.newest, // tagSupport, // tagSupport.global.newest as TagSupport,
-            false);
-            continue;
-        }
-    }
+    return tagsWithProvider;
 }
 /** Updates and returns memory of tag providers */
-function getTagsWithProvider(tagSupport, provider, memory = []) {
+function getTagsWithProvider(support, provider, memory = []) {
+    const subject = support.subject;
     memory.push({
-        tagSupport,
-        renderCount: tagSupport.global.renderCount,
+        support,
+        renderCount: subject.renderCount,
         provider,
     });
     const childTags = provider.children;
     for (let index = childTags.length - 1; index >= 0; --index) {
+        const child = childTags[index];
+        const cSubject = child.subject;
         memory.push({
-            tagSupport: childTags[index],
-            renderCount: childTags[index].global.renderCount,
+            support: child,
+            renderCount: cSubject.renderCount,
             provider,
         });
     }

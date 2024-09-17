@@ -1,14 +1,14 @@
 import { setUse } from './setUse.function.js';
-function setCurrentTagSupport(support) {
+function setCurrentSupport(support) {
     setUse.memory.childrenCurrentSupport = support;
 }
 export function children() {
-    const tagSupport = setUse.memory.childrenCurrentSupport;
-    const children = tagSupport.templater.children;
+    const support = setUse.memory.childrenCurrentSupport;
+    const children = support.templater.children;
     return children;
 }
 setUse({
-    beforeRender: tagSupport => setCurrentTagSupport(tagSupport),
-    beforeRedraw: tagSupport => setCurrentTagSupport(tagSupport),
+    beforeRender: support => setCurrentSupport(support),
+    beforeRedraw: support => setCurrentSupport(support),
 });
 //# sourceMappingURL=children.js.map

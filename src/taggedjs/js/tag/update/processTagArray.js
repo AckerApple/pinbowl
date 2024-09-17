@@ -1,157 +1,141 @@
-import { ValueSubject } from '../../subject/ValueSubject.js';
-import { ArrayNoKeyError } from '../../errors.js';
-import { destroyArrayTag } from '../checkDestroyPrevious.function.js';
-import { newTagSupportByTemplater, setupNewSupport, tagFakeTemplater } from './processTag.function.js';
-import { TagSupport } from '../TagSupport.class.js';
-import { isTagClass } from '../../isInstance.js';
-import { renderTagOnly } from '../render/renderTagOnly.function.js';
+// taggedjs-no-compile
+import { paintAppends, paintInsertBefores, paintRemoves } from '../paint.function.js';
+import { processFirstSubjectValue } from './processFirstSubjectValue.function.js';
+import { checkSimpleValueChange } from '../checkDestroyPrevious.function.js';
+import { updateExistingValue } from './updateExistingValue.function.js';
+import { processNewArrayValue } from './processNewValue.function.js';
+import { destroySupport } from '../destroySupport.function.js';
 export function processTagArray(subject, value, // arry of Tag classes
-insertBefore, // <template end interpolate />
-ownerSupport, options) {
-    const clones = ownerSupport.global.clones; // []
-    let lastArray = subject.lastArray = subject.lastArray || [];
-    if (!subject.placeholder) {
-        setPlaceholderElm(insertBefore, subject);
+ownerSupport, counts, appendTo) {
+    if (!subject.lastArray) {
+        subject.lastArray = [];
     }
-    const runtimeInsertBefore = subject.placeholder; // || insertBefore
+    const lastArray = subject.lastArray;
+    let runtimeInsertBefore = subject.placeholder;
     let removed = 0;
     /** 🗑️ remove previous items first */
-    lastArray = subject.lastArray = subject.lastArray.filter((item, index) => {
-        const newLength = value.length - 1;
-        const at = index - removed;
-        const lessLength = newLength < at;
-        if (lessLength) {
-            destroyArrayItem(lastArray, index, options);
-            ++removed;
-            return false;
-        }
-        const subTag = value[index - removed];
-        const tagClass = isTagClass(subTag);
-        let tag = subTag;
-        let templater = subTag.templater;
-        let prevArrayValue;
-        if (tagClass) {
-            prevArrayValue = tag.memory.arrayValue;
-        }
-        else {
-            templater = subTag;
-            tag = templater.tag;
-            prevArrayValue = templater.arrayValue;
-        }
-        // const tag = subTag?.templater.tag as Tag
-        const lastTag = item.tagSupport.templater.tag;
-        const lastArrayValue = lastTag.memory.arrayValue;
-        const destroyItem = !areLikeValues(prevArrayValue, lastArrayValue);
-        if (destroyItem) {
-            destroyArrayItem(lastArray, index, options);
-            ++removed;
-            return false;
-        }
-        return true;
+    const filteredLast = subject.lastArray = lastArray.filter(function lastArrayFilter(item, index) {
+        const newRemoved = reviewLastArrayItem(item, value, index, lastArray, removed, counts);
+        removed = removed + newRemoved;
+        return newRemoved === 0;
     });
+    // const eAppendTo = existed ? undefined : appendTo
+    const eAppendTo = appendTo; // existed ? undefined : appendTo
     const length = value.length;
     for (let index = 0; index < length; ++index) {
-        const item = value[index];
-        const previous = lastArray[index];
-        const previousSupport = previous?.tagSupport;
-        const subTag = item;
-        const tagClass = isTagClass(subTag);
-        const itemSubject = new ValueSubject(undefined);
-        let templater = subTag.templater;
-        let tagSupport;
-        if (tagClass) {
-            if (!templater) {
-                templater = tagFakeTemplater(subTag);
-            }
-            tagSupport = new TagSupport(templater, ownerSupport, itemSubject);
-        }
-        else {
-            templater = subTag;
-            tagSupport = setupNewTemplater(templater, ownerSupport, itemSubject);
-        }
-        // share global between old and new
-        if (previousSupport) {
-            setupNewSupport(tagSupport, ownerSupport, previousSupport.subject);
-            const global = previousSupport.global;
-            tagSupport.global = global;
-            global.newest = tagSupport;
-        }
-        // check for html``.key()
-        const tag = templater.tag || subTag;
-        const keySet = 'arrayValue' in tag.memory;
-        if (!keySet) {
-            const details = {
-                template: tagSupport.getTemplate().string,
-                array: value,
-            };
-            const message = 'Use html`...`.key(item) instead of html`...` to template an Array';
-            console.error(message, details);
-            const err = new ArrayNoKeyError(message, details);
-            throw err;
-        }
-        const couldBeSame = lastArray.length > index;
-        if (couldBeSame) {
-            const prevSupport = previous.tagSupport;
-            const prevGlobal = prevSupport.global;
-            const oldest = prevGlobal.oldest;
-            oldest.updateBy(tagSupport);
-            continue;
-        }
-        processAddTagArrayItem(runtimeInsertBefore, tagSupport, index, options, lastArray);
-        ownerSupport.global.childTags.push(tagSupport);
+        const newSubject = reviewArrayItem(value, index, filteredLast, ownerSupport, runtimeInsertBefore, counts, eAppendTo);
+        runtimeInsertBefore = newSubject.placeholder;
     }
-    return clones;
 }
-function setPlaceholderElm(insertBefore, subject) {
-    if (insertBefore.nodeName !== 'TEMPLATE') {
-        subject.placeholder = insertBefore;
-        return;
+function reviewArrayItem(array, index, lastArray, ownerSupport, runtimeInsertBefore, // used during updates
+counts, appendTo) {
+    const item = array[index];
+    const previous = lastArray[index];
+    if (previous) {
+        return reviewPreviousArrayItem(item, previous, lastArray, ownerSupport, index, runtimeInsertBefore, counts, appendTo);
     }
-    const placeholder = subject.placeholder = document.createTextNode('');
-    const parentNode = insertBefore.parentNode;
-    parentNode.insertBefore(placeholder, insertBefore);
-    parentNode.removeChild(insertBefore);
+    return processAddTagArrayItem(item, runtimeInsertBefore, // thisInsert as any,
+    ownerSupport, counts, lastArray, appendTo);
 }
-function processAddTagArrayItem(before, tagSupport, index, options, lastArray) {
-    const lastValue = {
-        tagSupport, index
+function reviewPreviousArrayItem(item, itemSubject, lastArray, ownerSupport, index, runtimeInsertBefore, // used during updates
+counts, appendTo) {
+    const couldBeSame = lastArray.length > index;
+    if (couldBeSame) {
+        updateExistingValue(itemSubject, item, ownerSupport);
+        return itemSubject;
+    }
+    const result = processAddTagArrayItem(item, runtimeInsertBefore, // thisInsert as any,
+    ownerSupport, counts, lastArray, appendTo);
+    return result;
+}
+function processAddTagArrayItem(value, before, // used during updates
+ownerSupport, counts, lastArray, appendTo) {
+    const itemSubject = {
+        value,
+        checkValueChange: checkSimpleValueChange,
+        withinOwnerElement: false, // TODO: we need to pass down depth so we can answer this truthfully
     };
+    counts.added = counts.added + 1; // index
+    const subPlaceholder = document.createTextNode('');
+    itemSubject.placeholder = subPlaceholder;
+    if (!appendTo) {
+        paintInsertBefores.push({
+            element: subPlaceholder,
+            relative: before,
+        });
+    }
+    processNewArrayValue(value, ownerSupport, itemSubject);
+    processFirstSubjectValue(value, itemSubject, ownerSupport, // support,
+    counts, `rvp_${lastArray.length}_array`, appendTo);
+    // after processing
+    itemSubject.value = value;
     // Added to previous array
-    lastArray.push(lastValue);
-    const counts = {
-        added: options.counts.added + index,
-        removed: options.counts.removed,
-    };
-    const fragment = document.createDocumentFragment();
-    const newTempElm = document.createElement('template');
-    fragment.appendChild(newTempElm);
-    tagSupport.buildBeforeElement(newTempElm, // before,
-    { counts });
-    const parent = before.parentNode;
-    parent.insertBefore(fragment, before);
-}
-/** compare two values. If both values are arrays then the items will be compared */
-function areLikeValues(valueA, valueB) {
-    if (valueA === valueB) {
-        return true;
+    lastArray.push(itemSubject);
+    if (appendTo) {
+        paintAppends.push({
+            element: subPlaceholder,
+            relative: appendTo,
+        });
     }
-    const bothArrays = valueA instanceof Array && valueB instanceof Array;
-    const matchLengths = bothArrays && valueA.length == valueB.length;
-    if (matchLengths) {
-        return valueA.every((item, index) => item == valueB[index]);
+    return itemSubject;
+}
+export function destroyArrayItem(item, counts) {
+    const global = item.global;
+    const support = global.newest;
+    global.deleted = true;
+    if (support) {
+        destroySupport(support, counts.removed);
     }
-    return false;
+    else {
+        const element = item.simpleValueElm;
+        delete item.simpleValueElm;
+        paintRemoves.push(element);
+    }
+    ++counts.removed;
 }
-function setupNewTemplater(templater, ownerSupport, itemSubject) {
-    const tagSupport = newTagSupportByTemplater(templater, ownerSupport, itemSubject);
-    renderTagOnly(tagSupport, tagSupport, itemSubject, ownerSupport);
-    return tagSupport;
+function reviewLastArrayItem(_subTag, // used to compare arrays
+value, index, lastArray, removed, counts) {
+    const newLength = value.length - 1;
+    const at = index - removed;
+    const lessLength = at < 0 || newLength < at;
+    if (lessLength) {
+        destroyArrayItem(lastArray[index], counts);
+        ++removed;
+        return 1;
+    }
+    /*
+    const nowValue = getArrayValueByItem(subTag)
+    const lastArrayValue = lastArray.array[index].arrayValue
+    */
+    // check for html``.key()
+    /*
+    const keySet = 'arrayValue' in tag
+    if (!keySet) {
+      const details = {
+        array: value.map(item => item.values || item),
+        vdom: (tag as any)?.support.templater.tag.dom,
+        tag,
+        lastArray: lastArray.array[index]
+      }
+      const message = 'Found Tag in array without key value, during array update. Be sure to use "html`...`.key(unique)" OR import TaggedJs "key" "key(unique).html = CustomTag(props)"'
+      console.error(message, details)
+      const err = new ArrayNoKeyError(message, details)
+      throw err
+    }
+    */
+    /*
+    const destroyItem = nowValue !== lastArrayValue
+    if(destroyItem) {
+      destroyArrayItem(lastArray.array, index, counts)
+      ++removed
+      return 1
+    }
+    */
+    return 0;
 }
-function destroyArrayItem(lastArray, index, options) {
-    const last = lastArray[index];
-    const tagSupport = last.tagSupport;
-    destroyArrayTag(tagSupport, options.counts);
-    last.deleted = true;
-    ++options.counts.removed;
+/*
+function getArrayValueByItem(item: any) {
+  return item?.arrayValue || item
 }
+*/
 //# sourceMappingURL=processTagArray.js.map

@@ -1,42 +1,42 @@
-import { getStateValue } from './state.utils.js';
-import { setUse } from './setUse.function.js';
+import { getStateValue } from './getStateValue.function.js';
+import { BasicTypes } from '../tag/ValueTypes.enum.js';
+import { setUseMemory } from './setUse.function.js';
 /** Used for variables that need to remain the same variable during render passes. If defaultValue is a function it is called only once, its return value is first state, and let value can changed */
 export function letState(defaultValue) {
-    const config = setUse.memory.stateConfig;
-    const rearray = config.rearray;
-    let getSetMethod;
-    const restate = rearray[config.array.length];
-    if (restate) {
-        let oldValue = getStateValue(restate);
-        getSetMethod = ((x) => [oldValue, oldValue = x]);
-        const push = {
-            get: () => getStateValue(push),
-            callback: getSetMethod,
-            lastValue: oldValue,
-            defaultValue: restate.defaultValue,
-        };
-        config.array.push(push);
-        return makeStateResult(oldValue, push);
-    }
+    const config = setUseMemory.stateConfig;
+    return config.handlers.letHandler(defaultValue);
+}
+export function firstLetState(defaultValue) {
+    const config = setUseMemory.stateConfig;
     // State first time run
-    const defaultFn = defaultValue instanceof Function ? defaultValue : () => defaultValue;
-    let initValue = defaultFn();
-    getSetMethod = ((x) => [initValue, initValue = x]);
+    const initValue = typeof (defaultValue) === BasicTypes.function ? defaultValue() : defaultValue;
     const push = {
-        get: () => getStateValue(push),
-        callback: getSetMethod,
-        lastValue: initValue,
+        get: function getPushState() {
+            return getStateValue(push);
+        },
         defaultValue: initValue,
     };
     config.array.push(push);
     return makeStateResult(initValue, push);
 }
+export function reLetState() {
+    const config = setUseMemory.stateConfig;
+    const rearray = config.rearray;
+    const restate = rearray[config.array.length];
+    const oldValue = getStateValue(restate);
+    const push = {
+        get: function getLetState() {
+            return getStateValue(push);
+        },
+        defaultValue: restate.defaultValue,
+    };
+    config.array.push(push);
+    return makeStateResult(oldValue, push);
+}
 function makeStateResult(initValue, push) {
-    // return initValue
-    const result = (y) => {
-        push.callback = y || (x => [initValue, initValue = x]);
+    return function msr(y) {
+        push.callback = y;
         return initValue;
     };
-    return result;
 }
 //# sourceMappingURL=letState.function.js.map

@@ -1,1 +1,1 @@
-{"version":3,"file":"tag.types.js","sourceRoot":"","sources":["../../ts/tag/tag.types.ts"],"names":[],"mappings":"AAGA,MAAM,OAAO,UAAU;IACrB,GAAG,CAAC,IAAY;QACd,OAAO,MAAM,CAAA;IACf,CAAC;CACF"}
+{"version":3,"file":"tag.types.js","sourceRoot":"","sources":["../../ts/tag/tag.types.ts"],"names":[],"mappings":"AAGA,MAAM,OAAO,UAAU;IACrB,GAAG,CAAC,KAAa;QACf,OAAO,MAAM,CAAA;IACf,CAAC;CACF"}

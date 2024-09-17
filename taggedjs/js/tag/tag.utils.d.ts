@@ -1,21 +1,27 @@
-import { Tag } from './Tag.class.js';
+import { DomTag, StringTag, TagTemplate } from './Tag.class.js';
 import { TemplaterResult } from './TemplaterResult.class.js';
 import { ValueSubject } from '../subject/ValueSubject.js';
-import { setUse } from '../state/index.js';
-export type TagChildren = ValueSubject<Tag[]> & {
-    lastArray?: Tag[];
+import { setUseMemory } from '../state/index.js';
+import { ValueTypes } from './ValueTypes.enum.js';
+export type TagChildren = ValueSubject<(StringTag | DomTag)[]> & {
+    lastArray?: (StringTag | DomTag)[];
 };
-export type TagChildrenInput = Tag[] | Tag | TagChildren;
-export type TagComponent = ((...args: any[]) => Tag) & {
-    tags?: TagWrapper<any>[];
-    setUse?: typeof setUse;
+export type TagChildrenInput = (StringTag | DomTag)[] | DomTag | StringTag | TagChildren;
+export type TagComponent = ((...args: unknown[]) => (StringTag | DomTag)) & {
+    tags?: TagWrapper<unknown>[];
     tagIndex?: number;
+    setUse?: typeof setUseMemory;
+    ValueTypes: typeof ValueTypes;
 };
-export declare const tags: TagWrapper<any>[];
+export declare const tags: TagWrapper<unknown>[];
+export type Original = ((...args: unknown[]) => unknown) & {
+    setUse: unknown[];
+    tags?: TagWrapper<unknown>[];
+};
 export type TagWrapper<T> = ((...props: T[]) => TemplaterResult) & {
-    original: (...args: any[]) => any;
-    compareTo: string;
-    isTag: boolean;
-    oneRender?: true;
+    original: Original;
+    tagJsType?: typeof ValueTypes.renderOnce | typeof ValueTypes.stateRender;
+    lastRuns?: {
+        [index: number]: TagTemplate;
+    };
 };
-export type TagMaker = ((...args: any[]) => Tag) | ((...args: any[]) => (...args: any[]) => Tag);

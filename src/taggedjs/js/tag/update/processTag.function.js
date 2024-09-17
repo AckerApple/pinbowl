@@ -1,20 +1,24 @@
-import { TagSupport } from '../TagSupport.class.js';
-import { ValueSubject } from '../../subject/index.js';
-/** When first time render, adds to owner childTags */
-export function processTag(templater, insertBefore, ownerSupport, // owner
+import { subscribeToTemplate } from '../../interpolations/subscribeToTemplate.function.js';
+import { getHtmlSupport } from '../Support.class.js';
+import { checkTagValueChange } from '../checkDestroyPrevious.function.js';
+import { buildBeforeElement } from '../buildBeforeElement.function.js';
+import { ValueTypes } from '../ValueTypes.enum.js';
+/** When first time render, adds to owner childTags
+ * Used for BOTH inserts & updates to values that were something else
+ * Intended use only for updates
+*/
+export function processTag(ownerSupport, // owner
 subject) {
-    let tagSupport = subject.tagSupport;
-    // first time seeing this tag?
-    if (!tagSupport) {
-        tagSupport = newTagSupportByTemplater(templater, ownerSupport, subject);
+    const global = subject.global;
+    const support = global.newest;
+    support.ownerSupport = ownerSupport;
+    subject.checkValueChange = checkTagValueChange;
+    const ph = subject.placeholder;
+    const result = buildBeforeElement(support, undefined, ph, { counts: { added: 0, removed: 0 } });
+    for (const sub of result.subs) {
+        subscribeToTemplate(sub);
     }
-    subject.tagSupport = tagSupport;
-    tagSupport.ownerTagSupport = ownerSupport;
-    // ++tagSupport.global.renderCount
-    tagSupport.buildBeforeElement(insertBefore, {
-        counts: { added: 0, removed: 0 },
-    });
-    return tagSupport;
+    return support;
 }
 export function tagFakeTemplater(tag) {
     const templater = getFakeTemplater();
@@ -24,29 +28,15 @@ export function tagFakeTemplater(tag) {
 }
 export function getFakeTemplater() {
     const fake = {
-        children: new ValueSubject([]), // no children
-        // props: {} as Props,
-        props: [],
-        isTag: true,
-        tagJsType: 'templater',
-        tagged: false,
-        html: () => fake,
-        key: () => fake,
+        tagJsType: ValueTypes.templater,
     };
     return fake;
 }
-/** Create TagSupport for a tag component */
-export function newTagSupportByTemplater(templater, ownerSupport, subject) {
-    const tagSupport = new TagSupport(templater, ownerSupport, subject);
-    setupNewSupport(tagSupport, ownerSupport, subject);
-    ownerSupport.global.childTags.push(tagSupport);
-    return tagSupport;
-}
-export function setupNewSupport(tagSupport, ownerSupport, subject) {
-    tagSupport.global.oldest = tagSupport;
-    tagSupport.global.newest = tagSupport;
-    // asking me to render will cause my parent to render
-    tagSupport.ownerTagSupport = ownerSupport;
-    subject.tagSupport = tagSupport;
+/** Create Support for a tag component */
+export function newSupportByTemplater(templater, ownerSupport, subject) {
+    const support = getHtmlSupport(templater, ownerSupport, ownerSupport.appSupport, subject);
+    const global = subject.global;
+    global.context = [];
+    return support;
 }
 //# sourceMappingURL=processTag.function.js.map

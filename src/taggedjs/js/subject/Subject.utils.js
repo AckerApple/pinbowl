@@ -7,25 +7,15 @@ function removeSubFromArray(subscribers, callback) {
 }
 export function getSubscription(subject, callback, subscribers) {
     const countSubject = Subject.globalSubCount$;
-    Subject.globalSubCount$.next(countSubject._value + 1);
-    const subscription = () => {
+    Subject.globalSubCount$.next(countSubject.value + 1);
+    const subscription = function () {
         subscription.unsubscribe();
     };
     subscription.callback = callback;
     subscription.subscriptions = [];
     // Return a function to unsubscribe from the BehaviorSubject
-    subscription.unsubscribe = () => {
-        removeSubFromArray(subscribers, callback); // each will be called when update comes in
-        // removeSubFromArray(Subject.globalSubs, callback) // 🔬 testing
-        Subject.globalSubCount$.next(countSubject._value - 1);
-        // any double unsubscribes will be ignored
-        subscription.unsubscribe = () => subscription;
-        // unsubscribe from any combined subjects
-        const subscriptions = subscription.subscriptions;
-        for (let index = subscriptions.length - 1; index >= 0; --index) {
-            subscriptions[index].unsubscribe();
-        }
-        return subscription;
+    subscription.unsubscribe = function () {
+        return unsubscribe(subscription, subscribers, callback);
     };
     subscription.add = (sub) => {
         subscription.subscriptions.push(sub);
@@ -50,5 +40,18 @@ export function runPipedMethods(value, methods, onComplete) {
     const pipeUtils = { setHandler, next };
     const methodResponse = firstMethod(value, pipeUtils);
     handler(methodResponse);
+}
+function unsubscribe(subscription, subscribers, callback) {
+    removeSubFromArray(subscribers, callback); // each will be called when update comes in
+    const valSub = Subject.globalSubCount$;
+    Subject.globalSubCount$.next(valSub.value - 1);
+    // any double unsubscribes will be ignored
+    subscription.unsubscribe = () => subscription;
+    // unsubscribe from any combined subjects
+    const subscriptions = subscription.subscriptions;
+    for (const sub of subscriptions) {
+        sub.unsubscribe();
+    }
+    return subscription;
 }
 //# sourceMappingURL=subject.utils.js.map

@@ -1,5 +1,5 @@
-import { setUse } from '../state/index.js';
+import { setUseMemory } from '../state/index.js';
 export function getSupportInCycle() {
-    return setUse.memory.stateConfig.tagSupport;
+    return setUseMemory.stateConfig.support;
 }
 //# sourceMappingURL=getSupportInCycle.function.js.map

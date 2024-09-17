@@ -1,40 +1,40 @@
-import { deepClone } from '../deepFunctions.js';
-import { setUse } from './setUse.function.js';
+import { getSupportInCycle } from '../tag/getSupportInCycle.function.js';
+import { setUseMemory } from './setUse.function.js';
 import { state } from './state.function.js';
 export const providers = {
     create: (constructMethod) => {
         const stateDiffMemory = state(() => ({ stateDiff: 0, provider: undefined }));
         // mimic how many states were called the first time
         if (stateDiffMemory.stateDiff) {
-            for (let x = stateDiffMemory.stateDiff; x > 0; --x) {
+            let x = stateDiffMemory.stateDiff;
+            while (x--) {
                 state(undefined);
             }
             const result = state(undefined);
             return result;
         }
         const result = state(() => {
-            const memory = setUse.memory;
-            const stateConfig = memory.stateConfig;
+            const stateConfig = setUseMemory.stateConfig;
             const oldStateCount = stateConfig.array.length;
             // Providers with provider requirements just need to use providers.create() and providers.inject()
-            const instance = 'prototype' in constructMethod ? new constructMethod() : constructMethod();
-            const tagSupport = stateConfig.tagSupport;
+            const instance = constructMethod.prototype ? new constructMethod() : constructMethod();
+            const support = stateConfig.support;
             const stateDiff = stateConfig.array.length - oldStateCount;
             const provider = {
                 constructMethod,
                 instance,
-                clone: deepClone(instance),
                 stateDiff,
-                owner: tagSupport,
+                owner: support,
                 children: [],
             };
             stateDiffMemory.provider = provider;
-            tagSupport.global.providers.push(provider);
+            const global = support.subject.global;
+            const providers = global.providers = global.providers || [];
+            providers.push(provider);
             stateDiffMemory.stateDiff = stateDiff;
             return instance;
         });
         const cm = constructMethod;
-        // const compareTo = cm.compareTo = cm.compareTo || cm.toString()
         const compareTo = cm.compareTo = cm.toString();
         stateDiffMemory.provider.constructMethod.compareTo = compareTo;
         return result;
@@ -47,16 +47,21 @@ export const providers = {
     inject: (constructor) => {
         // find once, return same every time after
         return state(() => {
-            const memory = setUse.memory;
+            // const memory = setUse.memory
             const cm = constructor;
             const compareTo = cm.compareTo = cm.compareTo || constructor.toString();
-            const tagSupport = memory.stateConfig.tagSupport;
+            const support = getSupportInCycle(); // memory.stateConfig.support as Support
             const providers = [];
             let owner = {
-                ownerTagSupport: tagSupport.ownerTagSupport
+                ownerSupport: support.ownerSupport
             };
-            while (owner.ownerTagSupport) {
-                const ownerProviders = owner.ownerTagSupport.global.providers;
+            while (owner.ownerSupport) {
+                const ownGlobal = owner.ownerSupport.subject.global;
+                const ownerProviders = ownGlobal.providers;
+                if (!ownerProviders) {
+                    owner = owner.ownerSupport; // cause reloop checking next parent
+                    continue;
+                }
                 const provider = ownerProviders.find(provider => {
                     providers.push(provider);
                     const constructorMatch = provider.constructMethod.compareTo === compareTo;
@@ -65,13 +70,13 @@ export const providers = {
                     }
                 });
                 if (provider) {
-                    provider.clone = deepClone(provider.instance); // keep a copy of the latest before any change occur
-                    const tagSupport = memory.stateConfig.tagSupport;
-                    tagSupport.global.providers.push(provider);
-                    provider.children.push(tagSupport);
+                    const global = support.subject.global;
+                    const providers = global.providers = global.providers || [];
+                    providers.push(provider);
+                    provider.children.push(support);
                     return provider.instance;
                 }
-                owner = owner.ownerTagSupport; // cause reloop checking next parent
+                owner = owner.ownerSupport; // cause reloop checking next parent
             }
             const msg = `Could not inject provider: ${constructor.name} ${constructor}`;
             console.warn(`${msg}. Available providers`, providers);

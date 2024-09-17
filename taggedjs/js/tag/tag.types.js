@@ -1,5 +1,5 @@
 export class RouteQuery {
-    get(name) {
+    get(_name) {
         return 'todo';
     }
 }

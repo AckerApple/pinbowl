@@ -1,6 +1,7 @@
-import { TagSubject } from '../../subject.types.js';
-import { BaseTagSupport, TagSupport } from '../TagSupport.class.js';
-import { InsertBefore } from '../../interpolations/InsertBefore.type.js';
-export declare function updateExistingTagComponent(ownerSupport: TagSupport, tagSupport: TagSupport, // lastest
-subject: TagSubject, insertBefore: InsertBefore, renderUp?: boolean): TagSupport | BaseTagSupport;
-export declare function moveProviders(lastSupport: TagSupport, newSupport: TagSupport): void;
+import { AnySupport, BaseSupport, Support, SupportContextItem } from '../Support.class.js';
+import { Props } from '../../Props.js';
+export declare function updateExistingTagComponent(ownerSupport: BaseSupport | Support, support: AnySupport, // lastest
+subject: SupportContextItem): void;
+export declare function syncFunctionProps(newSupport: AnySupport, lastSupport: AnySupport, ownerSupport: BaseSupport | Support, newPropsArray: unknown[], // templater.props
+maxDepth: number, depth?: number): Props;
+export declare function moveProviders(lastSupport: Support, newSupport: AnySupport): void;

@@ -1,15 +1,16 @@
-import { buildClones } from '../render.js';
+import { buildClones } from '../buildClones.function.js';
 import { afterElmBuild } from './interpolateTemplate.js';
-export function afterInterpolateElement(container, insertBefore, tagSupport, context, options) {
-    const clones = buildClones(container, insertBefore);
+export function afterInterpolateElement(container, template, support, context, options) {
+    const clones = buildClones(container, template);
     if (!clones.length) {
         return clones;
     }
+    const global = support.subject.global;
     for (let index = clones.length - 1; index >= 0; --index) {
         const clone = clones[index];
-        afterElmBuild(clone, options, context, tagSupport);
-        tagSupport.global.clones.push(clone);
+        afterElmBuild(clone, options, context, support);
     }
+    global.clones.push(...clones);
     return clones;
 }
 //# sourceMappingURL=afterInterpolateElement.function.js.map

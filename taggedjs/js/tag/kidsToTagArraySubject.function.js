@@ -11,8 +11,9 @@ export function kidsToTagArraySubject(children, templaterResult) {
     }
     const kid = children;
     if (kid) {
-        templaterResult.madeChildIntoSubject = true; // was converted into a subject
-        kid.memory.arrayValue = 0;
+        templaterResult.madeChildIntoSubject = true // was converted into a subject
+        ;
+        kid.arrayValue = 0;
         return new ValueSubject([kid]);
     }
     templaterResult.madeChildIntoSubject = true; // was converted into a subject

@@ -1,10 +1,23 @@
 import { hasPropChanges } from './hasPropChanges.function.js';
 export function hasTagSupportChanged(lastSupport, newTagSupport, newTemplater) {
+    /*if(lastSupport.templater.tag) {
+      const oldStringLength = lastSupport.templater.tag?.strings.length
+      const newStringLength = newTemplater.tag?.strings.length
+      if( oldStringLength !== newStringLength ) {
+        console.log('oldStringLength !== newStringLength', {
+          oldStringLength, newStringLength,
+          oldWrapper: lastSupport.templater.wrapper,
+          newWrapper: newTemplater.wrapper,
+          newTag: newTemplater.tag,
+          tagJsType0: newTemplater.tagJsType,
+          tagJsType1: lastSupport.templater.tagJsType,
+        })
+        return 1
+      }
+    }*/
     const latestProps = newTemplater.props; // newTagSupport.propsConfig.latest
     const pastCloneProps = lastSupport.propsConfig.latestCloned;
     const propsChanged = hasPropChanges(latestProps, pastCloneProps);
-    // const propsChanged = hasPropChanges(lastSupport.templater.props, newTagSupport.templater.props)
-    // const propsChanged = hasPropChanges(lastSupport.propsConfig.latestCloned, newTagSupport.propsConfig.latestCloned)
     // if no changes detected, no need to continue to rendering further tags
     if (propsChanged) {
         return propsChanged;

@@ -1,6 +1,6 @@
 import { ValueSubject } from '../subject/index.js';
 import { getSupportInCycle } from '../tag/getSupportInCycle.function.js';
-import { setUse } from './setUse.function.js';
+import { setUseMemory } from './setUse.function.js';
 import { state } from './state.function.js';
 import { syncStates } from './syncStates.function.js';
 /**
@@ -28,15 +28,15 @@ function newWatch(setup) {
  * @param param2
  * @returns
  */
-const setupWatch = (currentValues, callback, { init, before = () => true, final = defaultFinally, } = {}) => {
-    let previous = state({
+const setupWatch = (currentValues, callback, { init, before, final = defaultFinally, } = {}) => {
+    const previous = state({
         pastResult: undefined,
         values: undefined,
     });
     const previousValues = previous.values;
     // First time running watch?
     if (previousValues === undefined) {
-        if (!before(currentValues)) {
+        if (before && !before(currentValues)) {
             previous.values = currentValues;
             return previous.pastResult; // do not continue
         }
@@ -50,7 +50,7 @@ const setupWatch = (currentValues, callback, { init, before = () => true, final 
     if (allExact) {
         return previous.pastResult;
     }
-    if (!before(currentValues)) {
+    if (before && !before(currentValues)) {
         previous.values = currentValues;
         return previous.pastResult; // do not continue
     }
@@ -75,11 +75,12 @@ function defineOnMethod(getWatch, attachTo) {
             const subject = state(() => new ValueSubject(undefined));
             const method = (currentValues, callback) => {
                 setupWatch(currentValues, (currentValues, previousValues) => {
-                    const nowTagSupport = getSupportInCycle();
+                    const nowSupport = getSupportInCycle();
                     const setTo = callback(currentValues, previousValues);
-                    if (nowTagSupport !== firstSupport) {
-                        const newestState = setUse.memory.stateConfig.array;
-                        syncStates(newestState, firstSupport.memory.state);
+                    if (nowSupport !== firstSupport) {
+                        const newestState = setUseMemory.stateConfig.array;
+                        const oldestState = firstSupport.subject.global.oldest.state;
+                        syncStates(newestState, oldestState);
                     }
                     subject.next(setTo);
                 }, oldWatch.setup);

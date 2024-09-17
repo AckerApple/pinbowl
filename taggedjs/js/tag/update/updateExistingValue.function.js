@@ -1,130 +1,104 @@
-import { TagSupport } from '../TagSupport.class.js';
-import { TemplaterResult } from '../TemplaterResult.class.js';
-import { isTagClass, isTagTemplater } from '../../isInstance.js';
-import { processTagArray } from './processTagArray.js';
+import { getSupport } from '../Support.class.js';
+import { getFakeTemplater, newSupportByTemplater, processTag } from './processTag.function.js';
+import { processNowRegularValue } from './processRegularValue.function.js';
+import { processReplacementComponent } from './processFirstSubjectComponent.function.js';
 import { updateExistingTagComponent } from './updateExistingTagComponent.function.js';
-import { processRegularValue } from './processRegularValue.function.js';
-import { checkDestroyPrevious, restoreTagMarker } from '../checkDestroyPrevious.function.js';
-import { processSubjectComponent } from './processSubjectComponent.function.js';
-import { isLikeTags } from '../isLikeTags.function.js';
-import { getFakeTemplater, processTag, setupNewSupport } from './processTag.function.js';
-import { swapInsertBefore } from '../setTagPlaceholder.function.js';
-import { ValueTypes } from '../ValueTypes.enum.js';
-import { getValueType } from '../getValueType.function.js';
-export function updateExistingValue(subject, value, ownerSupport, insertBefore) {
-    const subjectTag = subject;
-    const valueType = getValueType(value);
-    checkDestroyPrevious(subject, value, insertBefore, valueType);
-    // handle already seen tag components
-    if (valueType === ValueTypes.tagComponent) {
-        return prepareUpdateToComponent(value, subjectTag, insertBefore, ownerSupport);
-    }
-    // was component but no longer
-    const tagSupport = subjectTag.tagSupport;
-    if (tagSupport) {
-        if (valueType === ValueTypes.function) {
-            return subjectTag; // its a oneRender tag
-        }
-        handleStillTag(subject, value, ownerSupport);
-        return subjectTag;
-    }
-    switch (valueType) {
-        case ValueTypes.tagArray:
-            processTagArray(subject, value, insertBefore, // oldInsertBefore as InsertBefore,
-            ownerSupport, { counts: {
-                    added: 0,
-                    removed: 0,
-                } });
-            return subject;
-        case ValueTypes.templater:
-            processTag(value, insertBefore, ownerSupport, subjectTag);
-            return subjectTag;
-        case ValueTypes.tag:
-            const tag = value;
-            let templater = tag.templater;
-            if (!templater) {
-                templater = getFakeTemplater();
-                tag.templater = templater;
-                templater.tag = tag;
-            }
-            processTag(templater, insertBefore, ownerSupport, subjectTag);
-            return subjectTag;
-        case ValueTypes.subject:
-            return value;
-        // now its a useless function (we don't automatically call functions)
-        case ValueTypes.function:
-            if (!subject.clone) {
-                subject.clone = swapInsertBefore(insertBefore);
-            }
-            return subject;
-    }
-    // This will cause all other values to render
-    processRegularValue(value, subject, insertBefore);
-    return subjectTag;
-}
-function handleStillTag(subject, value, ownerSupport) {
-    const lastSupport = subject.tagSupport;
-    let templater = value;
-    const isClass = isTagClass(value);
-    if (isClass) {
-        const tag = value;
-        templater = tag.templater;
-        if (!templater) {
-            templater = new TemplaterResult([]);
-            templater.tag = tag;
-            tag.templater = templater;
-        }
-    }
-    const valueSupport = new TagSupport(templater, ownerSupport, subject);
-    // ??? new
-    // subject.tagSupport = valueSupport
-    if (isClass) {
-        valueSupport.global = lastSupport.global;
-    }
-    const isSameTag = value && isLikeTags(lastSupport, valueSupport);
-    if (isTagTemplater(value)) {
-        setupNewSupport(valueSupport, ownerSupport, subject);
-    }
-    if (isSameTag) {
-        lastSupport.updateBy(valueSupport);
+import { BasicTypes, ValueTypes } from '../ValueTypes.enum.js';
+import { updateSupportBy } from '../updateSupportBy.function.js';
+import { isArray, isTagComponent } from '../../isInstance.js';
+import { getNewGlobal } from './getNewGlobal.function.js';
+import { processTagArray } from './processTagArray.js';
+export function updateExistingValue(contextItem, value, ownerSupport) {
+    // Do not continue if the value is just the same
+    if (value === contextItem.value) {
         return;
     }
-    if (isSameTag) {
-        // const subjectTag = subject as TagSubject
-        const global = lastSupport.global;
-        const insertBefore = global.insertBefore;
-        return processTag(templater, insertBefore, ownerSupport, subject);
+    const wasDestroyed = contextItem.checkValueChange(value, contextItem);
+    if (wasDestroyed === -1) {
+        return; // do nothing
     }
-    return processRegularValue(value, subject, subject.insertBefore);
+    // handle already seen tag components
+    const tagJsType = value && value.tagJsType;
+    if (tagJsType) {
+        if (tagJsType === ValueTypes.renderOnce) {
+            return;
+        }
+        const isComp = isTagComponent(value);
+        if (isComp) {
+            if (!contextItem.global) {
+                getNewGlobal(contextItem);
+            }
+            prepareUpdateToComponent(value, contextItem, ownerSupport);
+            return;
+        }
+    }
+    const global = contextItem.global;
+    if (global) {
+        // its html/dom based tag
+        const support = global.newest;
+        if (support) {
+            updateContextItemBySupport(support, contextItem, value, ownerSupport);
+            return;
+        }
+    }
+    if (tagJsType) {
+        switch (tagJsType) {
+            case ValueTypes.templater:
+                processTag(ownerSupport, contextItem);
+                return;
+            case ValueTypes.tag:
+            case ValueTypes.dom: {
+                const tag = value;
+                let templater = tag.templater;
+                if (!templater) {
+                    templater = getFakeTemplater();
+                    tag.templater = templater;
+                    templater.tag = tag;
+                }
+                const nowGlobal = (contextItem.global ? contextItem.global : getNewGlobal(contextItem));
+                nowGlobal.newest = newSupportByTemplater(templater, ownerSupport, contextItem);
+                processTag(ownerSupport, contextItem);
+                return;
+            }
+        }
+    }
+    if (isArray(value)) {
+        processTagArray(contextItem, value, ownerSupport, { added: 0, removed: 0 });
+        return;
+    }
+    if (typeof (value) === BasicTypes.function) {
+        contextItem.value = value; // do not render functions that are not explicity defined as tag html processing
+        return;
+    }
+    if (wasDestroyed) {
+        processNowRegularValue(value, contextItem);
+    }
 }
-function prepareUpdateToComponent(templater, subjectTag, insertBefore, ownerSupport) {
+function handleStillTag(lastSupport, subject, value, ownerSupport) {
+    const templater = value.templater || value;
+    const valueSupport = getSupport(templater, ownerSupport, ownerSupport.appSupport, subject);
+    const lastSubject = lastSupport.subject;
+    const newGlobal = lastSubject.global;
+    const oldest = newGlobal.oldest;
+    updateSupportBy(oldest, valueSupport);
+}
+function prepareUpdateToComponent(templater, contextItem, ownerSupport) {
+    const global = contextItem.global;
     // When last value was not a component
-    if (!subjectTag.tagSupport) {
-        processSubjectComponent(templater, subjectTag, insertBefore, // oldInsertBefore as InsertBefore,
-        ownerSupport, {
-            counts: { added: 0, removed: 0 },
-        });
-        return subjectTag;
+    if (!global.newest) {
+        processReplacementComponent(templater, contextItem, ownerSupport, { added: 0, removed: 0 });
+        return;
     }
-    const tagSupport = new TagSupport(templater, ownerSupport, subjectTag);
-    const subjectSup = subjectTag.tagSupport;
-    const prevSupport = subjectSup.global.newest;
-    if (prevSupport) {
-        const newestState = prevSupport.memory.state;
-        tagSupport.memory.state.length = 0;
-        tagSupport.memory.state.push(...newestState);
+    const support = getSupport(templater, ownerSupport, ownerSupport.appSupport, contextItem);
+    updateExistingTagComponent(ownerSupport, support, // latest value
+    contextItem);
+}
+/** Used to destro */
+function updateContextItemBySupport(support, contextItem, value, ownerSupport) {
+    if (typeof (value) === BasicTypes.function) {
+        return;
     }
-    else {
-        restoreTagMarker(subjectSup);
-        processSubjectComponent(templater, subjectTag, insertBefore, ownerSupport, {
-            counts: { added: 0, removed: 0 },
-        });
-        return subjectTag;
-    }
-    tagSupport.global = subjectSup.global;
-    subjectTag.tagSupport = tagSupport;
-    updateExistingTagComponent(ownerSupport, tagSupport, // latest value
-    subjectTag, insertBefore);
-    return subjectTag;
+    handleStillTag(support, contextItem, value, ownerSupport);
+    return;
 }
 //# sourceMappingURL=updateExistingValue.function.js.map

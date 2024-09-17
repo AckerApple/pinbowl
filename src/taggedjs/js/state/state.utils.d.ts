@@ -1,20 +1,20 @@
-import { BaseTagSupport, TagSupport } from '../tag/TagSupport.class.js';
-export type StateConfig<T> = (x: T) => [T, T];
-export type StateConfigItem<T> = {
-    get: () => T;
-    callback?: StateConfig<T>;
-    lastValue?: T;
-    defaultValue?: T;
-    watch?: T;
-};
+import { firstLetState } from './letState.function.js';
+import { BaseSupport, Support } from '../tag/Support.class.js';
+import { runFirstState } from './stateHandlers.js';
+import { State, StateConfig } from './state.types.js';
 export type Config = {
-    tagSupport?: BaseTagSupport | TagSupport;
+    version: number;
+    support?: BaseSupport | Support;
     array: State;
     rearray?: State;
+    handlers: {
+        handler: typeof runFirstState;
+        letHandler: typeof firstLetState;
+    };
 };
-export type State = StateConfigItem<any>[];
 export type GetSet<T> = (y: T) => [T, T];
-export declare function getStateValue<T>(state: StateConfigItem<T>): T | undefined;
+export declare function initState(support: Support | BaseSupport, config: Config): void;
+export declare function reState(support: Support | BaseSupport, config: Config): void;
 export declare class StateEchoBack {
 }
 export declare function getCallbackValue<T>(callback: StateConfig<T>): [T, T];

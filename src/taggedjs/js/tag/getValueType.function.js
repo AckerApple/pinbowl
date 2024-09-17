@@ -1,39 +1,31 @@
-import { isSimpleType } from './checkDestroyPrevious.function.js';
-import { ValueTypes } from './ValueTypes.enum.js';
-import { isSubjectInstance, isTagArray } from '../isInstance.js';
+import { BasicTypes, ImmutableTypes, ValueTypes } from './ValueTypes.enum.js';
+import { isSimpleType, isSubjectInstance } from '../isInstance.js';
 export function getValueType(value) {
     if (value === undefined || value === null) {
-        return ValueTypes.undefined;
+        return ImmutableTypes.undefined;
+    }
+    const tagJsType = value.tagJsType;
+    if (tagJsType) {
+        return tagJsType; // oneRender, stateRender
+    }
+    if (value instanceof Function) {
+        return BasicTypes.function;
+    }
+    if (value instanceof Date) {
+        return BasicTypes.date;
+    }
+    if (value instanceof Array) {
+        return ValueTypes.tagArray;
     }
     const type = typeof (value);
-    if (value instanceof Function) {
-        return ValueTypes.function;
+    if (isSimpleType(type)) {
+        return type;
     }
-    if (type === 'object') {
-        if (value instanceof Date) {
-            return ValueTypes.date;
-        }
-        if (isSimpleType(type)) {
-            return type;
-        }
-        const tagJsType = value.tagJsType;
-        if (tagJsType) {
-            const included = [
-                ValueTypes.tagComponent,
-                ValueTypes.templater,
-                ValueTypes.tag,
-            ].includes(tagJsType);
-            if (included) {
-                return tagJsType;
-            }
-        }
-        if (isTagArray(value)) {
-            return ValueTypes.tagArray;
-        }
+    if (type === BasicTypes.object) {
         if (isSubjectInstance(value)) {
             return ValueTypes.subject;
         }
     }
-    return ValueTypes.unknown;
+    return BasicTypes.unknown;
 }
 //# sourceMappingURL=getValueType.function.js.map

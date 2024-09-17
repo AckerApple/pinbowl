@@ -7,11 +7,10 @@ export declare class Subject<T> implements SubjectLike<T> {
     isSubject: boolean;
     subscribers: Subscription<T>[];
     subscribeWith?: (x: SubjectSubscriber<T>) => Subscription<T>;
-    _value?: T;
-    set: T;
     constructor(value?: T | undefined, onSubscription?: OnSubscription<T> | undefined);
-    subscribe(callback: SubjectSubscriber<T>): Subscription<any> | Subscription<T>;
+    subscribe(callback: SubjectSubscriber<T>): Subscription<T> | Subscription<any>;
     next(value?: any): void;
+    set: (value?: any) => void;
     emit(): void;
     toPromise(): Promise<T>;
     /** like toPromise but faster */
@@ -36,4 +35,12 @@ export declare class Subject<T> implements SubjectLike<T> {
     static all<A>(args: [Subject<A> | A]): Subject<[A]>;
     static globalSubCount$: Subject<number>;
 }
-export declare function defineValueOn(subject: Subject<any>): void;
+export declare class Subjective<T> extends Subject<T> {
+    value?: T | undefined;
+    onSubscription?: OnSubscription<T> | undefined;
+    _value?: T;
+    constructor(value?: T | undefined, onSubscription?: OnSubscription<T> | undefined);
+    next(value?: any): void;
+    emit(): void;
+}
+export declare function defineValueOn(subject: Subjective<any>): void;

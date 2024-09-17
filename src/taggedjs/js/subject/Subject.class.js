@@ -10,16 +10,12 @@ export class Subject {
     // private?
     subscribers = [];
     subscribeWith;
-    _value;
-    // this is overwritten by constructor at runtime. However having it helps editors know of its existence
-    set; // `subject.set = x` equal to `subject.next(x)`
     constructor(value, 
-    // private?
+    // private? - only used by extending classes
     onSubscription) {
         this.value = value;
         this.onSubscription = onSubscription;
-        this._value = value;
-        defineValueOn(this);
+        // defineValueOn(this)
     }
     subscribe(callback) {
         const subscription = getSubscription(this, callback, this.subscribers);
@@ -42,16 +38,17 @@ export class Subject {
         return subscription;
     }
     next(value) {
-        this._value = value;
+        this.value = value;
         this.emit();
     }
+    set = this.next.bind(this);
     emit() {
-        const value = this._value;
+        const value = this.value;
         // Notify all subscribers with the new value
-        const subs = [...this.subscribers]; // subs may change as we call callbacks
-        const length = subs.length;
-        for (let index = 0; index < length; ++index) {
-            const sub = subs[index];
+        // const subs = [...this.subscribers] // subs may change as we call callbacks
+        const subs = this.subscribers; // subs may change as we call callbacks
+        // const length = subs.length
+        for (const sub of subs) {
             sub.callback(value, sub);
         }
     }
@@ -72,7 +69,7 @@ export class Subject {
         return this;
     }
     pipe(...operations) {
-        const subject = new Subject(this._value);
+        const subject = new Subject(this.value);
         subject.setMethods(operations);
         subject.subscribeWith = (x) => this.subscribe(x);
         subject.next = x => this.next(x);
@@ -94,7 +91,35 @@ export class Subject {
         });
         return combineLatest(switched);
     }
-    static globalSubCount$ = new Subject(0); // for ease of debugging
+    static globalSubCount$ = new Subject(0); // for ease of debugging}
+}
+export class Subjective extends Subject {
+    value;
+    onSubscription;
+    _value;
+    constructor(value, 
+    // private?
+    onSubscription) {
+        super(value, onSubscription);
+        this.value = value;
+        this.onSubscription = onSubscription;
+        this._value = value;
+        defineValueOn(this);
+    }
+    next(value) {
+        this._value = value;
+        this.emit();
+    }
+    emit() {
+        const value = this._value;
+        // Notify all subscribers with the new value
+        // const subs = [...this.subscribers] // subs may change as we call callbacks
+        const subs = this.subscribers; // subs may change as we call callbacks
+        // const length = subs.length
+        for (const sub of subs) {
+            sub.callback(value, sub);
+        }
+    }
 }
 export function defineValueOn(subject) {
     Object.defineProperty(subject, 'value', {
@@ -107,12 +132,6 @@ export function defineValueOn(subject) {
         get() {
             return subject._value;
         }
-    });
-    Object.defineProperty(subject, 'set', {
-        // supports subject.set = x
-        set: (value) => subject.next(value),
-        // supports subject.set(x)
-        get: () => (x) => subject.next(x),
     });
 }
 //# sourceMappingURL=Subject.class.js.map

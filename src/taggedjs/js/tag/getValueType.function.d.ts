@@ -1,2 +1,3 @@
-import { ValueTypes } from './ValueTypes.enum.js';
-export declare function getValueType(value: any): ValueTypes;
+import { BasicTypes, ImmutableTypes, ValueType } from './ValueTypes.enum.js';
+export type TypedValue = ImmutableTypes | BasicTypes | ValueType;
+export declare function getValueType(value: any): TypedValue;

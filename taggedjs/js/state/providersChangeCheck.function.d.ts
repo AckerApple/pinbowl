@@ -1,2 +1,2 @@
-import { BaseTagSupport, TagSupport } from '../tag/TagSupport.class.js';
-export declare function providersChangeCheck(tagSupport: TagSupport | BaseTagSupport): void;
+import { AnySupport } from '../tag/Support.class.js';
+export declare function providersChangeCheck(support: AnySupport): AnySupport[];

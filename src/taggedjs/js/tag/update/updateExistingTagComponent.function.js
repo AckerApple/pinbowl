@@ -1,185 +1,164 @@
-import { hasTagSupportChanged } from '../hasTagSupportChanged.function.js';
-import { processSubjectComponent } from './processSubjectComponent.function.js';
-import { destroyTagMemory } from '../destroyTag.function.js';
-import { renderTagSupport } from '../render/renderTagSupport.function.js';
-import { castProps } from '../../alterProp.function.js';
+import { deepCompareDepth, hasSupportChanged, shallowCompareDepth } from '../hasSupportChanged.function.js';
+import { processReplacementComponent } from './processFirstSubjectComponent.function.js';
+import { castProps, isSkipPropValue } from '../../alterProp.function.js';
+import { renderSupport } from '../render/renderSupport.function.js';
+import { BasicTypes, ValueTypes } from '../ValueTypes.enum.js';
+import { destroySupport } from '../destroySupport.function.js';
+import { getNewGlobal } from './getNewGlobal.function.js';
 import { isLikeTags } from '../isLikeTags.function.js';
-export function updateExistingTagComponent(ownerSupport, tagSupport, // lastest
-subject, insertBefore, renderUp = false) {
-    let lastSupport = subject.tagSupport?.global.newest;
+import { isArray } from '../../isInstance.js';
+import { PropWatches } from '../tag.js';
+export function updateExistingTagComponent(ownerSupport, support, // lastest
+subject) {
+    const global = subject.global;
+    const lastSupport = global.newest;
     const oldWrapper = lastSupport.templater.wrapper;
-    const newWrapper = tagSupport.templater.wrapper;
+    const newWrapper = support.templater.wrapper;
     let isSameTag = false;
-    if (oldWrapper && newWrapper) {
+    const tagJsType = support.templater.tagJsType;
+    const skipComparing = ValueTypes.stateRender === tagJsType || ValueTypes.renderOnce === tagJsType;
+    if (skipComparing) {
+        isSameTag = support.templater.tagJsType === ValueTypes.renderOnce || isLikeTags(lastSupport, support);
+    }
+    else if (oldWrapper && newWrapper) {
         const oldFunction = oldWrapper.parentWrap.original;
         const newFunction = newWrapper.parentWrap.original;
         // string compare both functions
         isSameTag = oldFunction === newFunction;
     }
-    const templater = tagSupport.templater;
+    const templater = support.templater;
     if (!isSameTag) {
-        const oldestSupport = lastSupport.global.oldest;
-        destroyTagMemory(oldestSupport);
-        const newSupport = processSubjectComponent(templater, subject, insertBefore, ownerSupport, {
-            counts: { added: 0, removed: 0 },
-        });
-        return newSupport;
+        swapTags(subject, templater, ownerSupport);
+        return;
     }
-    else {
-        const hasChanged = hasTagSupportChanged(lastSupport, tagSupport, templater);
-        // everyhing has matched, no display needs updating.
-        if (!hasChanged) {
-            const newProps = templater.props;
-            // update function refs to use latest references
-            const castedProps = syncFunctionProps(tagSupport, lastSupport, ownerSupport, newProps);
-            // When new tagSupport actually makes call to real function, use these pre casted props
-            tagSupport.propsConfig.castProps = castedProps;
-            // update support to think it has different cloned props
-            lastSupport.propsConfig.latestCloned = tagSupport.propsConfig.latestCloned;
-            lastSupport.propsConfig.lastClonedKidValues = tagSupport.propsConfig.lastClonedKidValues;
-            return lastSupport; // its the same tag component
-        }
+    const hasChanged = skipComparing || hasSupportChanged(lastSupport, templater);
+    // everyhing has matched, no display needs updating.
+    if (!hasChanged) {
+        const maxDepth = templater.propWatch === PropWatches.DEEP ? deepCompareDepth : shallowCompareDepth;
+        syncSupports(templater, support, lastSupport, ownerSupport, maxDepth);
+        return;
     }
-    const oldest = lastSupport.global.oldest;
-    if (tagSupport.global.locked) {
-        tagSupport.global.blocked.push(tagSupport);
-        return tagSupport;
+    if (global.locked) {
+        global.blocked.push(support);
+        return;
     }
-    const previous = lastSupport.global.newest;
-    const newSupport = renderTagSupport(tagSupport, renderUp);
-    return afterTagRender(subject, oldest, templater, previous, newSupport, isSameTag);
+    renderSupport(support);
+    return;
 }
-function afterTagRender(subject, oldest, templater, previous, newSupport, isSameTag) {
-    let lastSupport = subject.tagSupport;
-    // const oldest = newSupport.global.oldest
-    /*
-    const hasOldest = oldest ? true : false
-    if(!hasOldest) {
-      return buildNewTag(
-        newSupport,
-        insertBefore,
-        lastSupport,
-        subject
-      )
-    }
-    */
-    if (oldest && templater.children._value.length) {
-        const oldKidsSub = oldest.templater.children;
-        oldKidsSub.next(templater.children._value);
-    }
-    // detect if both the function is the same and the return is the same
-    const isLikeTag = isSameTag && isLikeTags(previous, newSupport);
-    if (isLikeTag) {
-        const oldestTag = lastSupport.global.oldest;
-        subject.tagSupport = newSupport;
-        oldestTag.updateBy(newSupport);
-        return newSupport;
-    }
-    // Although function looked the same it returned a different html result
-    if (isSameTag && lastSupport) {
-        if (!previous.global.deleted) {
-            destroyTagMemory(previous);
-        }
-        /*
-        const insertBefore = (previous.global.insertBefore as any)
-        if(insertBefore.parentNode) {
-          insertBefore.parentNode.removeChild(insertBefore)
-        }
-        */
-        newSupport.global.context = {}; // do not share previous outputs
-        // delete newSupport.global.deleted
-    }
-    return buildNewTag(newSupport, newSupport.global.insertBefore, newSupport, subject);
-}
-function buildNewTag(newSupport, oldInsertBefore, oldTagSupport, subject) {
-    newSupport.buildBeforeElement(oldInsertBefore, {
-        counts: { added: 0, removed: 0 },
-    });
-    newSupport.global.oldest = newSupport;
-    newSupport.global.newest = newSupport;
-    oldTagSupport.global.oldest = newSupport;
-    oldTagSupport.global.newest = newSupport;
-    subject.tagSupport = newSupport;
-    subject.tagSupport.ownerTagSupport.global.childTags.push(newSupport);
-    return newSupport;
-}
-function syncFunctionProps(newSupport, lastSupport, ownerSupport, newPropsArray) {
-    const newest = lastSupport.global.newest;
+export function syncFunctionProps(newSupport, lastSupport, ownerSupport, newPropsArray, // templater.props
+maxDepth, depth = -1) {
+    const global = lastSupport.subject.global;
+    const newest = global.newest;
     if (!newest) {
-        // const state = ownerSupport.global.oldest.memory.state
-        const state = ownerSupport.memory.state;
-        newPropsArray.length = 0;
-        const castedProps = castProps(newPropsArray, newSupport, state);
+        const castedProps = castProps(newPropsArray, newSupport, depth);
         newPropsArray.push(...castedProps);
-        newSupport.propsConfig.castProps = castedProps;
+        const propsConfig = newSupport.propsConfig;
+        propsConfig.castProps = castedProps;
         return newPropsArray;
     }
     lastSupport = newest || lastSupport;
     const priorPropConfig = lastSupport.propsConfig;
     const priorPropsArray = priorPropConfig.castProps;
     const newArray = [];
-    for (let index = newPropsArray.length - 1; index >= 0; --index) {
+    for (let index = 0; index < newPropsArray.length; ++index) {
         const prop = newPropsArray[index];
         const priorProp = priorPropsArray[index];
-        const newValue = syncPriorPropFunction(priorProp, prop, newSupport, ownerSupport);
+        const newValue = syncPriorPropFunction(priorProp, prop, newSupport, ownerSupport, depth + 1, maxDepth);
         newArray.push(newValue);
     }
-    newSupport.propsConfig.castProps = newArray;
+    const newPropsConfig = newSupport.propsConfig;
+    newPropsConfig.castProps = newArray;
     return newArray;
 }
-function syncPriorPropFunction(priorProp, prop, newSupport, ownerSupport, seen = []) {
-    if (priorProp instanceof Function) {
+function syncPriorPropFunction(priorProp, prop, newSupport, ownerSupport, maxDepth, depth) {
+    if (typeof (priorProp) === BasicTypes.function) {
         // the prop i am receiving, is already being monitored/controlled by another parent
-        if (prop.toCall) {
-            priorProp.toCall = prop.toCall;
+        if (prop.mem) {
+            priorProp.mem = prop.mem;
             return prop;
         }
-        const ownerGlobal = ownerSupport.global;
-        const oldOwnerState = ownerGlobal.newest.memory.state;
-        priorProp.prop = prop;
-        priorProp.stateArray = oldOwnerState;
+        priorProp.mem = prop;
         return priorProp;
     }
     // prevent infinite recursion
-    if (seen.includes(prop)) {
+    if (depth === maxDepth) {
         return prop;
     }
-    seen.push(prop);
-    if (typeof (prop) !== 'object' || !prop) {
+    if (isSkipPropValue(prop)) {
         return prop; // no children to crawl through
     }
-    if (prop instanceof Array) {
-        for (let index = prop.length - 1; index >= 0; --index) {
-            const x = prop[index];
-            prop[index] = syncPriorPropFunction(priorProp[index], x, newSupport, ownerSupport, seen);
-        }
-        return prop;
+    if (isArray(prop)) {
+        return updateExistingArray(prop, priorProp, newSupport, ownerSupport, depth);
     }
     if (priorProp === undefined) {
         return prop;
     }
-    for (const name in prop) {
+    return updateExistingObject(prop, priorProp, newSupport, ownerSupport, depth, maxDepth);
+}
+function updateExistingObject(prop, priorProp, newSupport, ownerSupport, depth, maxDepth) {
+    const keys = Object.keys(prop);
+    for (const name of keys) {
         const subValue = prop[name];
-        const result = syncPriorPropFunction(priorProp[name], subValue, newSupport, ownerSupport, seen);
+        const result = syncPriorPropFunction(priorProp[name], subValue, newSupport, ownerSupport, maxDepth, depth + 1);
+        if (prop[name] === result) {
+            continue;
+        }
         const hasSetter = Object.getOwnPropertyDescriptor(prop, name)?.set;
         if (hasSetter) {
             continue;
         }
+        ;
         prop[name] = result;
     }
     return prop;
 }
+function updateExistingArray(prop, priorProp, newSupport, ownerSupport, depth) {
+    for (let index = prop.length - 1; index >= 0; --index) {
+        const x = prop[index];
+        prop[index] = syncPriorPropFunction(priorProp[index], x, newSupport, ownerSupport, depth + 1, index);
+    }
+    return prop;
+}
 export function moveProviders(lastSupport, newSupport) {
-    const destroy$ = lastSupport.global.destroy$;
-    lastSupport.global.providers.forEach(provider => {
-        provider.children.forEach((child, index) => {
-            const wasSameGlobals = lastSupport.global.destroy$ === child.global.destroy$;
+    const global = lastSupport.subject.global;
+    let pIndex = -1;
+    const providers = global.providers = global.providers || [];
+    const pLen = providers.length - 1;
+    while (pIndex++ < pLen) {
+        const provider = providers[pIndex];
+        let index = -1;
+        const pcLen = provider.children.length - 1;
+        while (index++ < pcLen) {
+            const child = provider.children[index];
+            const wasSameGlobals = global === child.subject.global;
             if (wasSameGlobals) {
                 provider.children.splice(index, 1);
                 provider.children.push(newSupport);
                 return;
             }
-        });
-    });
+        }
+    }
+}
+function syncSupports(templater, support, lastSupport, ownerSupport, maxDepth) {
+    // update function refs to use latest references
+    const newProps = templater.props;
+    const castedProps = syncFunctionProps(support, lastSupport, ownerSupport, newProps, maxDepth);
+    const propsConfig = support.propsConfig;
+    // When new support actually makes call to real function, use these pre casted props
+    propsConfig.castProps = castedProps;
+    const lastPropsConfig = lastSupport.propsConfig;
+    // update support to think it has different cloned props
+    lastPropsConfig.latest = propsConfig.latest;
+    return lastSupport; // its the same tag component  
+}
+/** Was tag, will be tag */
+function swapTags(subject, templater, // new tag
+ownerSupport) {
+    const global = subject.global;
+    const oldestSupport = global.oldest;
+    destroySupport(oldestSupport, 0);
+    getNewGlobal(subject);
+    const newSupport = processReplacementComponent(templater, subject, ownerSupport, { added: 0, removed: 0 });
+    return newSupport;
 }
 //# sourceMappingURL=updateExistingTagComponent.function.js.map

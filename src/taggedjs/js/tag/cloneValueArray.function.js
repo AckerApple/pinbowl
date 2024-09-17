@@ -1,20 +1,26 @@
 import { deepClone } from '../deepFunctions.js';
 import { ValueTypes } from './ValueTypes.enum.js';
-import { getValueType } from './getValueType.function.js';
+import { isArray } from '../isInstance.js';
 export function cloneValueArray(values) {
-    return values.map((value) => {
-        const tag = value;
-        switch (getValueType(value)) {
-            case ValueTypes.tagComponent:
-                const tagComponent = value;
-                return deepClone(tagComponent.props);
+    return values.map(cloneTagJsValue);
+}
+/** clones only what is needed to compare differences later */
+export function cloneTagJsValue(value, maxDepth) {
+    const tag = value;
+    const tagJsType = value?.tagJsType;
+    if (tagJsType) {
+        switch (tagJsType) {
+            case ValueTypes.stateRender:
+                return undefined;
+            case ValueTypes.dom:
             case ValueTypes.tag:
             case ValueTypes.templater:
                 return cloneValueArray(tag.values);
-            case ValueTypes.tagArray:
-                return cloneValueArray(tag);
         }
-        return deepClone(value);
-    });
+    }
+    if (isArray(value)) {
+        return cloneValueArray(tag);
+    }
+    return deepClone(value, maxDepth);
 }
 //# sourceMappingURL=cloneValueArray.function.js.map

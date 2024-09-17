@@ -1,18 +1,21 @@
+import { paintInsertBefores } from './tag/paint.function.js';
+import { empty } from './tag/ValueTypes.enum.js';
 // Function to update the value of x
 export function updateBeforeTemplate(value, // value should be casted before calling here
 lastFirstChild) {
-    const parent = lastFirstChild.parentNode;
-    // Insert the new value (never use innerHTML here)
     const textNode = document.createTextNode(value); // never innerHTML
-    parent.insertBefore(textNode, lastFirstChild);
-    /* remove existing nodes */
-    parent.removeChild(lastFirstChild);
+    paintInsertBefores.push({
+        element: textNode,
+        relative: lastFirstChild,
+    });
     return textNode;
 }
 export function castTextValue(value) {
-    // mimic React skipping to display EXCEPT for true does display on page
-    if ([undefined, false, null].includes(value)) { // || value === true
-        return '';
+    switch (value) {
+        case undefined:
+        case false:
+        case null:
+            return empty;
     }
     return value;
 }
